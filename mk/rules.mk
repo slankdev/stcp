@@ -5,4 +5,4 @@
 
 
 .cc.o: 
-	$(CPP) $(CPPFLAGS) -c $< -o $@  $(INCLUDE) $(LIB)
+	$(CXX) $(CXXFLAGS) -c $< -o $@  $(LIBS)

@@ -3,8 +3,8 @@
 
 prefix = /home/slank/git/stcp
 
-include $(prefix)/mk/commands.mk
-include $(prefix)/mk/rules.mk
+include $(CURDIR)/mk/commands.mk
+include $(CURDIR)/mk/rules.mk
 
 
 CPP   = g++
