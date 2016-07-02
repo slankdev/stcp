@@ -27,7 +27,7 @@ CXXFLAGS += -std=c++11 -I$(RTE_SDK)/$(RTE_TARGET)/include \
 
 
 TARGET = a.out
-SRC = main.cc dpdk.cc
+SRC = main.cc dpdk.cc rte.cc
 OBJ = $(SRC:.cc=.o)
 
 
