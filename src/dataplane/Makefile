@@ -40,4 +40,4 @@ clean:
 
 
 run:
-	sudo ./a.out --vdev=eth_pcap0,iface=wlxcce1d51517b5
+	sudo ./a.out --vdev=eth_pcap0,iface=wlan0
