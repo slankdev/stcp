@@ -70,6 +70,9 @@ public:
     void enq_array(struct rte_mbuf** bufs, size_t num_bufs);
     void print_info();
     size_t size();
+
+    void enq(struct rte_mbuf* buf);
+    struct rte_mbuf* deq();
 };
 
 
