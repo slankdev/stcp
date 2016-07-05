@@ -61,28 +61,19 @@ public:
 
 
 
-
-
-class conf {
+class pkt_queue {
+private:
+    struct rte_mbuf* head;
 public:
-    struct rte_eth_conf port_conf;
-
-    conf()
-    {
-        init_port_conf();
-    }
-    ~conf() {}
-
-    void init_port_conf()
-    {
-        struct rte_eth_rxmode rxmode;
-        memset(&rxmode, 0, sizeof rxmode);
-        rxmode.max_rx_pkt_len = ETHER_MAX_LEN;
-
-        memset(&port_conf, 0, sizeof(port_conf));
-        port_conf.rxmode = rxmode;
-    }
+    pkt_queue();
+    ~pkt_queue();
+    void enq_array(struct rte_mbuf** bufs, size_t num_bufs);
+    void print_info();
+    size_t size();
 };
+
+
+
 
     
 } /* namespace dpdk */

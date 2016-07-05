@@ -45,3 +45,7 @@ run:
 run2:
 	sudo ./a.out --vdev=eth_pcap0,iface=wlxcce1d51517b5 \
 		--vdev=eth_pcap1,iface=enp3s0
+
+run3:
+	sudo ./a.out  \
+		--vdev=eth_pcap1,iface=enp3s0

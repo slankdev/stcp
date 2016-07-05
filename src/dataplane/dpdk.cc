@@ -74,9 +74,10 @@ void core::init(int argc, char** argv)
 
 void core::port_init(uint8_t port)
 {
-    dpdk::conf conf;
-    struct rte_eth_conf port_conf = conf.port_conf;
 
+    struct rte_eth_conf port_conf;
+    memset(&port_conf, 0, sizeof port_conf);
+    port_conf.rxmode.max_rx_pkt_len = ETHER_MAX_LEN;
 
     rte::eth_dev_configure(port, num_rx_rings, num_tx_rings, &port_conf);
 
@@ -99,8 +100,6 @@ void core::port_init(uint8_t port)
                 "not be optimal. \n ", port);
         throw rte::exception(str);
     }
-
-
 
 }
 
