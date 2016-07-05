@@ -1,3 +1,4 @@
+#pragma once
 
 #include <stdio.h>
 #include <string.h>
@@ -30,13 +31,23 @@ namespace dpdk {
 
 class core {
 private:
-    struct rte_mempool* mempool;
-    void ports_init();
+    static uint16_t rx_ring_size;
+    static uint16_t tx_ring_size;
+    static uint32_t num_mbufs;
+    static uint32_t mbuf_cache_size;
 
+    struct rte_mempool* mempool;
+    void port_init(uint8_t port);
 public:
+
     core();
     void init(int argc, char** argv);
+
+    size_t num_ports();
+    uint16_t io_rx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs);
 };
+
+
 
 
 

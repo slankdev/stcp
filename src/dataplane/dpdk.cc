@@ -19,16 +19,18 @@
 #include "dpdk.h"
 
 
-#define RX_RING_SIZE 128
-#define TX_RING_SIZE 512
 
-#define NUM_MBUFS       8191
-#define MBUF_CACHE_SIZE 250
-#define BURST_SIZE      32
 
 
 
 namespace dpdk {
+
+
+
+uint16_t core::rx_ring_size = 128;
+uint16_t core::tx_ring_size = 512;
+uint32_t core::num_mbufs = 8192;
+uint32_t core::mbuf_cache_size = 250;
 
 
 
@@ -43,45 +45,76 @@ void core::init(int argc, char** argv)
 
     mempool = rte::pktmbuf_pool_create(
             "SLANK", 
-            NUM_MBUFS * rte::eth_dev_count(), 
-            MBUF_CACHE_SIZE, 
+            num_mbufs * rte::eth_dev_count(), 
+            mbuf_cache_size, 
             0, 
             RTE_MBUF_DEFAULT_BUF_SIZE, 
             rte::socket_id()
             );
 
-    ports_init();
+    for (size_t port=0; port<num_ports(); port++) {
+        port_init(port);
+    }
 }
 
 
 
 
-void core::ports_init()
+void core::port_init(uint8_t port)
 {
     dpdk::conf conf;
-
     struct rte_eth_conf port_conf = conf.port_conf;
-    const uint16_t nb_ports = rte::eth_dev_count();
 
-    for (uint16_t port=0; port<nb_ports; port++) {
+    // const uint16_t nb_ports = rte::eth_dev_count();
+    // for (uint16_t port=0; port<nb_ports; port++) {
+
+
         const uint16_t rx_rings = 1;
         const uint16_t tx_rings = 1;
         rte::eth_dev_configure(port, rx_rings, tx_rings, &port_conf);
 
         for (uint16_t ring=0; ring<rx_rings; ring++) {
-            rte::eth_rx_queue_setup(port, ring, RX_RING_SIZE,
+            rte::eth_rx_queue_setup(port, ring, rx_ring_size,
                 rte::eth_dev_socket_id(port), NULL, this->mempool); 
         }
         for (uint16_t ring=0; ring<tx_rings; ring++) {
-            rte::eth_tx_queue_setup(port, ring, TX_RING_SIZE,
+            rte::eth_tx_queue_setup(port, ring, tx_ring_size,
                 rte::eth_dev_socket_id(port), NULL); 
         }
         rte::eth_dev_start(port);
         rte::eth_promiscuous_enable(port);
-    }
+
+        if (rte::eth_dev_socket_id(port) > 0 && 
+                rte::eth_dev_socket_id(port) != (int)rte::socket_id()) {
+            char str[128];
+            sprintf(str, "WARNING: port %4u is on remote NUMA node to "
+                    "polling thread. \n\tPerformance will "
+                    "not be optimal. \n ", port);
+            throw rte::exception(str);
+        }
+
+
+
+
+    // }
 }
 
 
+
+
+size_t core::num_ports()
+{
+    return rte::eth_dev_count();
+}
+
+
+uint16_t core::io_rx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs)
+{
+    if (port > num_ports())
+        throw rte::exception("port number is too large.");
+
+    return rte::eth_rx_burst(port, 0, bufs, num_bufs);
+}
     
 
 } /* namespace dpdk */
