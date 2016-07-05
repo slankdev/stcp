@@ -36,10 +36,10 @@ uint16_t core::num_tx_rings = 1;
 
 
 
-core* core::instance()
+core& core::instance()
 {
     static core instance;
-    return &instance;
+    return instance;
 }
 
 core::core() : mempool(nullptr) {}

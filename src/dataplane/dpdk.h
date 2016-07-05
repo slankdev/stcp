@@ -49,7 +49,7 @@ private:
     ~core();
 
 public:
-    static core* instance();
+    static core& instance();
 
     void init(int argc, char** argv);
     size_t num_ports();
