@@ -77,36 +77,31 @@ void core::port_init(uint8_t port)
     dpdk::conf conf;
     struct rte_eth_conf port_conf = conf.port_conf;
 
-    // const uint16_t nb_ports = rte::eth_dev_count();
-    // for (uint16_t port=0; port<nb_ports; port++) {
 
+    rte::eth_dev_configure(port, num_rx_rings, num_tx_rings, &port_conf);
 
-        rte::eth_dev_configure(port, num_rx_rings, num_tx_rings, &port_conf);
-
-        for (uint16_t ring=0; ring<num_rx_rings; ring++) {
-            rte::eth_rx_queue_setup(port, ring, rx_ring_size,
+    for (uint16_t ring=0; ring<num_rx_rings; ring++) {
+        rte::eth_rx_queue_setup(port, ring, rx_ring_size,
                 rte::eth_dev_socket_id(port), NULL, this->mempool); 
-        }
-        for (uint16_t ring=0; ring<num_tx_rings; ring++) {
-            rte::eth_tx_queue_setup(port, ring, tx_ring_size,
+    }
+    for (uint16_t ring=0; ring<num_tx_rings; ring++) {
+        rte::eth_tx_queue_setup(port, ring, tx_ring_size,
                 rte::eth_dev_socket_id(port), NULL); 
-        }
-        rte::eth_dev_start(port);
-        rte::eth_promiscuous_enable(port);
+    }
+    rte::eth_dev_start(port);
+    rte::eth_promiscuous_enable(port);
 
-        if (rte::eth_dev_socket_id(port) > 0 && 
-                rte::eth_dev_socket_id(port) != (int)rte::socket_id()) {
-            char str[128];
-            sprintf(str, "WARNING: port %4u is on remote NUMA node to "
-                    "polling thread. \n\tPerformance will "
-                    "not be optimal. \n ", port);
-            throw rte::exception(str);
-        }
-
-
+    if (rte::eth_dev_socket_id(port) > 0 && 
+            rte::eth_dev_socket_id(port) != (int)rte::socket_id()) {
+        char str[128];
+        sprintf(str, "WARNING: port %4u is on remote NUMA node to "
+                "polling thread. \n\tPerformance will "
+                "not be optimal. \n ", port);
+        throw rte::exception(str);
+    }
 
 
-    // }
+
 }
 
 
