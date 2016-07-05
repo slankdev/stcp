@@ -35,7 +35,18 @@ uint16_t core::num_rx_rings = 1;
 uint16_t core::num_tx_rings = 1;
 
 
+
+core* core::instance()
+{
+    static core instance;
+    return &instance;
+}
+
+
+
 core::core() : mempool(nullptr) {}
+core::~core() {}
+
 void core::init(int argc, char** argv)
 {
     rte::eth_dev_init(argc, argv);

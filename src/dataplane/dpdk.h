@@ -40,11 +40,18 @@ private:
 
     struct rte_mempool* mempool;
     void port_init(uint8_t port);
-public:
 
+
+private:
     core();
-    void init(int argc, char** argv);
+    core(const core&) = delete;
+    core& operator=(const core&) =delete;
+    ~core();
 
+public:
+    static core* instance();
+
+    void init(int argc, char** argv);
     size_t num_ports();
     uint16_t io_rx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs);
     uint16_t io_tx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs);
