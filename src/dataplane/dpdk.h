@@ -31,10 +31,12 @@ namespace dpdk {
 
 class core {
 private:
-    static uint16_t rx_ring_size;
-    static uint16_t tx_ring_size;
-    static uint32_t num_mbufs;
-    static uint32_t mbuf_cache_size;
+    static uint32_t num_mbufs;        /* num of mbuf that allocated in a mempool */
+    static uint32_t mbuf_cache_size;  /* packet cache size in each mbufs */
+    static uint16_t rx_ring_size;     /* rx ring size */
+    static uint16_t tx_ring_size;     /* tx ring size */
+    static uint16_t num_rx_rings;     /* num of rx_rings per port */
+    static uint16_t num_tx_rings;     /* num of tx_rings per port */
 
     struct rte_mempool* mempool;
     void port_init(uint8_t port);

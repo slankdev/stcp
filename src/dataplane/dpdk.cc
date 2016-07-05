@@ -31,7 +31,8 @@ uint16_t core::rx_ring_size = 128;
 uint16_t core::tx_ring_size = 512;
 uint32_t core::num_mbufs = 8192;
 uint32_t core::mbuf_cache_size = 250;
-
+uint16_t core::num_rx_rings = 1;
+uint16_t core::num_tx_rings = 1;
 
 
 core::core() : mempool(nullptr) {}
@@ -69,15 +70,13 @@ void core::port_init(uint8_t port)
     // for (uint16_t port=0; port<nb_ports; port++) {
 
 
-        const uint16_t rx_rings = 1;
-        const uint16_t tx_rings = 1;
-        rte::eth_dev_configure(port, rx_rings, tx_rings, &port_conf);
+        rte::eth_dev_configure(port, num_rx_rings, num_tx_rings, &port_conf);
 
-        for (uint16_t ring=0; ring<rx_rings; ring++) {
+        for (uint16_t ring=0; ring<num_rx_rings; ring++) {
             rte::eth_rx_queue_setup(port, ring, rx_ring_size,
                 rte::eth_dev_socket_id(port), NULL, this->mempool); 
         }
-        for (uint16_t ring=0; ring<tx_rings; ring++) {
+        for (uint16_t ring=0; ring<num_tx_rings; ring++) {
             rte::eth_tx_queue_setup(port, ring, tx_ring_size,
                 rte::eth_dev_socket_id(port), NULL); 
         }
