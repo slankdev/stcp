@@ -115,7 +115,17 @@ uint16_t core::io_rx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs)
 
     return rte::eth_rx_burst(port, 0, bufs, num_bufs);
 }
-    
+
+
+uint16_t core::io_tx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs)
+{
+    if (port > num_ports())
+        throw rte::exception("port number is too large.");
+
+    return rte::eth_tx_burst(port, 0, bufs, num_bufs);
+}
+ 
+
 
 } /* namespace dpdk */
 

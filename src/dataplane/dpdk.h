@@ -45,6 +45,7 @@ public:
 
     size_t num_ports();
     uint16_t io_rx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs);
+    uint16_t io_tx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs);
 };
 
 
