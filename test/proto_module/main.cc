@@ -1,34 +1,30 @@
 
 #include <stcp/rte.h>
 #include <stcp/dpdk.h>
-#include <arpa/inet.h>
-#include <pgen2.h>
 #include <stcp/protocol.h>
+#include <arpa/inet.h>
 
 #define BURST_SIZE 32
 #define ETHER_TYPE(PTR) *(uint16_t*)((uint8_t*)(PTR)+12)
-const char* out = "out.pcap";
 
 
 
-static void analyze(protocol::proto_module rx)
+static void analyze(protocol::proto_module& rx)
 {
-    pgen::pcap_stream pcap(out, pgen::open_mode::pcap_write);
-
     while (rx.rx_size()>0) {
         struct rte_mbuf* mbuf = rx.rx_out();
-        pcap.send(
-                rte::mbuf2ptr(mbuf),
-                rte::mbuf2len(mbuf));
 
         if(rte::mbuf2len(mbuf) < 14) {
-            printf("len:%zd \n", rte::mbuf2len(mbuf));
-            exit(-1);
+            printf("length: %zd\n", rte::mbuf2len(mbuf));
+            continue ;
         }
 
-        if (ETHER_TYPE(rte::mbuf2ptr(mbuf)) == htons(0x0806)) printf("arp\n");
-        else if (ETHER_TYPE(rte::mbuf2ptr(mbuf)) == htons(0x0800)) printf("ip\n");
-        else if (ETHER_TYPE(rte::mbuf2ptr(mbuf)) == htons(0x86dd)) printf("ip6\n");
+        static int c=0; c++; printf("%04d: ", c);
+
+        uint16_t type = htons( ETHER_TYPE(rte::mbuf2ptr(mbuf)) );
+        if (type == 0x0806)      printf("arp\n");
+        else if (type == 0x0800) printf("ip\n");
+        else if (type == 0x86dd) printf("ip6\n");
         else printf("other \n");
 
         rte::pktmbuf_free(mbuf);
@@ -50,12 +46,9 @@ int main(int argc, char** argv)
 
             if (unlikely(num_rx == 0)) continue;
             rx.rx_in(dpdk::pkt_queue::array2llist(bufs, num_rx));
+            analyze(rx);
         }
-        if (rx.rx_size() > 10)
-            break;
     }
-
-    analyze(rx);
 }
 
 
