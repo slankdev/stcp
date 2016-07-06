@@ -8,7 +8,7 @@ include $(prefix)/mk/rules.mk
 
 
 
-INCLUDES   = -I$(prefix)/src/include \
+INCLUDES   += -I$(prefix)/src/include \
 			 -I$(RTE_SDK)/$(RTE_TARGET)/include \
 			 -include $(RTE_SDK)/$(RTE_TARGET)/include/rte_config.h
 
@@ -30,7 +30,7 @@ DPDK_LDFLAGS += \
 MAKE      = make
 CXX       = g++
 
-CXXFLAGS  = -Wall -Wextra
+CXXFLAGS += -Wall -Wextra
 CXXFLAGS += -std=c++11 
 CXXFLAGS += $(INCLUDES)
 

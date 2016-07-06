@@ -64,8 +64,9 @@ public:
 class pkt_queue {
 protected:
     struct rte_mbuf* head;
-    void enq(struct rte_mbuf* buf);
-    struct rte_mbuf* deq();
+
+    // virtual bool input_impl(struct rte_mbuf* mbuf);
+    // virtual bool output_impl(struct rte_mbuf* mbuf);
 
 public:
     static struct rte_mbuf* array2llist(
@@ -73,11 +74,13 @@ public:
 
     pkt_queue();
     ~pkt_queue();
-    void print_info();
+    void enq(struct rte_mbuf* buf);
+    struct rte_mbuf* deq();
     size_t size();
 
-    virtual void input(struct rte_mbuf* mbuf);
-    virtual void output();
+    // void input(struct rte_mbuf* mbuf);
+    // struct rte_mbuf* output();
+    void print_info();
 };
 
 

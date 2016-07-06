@@ -54,6 +54,8 @@ class exception : public std::exception {
 
 
 
+void* mbuf2ptr(struct rte_mbuf* mbuf);
+size_t mbuf2len(struct rte_mbuf* mbuf);
 
 
 void eth_dev_init(int argc, char** argv);

@@ -177,21 +177,6 @@ pkt_queue::~pkt_queue()
     }
 }
 
-void pkt_queue::print_info()
-{
-    printf("%zd packets\n", size());
-    struct rte_mbuf* mbuf = head;
-    int i=0;
-    for (; mbuf; i++) {
-        for (int j=0; j<i; j++) printf(" ");
-        printf("[%p]\n", mbuf);
-        mbuf = mbuf->next;
-
-    }
-    for (int j=0; j<i; j++) printf(" ");
-    printf("[nil]\n");
-}
-
 size_t pkt_queue::size()
 {
     size_t cnt = 0;
@@ -221,21 +206,25 @@ struct rte_mbuf* pkt_queue::deq()
     return node;
 }
 
-void pkt_queue::input(struct rte_mbuf* mbuf)
+void pkt_queue::print_info()
 {
-    enq(mbuf);
+    printf("%zd packets\n", size());
+    struct rte_mbuf* mbuf = head;
+    int i=0;
+    for (; mbuf; i++) {
+        for (int j=0; j<i; j++) printf(" ");
+        printf("[%p]\n", mbuf);
+        mbuf = mbuf->next;
+
+    }
+    for (int j=0; j<i; j++) printf(" ");
+    printf("[nil]\n");
 }
-
-void pkt_queue::output()
-{
-    rte::pktmbuf_free(deq());
-}
-
-
-
 
 
 
 } /* namespace dpdk */
+
+
 
 

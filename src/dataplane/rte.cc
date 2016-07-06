@@ -25,6 +25,19 @@ namespace rte {
 
 
 
+void* mbuf2ptr(struct rte_mbuf* mbuf)
+{
+    return rte_pktmbuf_mtod(mbuf, void*);
+}
+
+size_t mbuf2len(struct rte_mbuf* mbuf)
+{
+    return rte_pktmbuf_data_len(mbuf);
+}
+
+
+
+
 void eth_dev_init(int argc, char** argv)
 {
     int ret = rte_eal_init(argc, argv);
