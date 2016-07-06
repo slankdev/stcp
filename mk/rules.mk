@@ -12,5 +12,3 @@ $(TARGET): $(OBJS)
 	@$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
 
-clean:
-	$(RM) $(OBJS) $(TARGET)
