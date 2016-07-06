@@ -125,28 +125,23 @@ uint16_t core::io_tx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs)
 
 
 
-// FOR DEBUG
-// static void print_mbuf_links(const struct rte_mbuf* mbuf)
-// {
-//     printf("[%p]", mbuf);
-//     if (mbuf) {
-//         printf("->");
-//         print_mbuf_links(mbuf->next);
-//     } else {
-//         printf("\n");
-//     }
-// }
-// static struct rte_mbuf* array2linklist(struct rte_mbuf** bufs, size_t num_bufs)
-// {
-//     struct rte_mbuf* link_head = bufs[0];
-//     struct rte_mbuf* link = link_head;
-//     for (size_t i=0; i<num_bufs-1; i++) {
-//         link->next = bufs[i+1];
-//         link = link->next;
-//     }
-//     return link_head;
-// }
-//
+#if 0 //FOR DEBUG
+static void print_mbuf_links(const struct rte_mbuf* head)
+{
+
+    if (!head) {
+        printf("[nil]\n");
+        return ;
+    }
+
+    while (head->next) {
+        printf("[%p]->", head);
+        head = head->next;
+    }
+    printf("[nil]\n");
+}
+#endif
+
 
 
 static struct rte_mbuf* get_tail(struct rte_mbuf* head)
@@ -157,6 +152,17 @@ static struct rte_mbuf* get_tail(struct rte_mbuf* head)
     while (head->next)
         head = head->next;
     return head;
+}
+
+struct rte_mbuf* pkt_queue::array2llist(struct rte_mbuf** bufs, size_t num_bufs)
+{
+    struct rte_mbuf* link_head = bufs[0];
+    struct rte_mbuf* link = link_head;
+    for (size_t i=0; i<num_bufs-1; i++) {
+        link->next = bufs[i+1];
+        link = link->next;
+    }
+    return link_head;
 }
 
 
@@ -170,31 +176,6 @@ pkt_queue::~pkt_queue()
         link = next;
     }
 }
-
-void pkt_queue::enq_array(struct rte_mbuf** bufs, size_t num_bufs)
-{
-    for (size_t i=0; i<num_bufs; i++) {
-        enq(bufs[i]);
-    }
-}
-
-void pkt_queue::enq(struct rte_mbuf* buf)
-{
-    struct rte_mbuf* tail = get_tail(head);
-    if (tail)
-        tail->next = buf;
-    else 
-        head = buf;
-}
-
-struct rte_mbuf* pkt_queue::deq()
-{
-    struct rte_mbuf* node = head;
-    head = node->next;
-    node->next = nullptr;
-    return node;
-}
-
 
 void pkt_queue::print_info()
 {
@@ -222,6 +203,33 @@ size_t pkt_queue::size()
     return cnt;
 }
 
+
+void pkt_queue::enq(struct rte_mbuf* buf)
+{
+    struct rte_mbuf* tail = get_tail(head);
+    if (tail)
+        tail->next = buf;
+    else 
+        head = buf;
+}
+
+struct rte_mbuf* pkt_queue::deq()
+{
+    struct rte_mbuf* node = head;
+    head = node->next;
+    node->next = nullptr;
+    return node;
+}
+
+void pkt_queue::input(struct rte_mbuf* mbuf)
+{
+    enq(mbuf);
+}
+
+void pkt_queue::output()
+{
+    rte::pktmbuf_free(deq());
+}
 
 
 
