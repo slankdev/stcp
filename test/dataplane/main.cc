@@ -1,7 +1,7 @@
 
 
-#include <rte.h>
-#include <dpdk.h>
+#include <stcp/rte.h>
+#include <stcp/dpdk.h>
 
 #define BURST_SIZE 32
 

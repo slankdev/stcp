@@ -15,8 +15,8 @@
 #include <rte_mbuf.h>
 #include <rte_hexdump.h>
 
-#include <rte.h>
-#include <dpdk.h>
+#include <stcp/rte.h>
+#include <stcp/dpdk.h>
 
 
 
