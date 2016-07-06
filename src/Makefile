@@ -1,21 +1,32 @@
 
 
-include ../mk/vars.mk
+prefix = ..
+
+TARGET = a.out
+SRCS = main.cc \
+	   dataplane/dpdk.cc \
+	   dataplane/rte.cc \
+
+OBJS = $(SRCS:.cc=.o)
 
 
-SRC = main.cc
-OBJ = $(SRC:.cc=.o)
+
+all: $(TARGET)
+
+runall:
+	sudo ./$(TARGET) \
+		--vdev=eth_pcap0,iface=enp3s0 \
+		--vdev=eth_pcap1,iface=wlxcce1d51517b5
 
 
-all: build-dataplane $(OBJ)
-	$(CPP) $(OBJ) -o $(TARGET)
+runwlan:
+	sudo ./$(TARGET) \
+		--vdev=eth_pcap1,iface=wlxcce1d51517b5
+
+runenp:
+	sudo ./$(TARGET) \
+		--vdev=eth_pcap0,iface=enp3s0 
 
 
-build-dataplane:
-	$(MAKE) -C $(DATAPLANE_DIR)/dpdk
-
-
-clean:
-	$(RM) $(OBJ) $(TARGET)
-
+include $(prefix)/mk/vars.mk
 

@@ -2,7 +2,15 @@
 
 
 .SUFFIXES: .out .c .cc .o .h 
-
-
 .cc.o: 
-	$(CXX) $(CXXFLAGS) -c $< -o $@  $(LIBS)
+	@echo "[CXX] $<"
+	@$(CXX) $(CXXFLAGS) -c $< -o $@ 
+
+
+$(TARGET): $(OBJS)
+	@echo "[CXX link] $<"
+	@$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
+
+
+clean:
+	$(RM) $(OBJS) $(TARGET)

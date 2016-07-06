@@ -1,7 +1,7 @@
 
 
-#include "rte.h"
-#include "dpdk.h"
+#include <rte.h>
+#include <dpdk.h>
 
 #define BURST_SIZE 32
 
