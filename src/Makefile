@@ -6,12 +6,16 @@ TARGET = a.out
 SRCS = main.cc \
 	   dataplane/dpdk.cc \
 	   dataplane/rte.cc \
+	   protocol/protocol.cc
 
 OBJS = $(SRCS:.cc=.o)
 
 
 
 all: $(TARGET)
+
+clean:
+	$(RM) $(OBJS) $(TARGET)
 
 runall:
 	sudo ./$(TARGET) \
