@@ -30,4 +30,5 @@
 
 dpdk/*
 
-protocol
+*.pcap
+*.pcapng
