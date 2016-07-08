@@ -2,7 +2,7 @@
 
 #include <stcp/rte.h>
 #include <stcp/dpdk.h>
-#include <stcp/protocol.h>
+#include <stcp/proto_module.h>
 #include <arpa/inet.h>
 
 #define BURST_SIZE 32

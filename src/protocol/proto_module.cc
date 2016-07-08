@@ -1,7 +1,7 @@
 
 
 
-#include <stcp/protocol.h>
+#include <stcp/proto_module.h>
 #include <stcp/rte.h>
 
 

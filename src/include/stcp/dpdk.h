@@ -42,16 +42,16 @@ private:
     void port_init(uint8_t port);
 
 
-private:
-    core();
-    core(const core&) = delete;
-    core& operator=(const core&) =delete;
-    ~core();
+private:                                  /* for singleton */
+    core();                               /* for singleton */
+    core(const core&) = delete;           /* for singleton */
+    core& operator=(const core&) =delete; /* for singleton */
+    ~core();                              /* for singleton */
 
 public:
-    static core& instance();
+    static core& instance();              /* for singleton */
 
-    void init(int argc, char** argv);
+    void init(int argc, char** argv);     /* init rte_eal and ports */
     size_t num_ports();
     uint16_t io_rx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs);
     uint16_t io_tx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs);
@@ -61,12 +61,11 @@ public:
 
 
 
+
+
 class pkt_queue {
 protected:
     struct rte_mbuf* head;
-
-    // virtual bool input_impl(struct rte_mbuf* mbuf);
-    // virtual bool output_impl(struct rte_mbuf* mbuf);
 
 public:
     static struct rte_mbuf* array2llist(
@@ -74,12 +73,11 @@ public:
 
     pkt_queue();
     ~pkt_queue();
+
     void enq(struct rte_mbuf* buf);
     struct rte_mbuf* deq();
     size_t size();
 
-    // void input(struct rte_mbuf* mbuf);
-    // struct rte_mbuf* output();
     void print_info();
 };
 
