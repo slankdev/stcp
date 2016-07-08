@@ -9,6 +9,7 @@ SRCS = main.cc \
 	   $(prefix)/src/dataplane/dpdk.cc \
 	   $(prefix)/src/dataplane/rte.cc
 OBJS = $(SRCS:.cc=.o)
+include $(prefix)/mk/vars.mk
 
 
 
@@ -33,7 +34,6 @@ allif:
 
 
 
-include $(prefix)/mk/vars.mk
 
 
 

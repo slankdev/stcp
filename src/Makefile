@@ -15,7 +15,12 @@ OBJS = $(SRCS:.cc=.o)
 all: $(TARGET)
 
 clean:
-	$(RM) $(OBJS) $(TARGET)
+	$(RM) $(TARGET) main.o
+
+
+
+
+
 
 runall:
 	sudo ./$(TARGET) \

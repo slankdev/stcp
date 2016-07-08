@@ -2,20 +2,19 @@
 
 
 prefix = ../..
-
 TARGET = a.out
-
 SRCS   = main.cc \
 		 $(prefix)/src/protocol/protocol.cc \
 		 $(prefix)/src/dataplane/dpdk.cc \
 		 $(prefix)/src/dataplane/rte.cc
-
 OBJS   = $(SRCS:.cc=.o)
+include $(prefix)/mk/vars.mk
+LDFLAGS += -lpgen2
+
+
 
 
 all: $(TARGET)
-
-
 
 run: all
 	sudo ./$(TARGET) \
@@ -28,7 +27,9 @@ runall: all
 	--vdev=eth_pcap1,iface=wlxcce1d51517b5
 
 
-include $(prefix)/mk/vars.mk
+
+
 clean:
 	$(RM) $(TARGET) main.o
-LDFLAGS += -lpgen2
+
+
