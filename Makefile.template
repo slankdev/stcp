@@ -1,0 +1,16 @@
+
+
+prefix =
+TARGET =
+SRCS   =
+OBJS   =
+include $(prefix)/mk/vars.mk
+LDFLAGS +=
+
+
+
+all: $(TARGET)
+clean:
+	$(RM) $(TARGET)
+
+
