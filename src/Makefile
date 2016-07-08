@@ -38,4 +38,5 @@ runenp:
 
 
 include $(prefix)/mk/vars.mk
+LDFLAGS += -lslankdev
 

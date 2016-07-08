@@ -8,52 +8,24 @@
 namespace protocol {
    
 
-
-void proto_module::rx_in(struct rte_mbuf* node)
+void proto_module::input(trx trx, struct rte_mbuf* mbuf)
 {
-    rx.enq(node);
+    que[trx].enq(mbuf);
 }
 
 
-void proto_module::rx_drop()
+struct rte_mbuf* proto_module::output(trx trx)
 {
-    rte::pktmbuf_free(rx.deq());
+    return que[trx].deq();
 }
 
 
-struct rte_mbuf* proto_module::rx_out()
+size_t proto_module::size(trx trx)
 {
-    return rx.deq();
+    return que[trx].size();
+    
 }
 
-
-size_t proto_module::rx_size()
-{
-    return rx.size();
-}
-
-void proto_module::tx_in(struct rte_mbuf* node)
-{
-    tx.enq(node);
-}
-
-
-void proto_module::tx_drop()
-{
-    rte::pktmbuf_free(tx.deq());
-}
-
-
-struct rte_mbuf* proto_module::tx_out()
-{
-    return tx.deq();
-}
-
-
-size_t proto_module::tx_size()
-{
-    return tx.size();
-}
 
 
 

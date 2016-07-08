@@ -9,21 +9,20 @@ namespace protocol {
 
 
 
+
+enum trx {
+    tx = 0,
+    rx,
+};
+
 class proto_module {
 private:
-    dpdk::pkt_queue rx;
-    dpdk::pkt_queue tx;
+    dpdk::pkt_queue que[2];
 
 public:
-    void        rx_in(struct rte_mbuf* node); // enque packet(s) to que
-    void        rx_drop();                       // free a packet that was dequeued from que
-    rte_mbuf*   rx_out();                     // deque a packet that wasnt freed from que
-    size_t      rx_size();                       // returns size of que
-
-    void        tx_in(struct rte_mbuf* node); // enque packet(s) to que
-    void        tx_drop();                       // free a packet that was dequeued from que
-    rte_mbuf*   tx_out();                     // deque a packet that wasnt freed from que
-    size_t      tx_size();                       // returns size of que
+    void input(trx trx, struct rte_mbuf* mbuf);
+    struct rte_mbuf* output(trx trx);
+    size_t size(trx trx);
 };
  
 
