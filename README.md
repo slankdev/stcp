@@ -7,11 +7,7 @@ slank's tcp protocol stack
 ```
 $ git clone https://github.com/slankdev/stcp.git 
 $ cd stcp
-
-$ echo $RTE_SDK
-$ echo $RTE_TARGET
-
-$ make prefix=$(pwd)
+$ make 
 $ sudo make install
 ```
 
