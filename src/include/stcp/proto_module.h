@@ -4,7 +4,6 @@
 #include <stcp/dpdk.h>
 
 
-namespace protocol {
 
 
 
@@ -28,5 +27,4 @@ public:
 
 
 
-} /* namespace protocol */
 

@@ -50,12 +50,12 @@ struct info {
 
 
 
-static void analyze(uint8_t port, protocol::proto_module& mod)
+static void analyze(uint8_t port, proto_module& mod)
 {
     info& infos = slankdev::singleton<info>::instance();
 
-    while (mod.size(protocol::rx) > 0) {
-        struct rte_mbuf* mbuf = mod.output(protocol::rx);
+    while (mod.size(rx) > 0) {
+        struct rte_mbuf* mbuf = mod.output(rx);
 
         if(rte::mbuf2len(mbuf) < 14) {
             printf("length: %zd\n", rte::mbuf2len(mbuf));
@@ -77,10 +77,10 @@ static void analyze(uint8_t port, protocol::proto_module& mod)
         rte::pktmbuf_free(mbuf);
     }
 
-    struct rte_mbuf* bufs[mod.size(protocol::tx)];
-    size_t txsize = mod.size(protocol::tx);
+    struct rte_mbuf* bufs[mod.size(tx)];
+    size_t txsize = mod.size(tx);
     for (size_t i=0; i<txsize; i++) {
-        bufs[i] = mod.output(protocol::tx);
+        bufs[i] = mod.output(tx);
     }
 
     dpdk::core& dpdk = dpdk::core::instance();
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 {
     dpdk::core& dpdk = dpdk::core::instance();
     dpdk.init(argc, argv);
-    protocol::proto_module mod;
+    proto_module mod;
 
     for (;;) {
         for (uint8_t port=0; port<dpdk.num_ports(); port++) {
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
             uint16_t num_rx = dpdk.io_rx(port, bufs, BURST_SIZE);
 
             if (unlikely(num_rx == 0)) continue;
-            mod.input(protocol::rx, dpdk::pkt_queue::array2llist(bufs, num_rx));
+            mod.input(rx, dpdk::pkt_queue::array2llist(bufs, num_rx));
             analyze(port, mod);
         }
     }

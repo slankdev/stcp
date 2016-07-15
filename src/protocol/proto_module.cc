@@ -5,7 +5,6 @@
 #include <stcp/rte.h>
 
 
-namespace protocol {
    
 
 void proto_module::input(trx trx, struct rte_mbuf* mbuf)
@@ -29,4 +28,3 @@ size_t proto_module::size(trx trx)
 
 
 
-} /* namespace protocol */
