@@ -3,9 +3,23 @@
 #include <stcp/rte.h>
 #include <stcp/dpdk.h>
 #include <slankdev.h>
-
 #define BURST_SIZE 32
 #define ETHER_TYPE(PTR) *(uint16_t*)((uint8_t*)(PTR)+12)
+
+
+
+class myallocator {
+    public:
+        struct rte_mbuf* allocate(size_t size)
+        {
+            // return rte::pktmbuf_alloc();
+            return nullptr;
+        }
+        void deallocate(struct rte_mbuf* ptr)
+        {
+            rte::pktmbuf_free(ptr);
+        }
+};
 
 
 enum {
@@ -48,7 +62,8 @@ struct info {
 
 
 
-static void analyze(uint8_t port, slankdev::queue<struct rte_mbuf>& q)
+
+static void analyze(uint8_t port, slankdev::queue<struct rte_mbuf, myallocator>& q)
 {
     info& infos = slankdev::singleton<info>::instance();
 
@@ -84,7 +99,7 @@ int main(int argc, char** argv)
 {
     dpdk::core& dpdk = dpdk::core::instance();
     dpdk.init(argc, argv);
-    slankdev::queue<struct rte_mbuf> q(rte_pktmbuf_free);
+    slankdev::queue<struct rte_mbuf, myallocator> q;
 
     for (;;) {
         for (uint8_t port=0; port<dpdk.num_ports(); port++) {
@@ -97,6 +112,11 @@ int main(int argc, char** argv)
         }
     }
 }
+
+
+
+
+
 
 
 

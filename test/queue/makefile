@@ -18,10 +18,10 @@ all: $(TARGET)
 clean:
 	$(RM) $(TARGET) $(OBJS)
 
-runall:
+run:
 	sudo ./$(TARGET) \
-		--vdev=eth_pcap0,iface=enp3s0 \
-		--vdev=eth_pcap1,iface=wlxcce1d51517b5
+		--vdev=eth_pcap0,iface=eth0 \
+		--vdev=eth_pcap1,iface=lo
 
 runwlan:
 	sudo ./$(TARGET) \
