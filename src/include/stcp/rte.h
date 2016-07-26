@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <inttypes.h>
 #include <errno.h>
 
@@ -22,6 +23,8 @@
 #include <rte_lcore.h>
 #include <rte_mbuf.h>
 #include <rte_hexdump.h>
+
+
 
 
 

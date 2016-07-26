@@ -1,9 +1,17 @@
 
+
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <inttypes.h>
+#include <errno.h>
+
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <exception>
 
 #include <rte_config.h>
 #include <rte_version.h>
@@ -16,8 +24,6 @@
 #include <rte_hexdump.h>
 
 #include <stcp/rte.h>
-
-
 
 
 
@@ -162,8 +168,4 @@ int eth_dev_socket_id(uint8_t port_id)
     return rte_eth_dev_socket_id(port_id);
 }
 
-
-
 } /* namespace rte */
-
-
