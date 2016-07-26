@@ -1,10 +1,11 @@
 
-DATAPLANE = dataplane
-
-
+# DATAPLANE = dataplane
+#
+#
 all:
-	$(MAKE) -C $(DATAPLANE)
-
-
-clean:
-	$(MAKE) -C $(DATAPLANE) clean
+	@echo "Build tests"
+# 	$(MAKE) -C $(DATAPLANE)
+#
+#
+# clean:
+# 	$(MAKE) -C $(DATAPLANE) clean

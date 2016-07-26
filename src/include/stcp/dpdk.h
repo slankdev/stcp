@@ -58,28 +58,8 @@ public:
 };
 
 
+struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs);
 
-
-
-
-
-class pkt_queue {
-protected:
-    struct rte_mbuf* head;
-
-public:
-    static struct rte_mbuf* array2llist(
-            struct rte_mbuf** bufs, size_t num_bufs);
-
-    pkt_queue();
-    ~pkt_queue();
-
-    void enq(struct rte_mbuf* buf);
-    struct rte_mbuf* deq();
-    size_t size();
-
-    void print_info();
-};
 
 
 

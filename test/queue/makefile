@@ -1,11 +1,13 @@
 
 
-prefix = ..
+
+prefix = ../..
+
 
 TARGET = a.out
-SRCS = rte.cc \
-	   dpdk.cc \
-	   main.cc \
+SRCS = main.cc \
+	   $(prefix)/src/dpdk.cc \
+	   $(prefix)/src/rte.cc
 
 OBJS = $(SRCS:.cc=.o)
 
@@ -16,16 +18,10 @@ all: $(TARGET)
 clean:
 	$(RM) $(TARGET) $(OBJS)
 
-
-
-
-
-
 runall:
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=enp3s0 \
 		--vdev=eth_pcap1,iface=wlxcce1d51517b5
-
 
 runwlan:
 	sudo ./$(TARGET) \
@@ -38,4 +34,5 @@ runenp:
 
 include $(prefix)/mk/vars.mk
 LDFLAGS += -lslankdev
+
 

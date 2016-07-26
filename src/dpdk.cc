@@ -119,42 +119,7 @@ uint16_t core::io_tx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs)
     return rte::eth_tx_burst(port, 0, bufs, num_bufs);
 }
  
-
-
-
-
-
-
-#if 0 //FOR DEBUG
-static void print_mbuf_links(const struct rte_mbuf* head)
-{
-
-    if (!head) {
-        printf("[nil]\n");
-        return ;
-    }
-
-    while (head->next) {
-        printf("[%p]->", head);
-        head = head->next;
-    }
-    printf("[nil]\n");
-}
-#endif
-
-
-
-static struct rte_mbuf* get_tail(struct rte_mbuf* head)
-{
-    if (!head)
-        return nullptr;
-
-    while (head->next)
-        head = head->next;
-    return head;
-}
-
-struct rte_mbuf* pkt_queue::array2llist(struct rte_mbuf** bufs, size_t num_bufs)
+struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs)
 {
     struct rte_mbuf* link_head = bufs[0];
     struct rte_mbuf* link = link_head;
@@ -165,61 +130,6 @@ struct rte_mbuf* pkt_queue::array2llist(struct rte_mbuf** bufs, size_t num_bufs)
     return link_head;
 }
 
-
-pkt_queue::pkt_queue() : head(nullptr) {}
-pkt_queue::~pkt_queue()
-{
-    struct rte_mbuf* link = head;
-    while (link) {
-        struct rte_mbuf* next = link->next;
-        rte::pktmbuf_free(link);
-        link = next;
-    }
-}
-
-size_t pkt_queue::size()
-{
-    size_t cnt = 0;
-    struct rte_mbuf* mbuf = head;
-    while (mbuf) {
-        cnt++;
-        mbuf = mbuf->next;
-    }
-    return cnt;
-}
-
-
-void pkt_queue::enq(struct rte_mbuf* buf)
-{
-    struct rte_mbuf* tail = get_tail(head);
-    if (tail)
-        tail->next = buf;
-    else 
-        head = buf;
-}
-
-struct rte_mbuf* pkt_queue::deq()
-{
-    struct rte_mbuf* node = head;
-    head = node->next;
-    node->next = nullptr;
-    return node;
-}
-
-void pkt_queue::print_info()
-{
-    printf("%zd packets\n", size());
-    struct rte_mbuf* mbuf = head;
-    int i=0;
-    for (; mbuf; i++) {
-        for (int j=0; j<i; j++) printf(" ");
-        printf("[%p]\n", mbuf);
-        mbuf = mbuf->next;
-
-    }
-    for (int j=0; j<i; j++) printf(" ");
-    printf("[nil]\n");
-}
 
 
 
