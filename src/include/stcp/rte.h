@@ -91,7 +91,8 @@ void pktmbuf_free(struct rte_mbuf* m);
 uint32_t socket_id();
 void pktmbuf_dump(FILE* f,const struct rte_mbuf* m, unsigned dump_len);	
 int eth_dev_socket_id(uint8_t port_id);
-
+struct rte_mbuf* pktmbuf_alloc(struct rte_mempool* mp);
+struct rte_mbuf* pktmbuf_clone(struct rte_mbuf* md, struct rte_mempool* mp);
 
 
 

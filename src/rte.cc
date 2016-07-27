@@ -168,4 +168,24 @@ int eth_dev_socket_id(uint8_t port_id)
     return rte_eth_dev_socket_id(port_id);
 }
 
+struct rte_mbuf* pktmbuf_alloc(struct rte_mempool* mp)
+{
+    struct rte_mbuf* buf = rte_pktmbuf_alloc(mp);
+    if (buf == nullptr) {
+        throw rte::exception("rte_pktmbuf_alloc");
+    }
+    return buf;
+}
+
+struct rte_mbuf* pktmbuf_clone(struct rte_mbuf* md, struct rte_mempool* mp)
+{
+    struct rte_mbuf* buf = rte_pktmbuf_clone(md, mp);
+    if (buf == nullptr) {
+        throw rte::exception("rte_pktmbuf_clone");
+    }
+    return buf;
+}
+
+
+
 } /* namespace rte */

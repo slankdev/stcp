@@ -1,5 +1,4 @@
 
-
 #include <stcp/rte.h>
 #include <stcp/dpdk.h>
 #include <slankdev.h>
@@ -8,28 +7,32 @@
 #define BURST_SIZE 32
 
 
-class myallocator {
-    public:
-        void deallocate(struct rte_mbuf* ptr)
-        {
-            rte::pktmbuf_free(ptr);
-        }
-};
 
 
-static void analyze(uint8_t port, slankdev::queue<struct rte_mbuf, myallocator>& q)
+
+
+static void main_recv_loop()
 {
+    dpdk::core& dpdk = dpdk::core::instance();
 
-    while (q.size() > 0) {
-        struct rte_mbuf* mbuf = q.pop();
+    for (dpdk::net_device& dev : dpdk.devices) {
+        uint16_t num_rx = dev.io_rx();
+        if (num_rx > 0) {
+            printf("before refrect ");
+            dev.stat();
 
-        if(rte::mbuf2len(mbuf) < 14) {
-            printf("length: %zd\n", rte::mbuf2len(mbuf));
-            continue ;
+            struct rte_mbuf* mbuf = rte::pktmbuf_clone(dev.rx.front(),
+                    dpdk.get_mempool());
+            mbuf->next = nullptr;
+            dev.tx.push(mbuf);
+
+            uint16_t num_tx = dev.io_tx(1);
+            if (num_tx != 1) {
+                printf("tx error 1!=%u\n", num_tx);
+            }
+            printf("after refrect ");
+            dev.stat();
         }
-
-        rte::pktmbuf_free(mbuf);
-        printf("%d: recv \n", port);
     }
 }
 
@@ -38,19 +41,11 @@ static void analyze(uint8_t port, slankdev::queue<struct rte_mbuf, myallocator>&
 int main(int argc, char** argv)
 {
     dpdk::core& dpdk = dpdk::core::instance();
-    dpdk.init(argc, argv);
-    slankdev::queue<struct rte_mbuf, myallocator> q;
-
+    dpdk.init(argc, argv);        
     printf("%zd devices found \n", dpdk.devices.size());
+    printf("\033[2J\n"); // clear screen
 
-    for (;;) {
-        for (uint8_t port=0; port<dpdk.devices.size(); port++) {
-            struct rte_mbuf* bufs[BURST_SIZE];
-            uint16_t num_rx = dpdk.io_rx(port, bufs, BURST_SIZE);
-
-            if (unlikely(num_rx == 0)) continue;
-            q.push(dpdk::array2llist_mbuf(bufs, num_rx));
-            analyze(port, q);
-        }
-    }
+    for (;;)
+        main_recv_loop();
 }
+

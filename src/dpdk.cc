@@ -82,7 +82,7 @@ void core::port_init(uint8_t port)
         throw rte::exception(str);
     }
 
-    net_device dev("port" + std::to_string(port));
+    net_device dev(port);
     struct ether_addr addr;
     rte::eth_macaddr_get(port, &addr);
     dev.set_hw_addr(&addr);
@@ -90,24 +90,11 @@ void core::port_init(uint8_t port)
     devices.push_back(dev);
 }
 
-uint16_t core::io_rx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs)
-{
-    if (port > rte::eth_dev_count())
-        throw rte::exception("port number is too large.");
 
-    return rte::eth_rx_burst(port, 0, bufs, num_bufs);
-}
-
-uint16_t core::io_tx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs)
-{
-    if (port > rte::eth_dev_count())
-        throw rte::exception("port number is too large.");
-
-    return rte::eth_tx_burst(port, 0, bufs, num_bufs);
-}
- 
 struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs)
 {
+    if (num_bufs <= 0) return nullptr;
+
     struct rte_mbuf* link_head = bufs[0];
     struct rte_mbuf* link = link_head;
     for (size_t i=0; i<num_bufs-1; i++) {
