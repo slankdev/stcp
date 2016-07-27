@@ -5,26 +5,12 @@
 #include <stdarg.h>
 #include <inttypes.h>
 
-// #include <rte_config.h>
-// #include <rte_version.h>
-// #include <rte_eal.h>
-// #include <rte_ethdev.h>
-// #include <rte_ether.h>
-// #include <rte_cycles.h>
-// #include <rte_lcore.h>
-// #include <rte_mbuf.h>
-// #include <rte_hexdump.h>
-
 #include <stcp/rte.h>
 #include <stcp/dpdk.h>
 
 
 
-
-
-
 namespace dpdk {
-
 
 
 uint16_t core::rx_ring_size = 128;
@@ -62,7 +48,7 @@ void core::init(int argc, char** argv)
             rte::socket_id()
             );
 
-    for (size_t port=0; port<num_ports(); port++) {
+    for (size_t port=0; port<rte::eth_dev_count(); port++) {
         port_init(port);
     }
 }
@@ -96,16 +82,17 @@ void core::port_init(uint8_t port)
         throw rte::exception(str);
     }
 
-}
+    net_device dev("port" + std::to_string(port));
+    struct ether_addr addr;
+    rte::eth_macaddr_get(port, &addr);
+    dev.set_hw_addr(&addr);
 
-size_t core::num_ports()
-{
-    return rte::eth_dev_count();
+    devices.push_back(dev);
 }
 
 uint16_t core::io_rx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs)
 {
-    if (port > num_ports())
+    if (port > rte::eth_dev_count())
         throw rte::exception("port number is too large.");
 
     return rte::eth_rx_burst(port, 0, bufs, num_bufs);
@@ -113,7 +100,7 @@ uint16_t core::io_rx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs)
 
 uint16_t core::io_tx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs)
 {
-    if (port > num_ports())
+    if (port > rte::eth_dev_count())
         throw rte::exception("port number is too large.");
 
     return rte::eth_tx_burst(port, 0, bufs, num_bufs);

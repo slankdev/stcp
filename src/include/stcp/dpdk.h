@@ -11,24 +11,68 @@
 #include <iostream>
 #include <sstream>
 #include <exception>
+#include <vector>
 
 #include <stcp/rte.h>
+#include <stcp/dpdk.h>
 
-// #include <rte_config.h>
-// #include <rte_version.h>
-// #include <rte_eal.h>
-// #include <rte_ethdev.h>
-// #include <rte_ether.h>
-// #include <rte_cycles.h>
-// #include <rte_lcore.h>
-// #include <rte_mbuf.h>
-// #include <rte_hexdump.h>
 
 
 
 
 
 namespace dpdk {
+
+
+enum address_family {
+    link,
+    inet
+};
+class if_addr {
+    public:
+        enum address_family af;
+        uint8_t data[16];
+
+        if_addr(address_family a, const void* raw, size_t rawlen)
+        {
+            if (rawlen > sizeof(data))
+                exit(-1);
+
+            af = a;
+            memcpy(data, raw, rawlen);
+        }
+
+    
+};
+
+
+
+
+
+class net_device {
+    public:
+        std::string name;
+        std::vector<if_addr> addrs;
+
+        net_device(std::string n) : name(n)
+        {
+            printf("[net_device:%s] init \n", name.c_str());
+        }
+        void set_hw_addr(struct ether_addr* addr)
+        {
+            if_addr ifaddr(link, addr, sizeof(struct ether_addr));
+            addrs.push_back(ifaddr);
+
+            printf("[net_device:%s] set address ", name.c_str());
+            for (int i=0; i<6; i++) {
+                printf("%02x", addr->addr_bytes[i]);
+                if (i==5) printf("\n");
+                else      printf(":");
+            }
+        }
+};
+
+
 
 
 class core {
@@ -43,7 +87,6 @@ private:
     struct rte_mempool* mempool;
     void port_init(uint8_t port);
 
-
 private:                                  /* for singleton */
     core();                               /* for singleton */
     core(const core&) = delete;           /* for singleton */
@@ -54,9 +97,10 @@ public:
     static core& instance();              /* for singleton */
 
     void init(int argc, char** argv);     /* init rte_eal and ports */
-    size_t num_ports();
     uint16_t io_rx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs);
     uint16_t io_tx(uint16_t port, struct rte_mbuf** bufs, size_t num_bufs);
+
+    std::vector<net_device> devices;
 };
 
 

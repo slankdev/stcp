@@ -2,13 +2,10 @@
 
 #include <stcp/rte.h>
 #include <stcp/dpdk.h>
-#include <stcp/net_device.h>
 #include <slankdev.h>
 #include <vector>
 #include <string>
 #define BURST_SIZE 32
-#define ETHER_TYPE(PTR) *(uint16_t*)((uint8_t*)(PTR)+12)
-
 
 
 class myallocator {
@@ -18,7 +15,6 @@ class myallocator {
             rte::pktmbuf_free(ptr);
         }
 };
-
 
 
 static void analyze(uint8_t port, slankdev::queue<struct rte_mbuf, myallocator>& q)
@@ -45,23 +41,10 @@ int main(int argc, char** argv)
     dpdk.init(argc, argv);
     slankdev::queue<struct rte_mbuf, myallocator> q;
 
-
-    // ここを一般化するぞ!!!!
-    std::vector<net_device> devs;
-    for (uint8_t port=0; port<dpdk.num_ports(); port++) {
-        net_device dev("port" + std::to_string(port));
-
-        struct ether_addr addr;
-        rte::eth_macaddr_get(port, &addr);
-        dev.set_hw_addr(&addr);
-
-        devs.push_back(dev);
-    }
-
-
+    printf("%zd devices found \n", dpdk.devices.size());
 
     for (;;) {
-        for (uint8_t port=0; port<dpdk.num_ports(); port++) {
+        for (uint8_t port=0; port<dpdk.devices.size(); port++) {
             struct rte_mbuf* bufs[BURST_SIZE];
             uint16_t num_rx = dpdk.io_rx(port, bufs, BURST_SIZE);
 
@@ -71,12 +54,3 @@ int main(int argc, char** argv)
         }
     }
 }
-
-
-
-
-
-
-
-
-
