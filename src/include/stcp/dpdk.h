@@ -1,3 +1,6 @@
+
+
+
 #pragma once
 
 #include <stdio.h>
@@ -13,7 +16,7 @@
 #include <exception>
 #include <vector>
 
-#include <slankdev.h>
+#include <slankdev/queue.h>
 #include <stcp/rte.h>
 #include <stcp/dpdk.h>
 
@@ -136,6 +139,20 @@ class net_device {
 
 
 
+struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs)
+{
+    if (num_bufs <= 0) return nullptr;
+
+    struct rte_mbuf* link_head = bufs[0];
+    struct rte_mbuf* link = link_head;
+    for (size_t i=0; i<num_bufs-1; i++) {
+        link->next = bufs[i+1];
+        link = link->next;
+    }
+    return link_head;
+}
+
+
 class core {
 private:
     static uint32_t num_mbufs;        /* num of mbuf that allocated in a mempool */
@@ -146,18 +163,78 @@ private:
     static uint16_t num_tx_rings;     /* num of tx_rings per port */
 
     struct rte_mempool* mempool;
-    void port_init(uint8_t port);
+    void port_init(uint8_t port)
+    {
+
+        struct rte_eth_conf port_conf;
+        memset(&port_conf, 0, sizeof port_conf);
+        port_conf.rxmode.max_rx_pkt_len = ETHER_MAX_LEN;
+
+        rte::eth_dev_configure(port, num_rx_rings, num_tx_rings, &port_conf);
+
+        for (uint16_t ring=0; ring<num_rx_rings; ring++) {
+            rte::eth_rx_queue_setup(port, ring, rx_ring_size,
+                    rte::eth_dev_socket_id(port), NULL, this->mempool); 
+        }
+        for (uint16_t ring=0; ring<num_tx_rings; ring++) {
+            rte::eth_tx_queue_setup(port, ring, tx_ring_size,
+                    rte::eth_dev_socket_id(port), NULL); 
+        }
+        rte::eth_dev_start(port);
+        rte::eth_promiscuous_enable(port);
+
+        if (rte::eth_dev_socket_id(port) > 0 && 
+                rte::eth_dev_socket_id(port) != (int)rte::socket_id()) {
+            char str[128];
+            sprintf(str, "WARNING: port %4u is on remote NUMA node to "
+                    "polling thread. \n\tPerformance will "
+                    "not be optimal. \n ", port);
+            throw rte::exception(str);
+        }
+
+        net_device dev(port);
+        struct ether_addr addr;
+        rte::eth_macaddr_get(port, &addr);
+        dev.set_hw_addr(&addr);
+
+        devices.push_back(dev);
+    }
+
 
 private:                                  /* for singleton */
-    core();                               /* for singleton */
+    core() : mempool(nullptr) {}          /* for singleton */
     core(const core&) = delete;           /* for singleton */
     core& operator=(const core&) =delete; /* for singleton */
-    ~core();                              /* for singleton */
+    ~core() {}                            /* for singleton */
 
 public:
     std::vector<net_device> devices;
-    static core& instance();              /* for singleton */
-    void init(int argc, char** argv);     /* init rte_eal and ports */
+    static core& instance()               /* for singleton */
+    {
+        static core instance;
+        return instance;
+    }
+    void init(int argc, char** argv)      /* init rte_eal and ports */
+    {
+        rte::eth_dev_init(argc, argv);
+
+        if (rte::eth_dev_count() < 1) {
+            throw rte::exception("num of devices is less than 1");
+        }
+
+        mempool = rte::pktmbuf_pool_create(
+                "SLANK", 
+                num_mbufs * rte::eth_dev_count(), 
+                mbuf_cache_size, 
+                0, 
+                RTE_MBUF_DEFAULT_BUF_SIZE, 
+                rte::socket_id()
+                );
+
+        for (size_t port=0; port<rte::eth_dev_count(); port++) {
+            port_init(port);
+        }
+    }
 
     struct rte_mempool* get_mempool()
     {
@@ -165,6 +242,12 @@ public:
     }
 };
 
+uint16_t core::rx_ring_size = 128;
+uint16_t core::tx_ring_size = 512;
+uint32_t core::num_mbufs = 8192;
+uint32_t core::mbuf_cache_size = 250;
+uint16_t core::num_rx_rings = 1;
+uint16_t core::num_tx_rings = 1;
 
 
 

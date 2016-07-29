@@ -1,12 +1,8 @@
 
+
+
 #include <stcp/rte.h>
 #include <stcp/dpdk.h>
-#include <slankdev.h>
-#include <vector>
-#include <string>
-#define BURST_SIZE 32
-
-
 
 
 

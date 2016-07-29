@@ -3,11 +3,9 @@
 prefix = ..
 
 TARGET = a.out
-SRCS = rte.cc \
-	   dpdk.cc \
-	   main.cc \
+SRCS   = main.cc \
 
-OBJS = $(SRCS:.cc=.o)
+OBJS   = $(SRCS:.cc=.o)
 
 
 
