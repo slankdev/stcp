@@ -153,6 +153,13 @@ struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs)
 }
 
 
+
+
+
+
+
+
+
 class dpdk {
 private:
     static uint32_t num_mbufs;        /* num of mbuf that allocated in a mempool */

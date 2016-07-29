@@ -32,3 +32,5 @@ dpdk/*
 
 *.pcap
 *.pcapng
+
+*.log

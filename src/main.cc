@@ -5,6 +5,27 @@
 #include <stcp/dpdk.h>
 
 
+// for class stcp
+#include <slankdev/log.h>
+#include <slankdev/util.h>
+#include <slankdev/singleton.h>
+
+
+class stcp {
+    private:
+    public:
+        stcp(int argc, char** argv)
+        {
+            dpdk& dpdk = dpdk::instance();
+            slankdev::log& log = slankdev::singleton<slankdev::log>::instance();
+
+            log.open("stcp.log");
+            dpdk.init(argc, argv);
+
+            slankdev::clear_screen();
+        }
+};
+
 
 
 static void main_recv_loop()
@@ -36,10 +57,7 @@ static void main_recv_loop()
 
 int main(int argc, char** argv)
 {
-    dpdk& dpdk = dpdk::instance();
-    dpdk.init(argc, argv);        
-    printf("%zd devices found \n", dpdk.devices.size());
-    printf("\033[2J\n"); // clear screen
+    stcp s(argc, argv);
 
     for (;;)
         main_recv_loop();
