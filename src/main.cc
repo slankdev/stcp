@@ -9,9 +9,9 @@
 
 static void main_recv_loop()
 {
-    dpdk::core& dpdk = dpdk::core::instance();
+    dpdk& dpdk = dpdk::instance();
 
-    for (dpdk::net_device& dev : dpdk.devices) {
+    for (net_device& dev : dpdk.devices) {
         uint16_t num_rx = dev.io_rx();
         if (num_rx > 0) {
             printf("before refrect ");
@@ -36,7 +36,7 @@ static void main_recv_loop()
 
 int main(int argc, char** argv)
 {
-    dpdk::core& dpdk = dpdk::core::instance();
+    dpdk& dpdk = dpdk::instance();
     dpdk.init(argc, argv);        
     printf("%zd devices found \n", dpdk.devices.size());
     printf("\033[2J\n"); // clear screen

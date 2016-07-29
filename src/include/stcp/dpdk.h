@@ -18,14 +18,14 @@
 
 #include <slankdev/queue.h>
 #include <stcp/rte.h>
-#include <stcp/dpdk.h>
+// #include <stcp/dpdk.h>
 
 
 
 
 
 
-namespace dpdk {
+// namespace dpdk {
 
 struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs);
 
@@ -98,7 +98,7 @@ class net_device {
             uint16_t num_rx = rte::eth_rx_burst(port_id, 0, bufs, BURST_SIZE);
             if (unlikely(num_rx == 0)) return 0;
 
-            rx.push(dpdk::array2llist_mbuf(bufs, num_rx));
+            rx.push(array2llist_mbuf(bufs, num_rx));
             printf("%s: recv %u packets\n", name.c_str(), num_rx);
             return num_rx;
         }
@@ -153,7 +153,7 @@ struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs)
 }
 
 
-class core {
+class dpdk {
 private:
     static uint32_t num_mbufs;        /* num of mbuf that allocated in a mempool */
     static uint32_t mbuf_cache_size;  /* packet cache size in each mbufs */
@@ -202,16 +202,16 @@ private:
 
 
 private:                                  /* for singleton */
-    core() : mempool(nullptr) {}          /* for singleton */
-    core(const core&) = delete;           /* for singleton */
-    core& operator=(const core&) =delete; /* for singleton */
-    ~core() {}                            /* for singleton */
+    dpdk() : mempool(nullptr) {}          /* for singleton */
+    dpdk(const dpdk&) = delete;           /* for singleton */
+    dpdk& operator=(const dpdk&) =delete; /* for singleton */
+    ~dpdk() {}                            /* for singleton */
 
 public:
     std::vector<net_device> devices;
-    static core& instance()               /* for singleton */
+    static dpdk& instance()               /* for singleton */
     {
-        static core instance;
+        static dpdk instance;
         return instance;
     }
     void init(int argc, char** argv)      /* init rte_eal and ports */
@@ -242,12 +242,12 @@ public:
     }
 };
 
-uint16_t core::rx_ring_size = 128;
-uint16_t core::tx_ring_size = 512;
-uint32_t core::num_mbufs = 8192;
-uint32_t core::mbuf_cache_size = 250;
-uint16_t core::num_rx_rings = 1;
-uint16_t core::num_tx_rings = 1;
+uint16_t dpdk::rx_ring_size = 128;
+uint16_t dpdk::tx_ring_size = 512;
+uint32_t dpdk::num_mbufs = 8192;
+uint32_t dpdk::mbuf_cache_size = 250;
+uint16_t dpdk::num_rx_rings = 1;
+uint16_t dpdk::num_tx_rings = 1;
 
 
 
@@ -255,7 +255,7 @@ uint16_t core::num_tx_rings = 1;
 
 
     
-} /* namespace dpdk */
+// } #<{(| namespace dpdk |)}>#
 
 
 
