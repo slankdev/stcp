@@ -43,11 +43,11 @@ static void main_recv_loop()
             mbuf->next = nullptr;
             dev.tx.push(mbuf);
 
-            uint16_t num_tx = dev.io_tx(1);
-            if (num_tx != 1) {
-                printf("tx error 1!=%u\n", num_tx);
-            }
-            printf("after refrect ");
+            // uint16_t num_tx = dev.io_tx(1);
+            // if (num_tx != 1) {
+            //     printf("tx error 1!=%u\n", num_tx);
+            // }
+            // printf("after refrect ");
             dev.stat();
         }
     }
