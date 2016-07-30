@@ -17,18 +17,12 @@
 #include <vector>
 
 #include <slankdev/queue.h>
+#include <slankdev/singleton.h>
 #include <stcp/rte.h>
-// #include <stcp/dpdk.h>
 
 
-
-
-
-
-// namespace dpdk {
 
 struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs);
-
 
 enum address_family {
     link,
@@ -47,8 +41,6 @@ class if_addr {
             af = a;
             memcpy(data, raw, rawlen);
         }
-
-        
 };
 
 
@@ -91,7 +83,6 @@ class net_device {
                 else      printf(":");
             }
         }
-
         uint16_t io_rx()
         {
             struct rte_mbuf* bufs[BURST_SIZE];
@@ -129,7 +120,6 @@ class net_device {
             printf("%s: sent %u packets\n", name.c_str(), num_tx_sum);
             return num_tx_sum;
         }
-    
         void stat()
         {
             printf("rx/tx = %zd/%zd \n", rx.size(), tx.size());
@@ -160,7 +150,8 @@ struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs)
 
 
 
-class dpdk {
+class dpdk : public slankdev::singleton<dpdk> {
+    friend slankdev::singleton<dpdk>;
 private:
     static uint32_t num_mbufs;        /* num of mbuf that allocated in a mempool */
     static uint32_t mbuf_cache_size;  /* packet cache size in each mbufs */
@@ -168,11 +159,31 @@ private:
     static uint16_t tx_ring_size;     /* tx ring size */
     static uint16_t num_rx_rings;     /* num of rx_rings per port */
     static uint16_t num_tx_rings;     /* num of tx_rings per port */
-
     struct rte_mempool* mempool;
+
+    dpdk() : mempool(nullptr) {}          /* for singleton */
+    ~dpdk() {}                            /* for singleton */
+
+public:
+    std::vector<net_device> devices;
+    void rte_init(int argc, char** argv)
+    {
+        rte::eth_dev_init(argc, argv);
+        if (rte::eth_dev_count() < 1) {
+            throw rte::exception("num of devices is less than 1");
+        }
+
+        mempool = rte::pktmbuf_pool_create(
+                "SLANK", 
+                num_mbufs * rte::eth_dev_count(), 
+                mbuf_cache_size, 
+                0, 
+                RTE_MBUF_DEFAULT_BUF_SIZE, 
+                rte::socket_id()
+                );
+    }
     void port_init(uint8_t port)
     {
-
         struct rte_eth_conf port_conf;
         memset(&port_conf, 0, sizeof port_conf);
         port_conf.rxmode.max_rx_pkt_len = ETHER_MAX_LEN;
@@ -206,43 +217,6 @@ private:
 
         devices.push_back(dev);
     }
-
-
-private:                                  /* for singleton */
-    dpdk() : mempool(nullptr) {}          /* for singleton */
-    dpdk(const dpdk&) = delete;           /* for singleton */
-    dpdk& operator=(const dpdk&) =delete; /* for singleton */
-    ~dpdk() {}                            /* for singleton */
-
-public:
-    std::vector<net_device> devices;
-    static dpdk& instance()               /* for singleton */
-    {
-        static dpdk instance;
-        return instance;
-    }
-    void init(int argc, char** argv)      /* init rte_eal and ports */
-    {
-        rte::eth_dev_init(argc, argv);
-
-        if (rte::eth_dev_count() < 1) {
-            throw rte::exception("num of devices is less than 1");
-        }
-
-        mempool = rte::pktmbuf_pool_create(
-                "SLANK", 
-                num_mbufs * rte::eth_dev_count(), 
-                mbuf_cache_size, 
-                0, 
-                RTE_MBUF_DEFAULT_BUF_SIZE, 
-                rte::socket_id()
-                );
-
-        for (size_t port=0; port<rte::eth_dev_count(); port++) {
-            port_init(port);
-        }
-    }
-
     struct rte_mempool* get_mempool()
     {
         return mempool;
@@ -255,16 +229,6 @@ uint32_t dpdk::num_mbufs = 8192;
 uint32_t dpdk::mbuf_cache_size = 250;
 uint16_t dpdk::num_rx_rings = 1;
 uint16_t dpdk::num_tx_rings = 1;
-
-
-
-
-
-
-    
-// } #<{(| namespace dpdk |)}>#
-
-
 
 
 

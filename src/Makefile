@@ -20,6 +20,9 @@ run:
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=eth0
 
+runlo:
+	sudo ./$(TARGET) \
+		--vdev=eth_pcap0,iface=lo
 
 runall:
 	sudo ./$(TARGET) \
