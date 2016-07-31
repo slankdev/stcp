@@ -12,17 +12,19 @@ OBJS   = $(SRCS:.cc=.o)
 all: $(TARGET)
 
 clean:
-	$(RM) $(TARGET) $(OBJS)
+	$(RM) $(TARGET) $(OBJS) stcp.log
 
 
 
 run:
-	sudo ./$(TARGET) \
-		--vdev=eth_pcap0,iface=eth0
-
-runlo:
+	@sudo rm -rf stcp.log
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=lo
+	@cat stcp.log
+
+runeth0:
+	sudo ./$(TARGET) \
+		--vdev=eth_pcap0,iface=eth0
 
 runall:
 	sudo ./$(TARGET) \

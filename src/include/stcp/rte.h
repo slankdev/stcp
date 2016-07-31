@@ -24,6 +24,7 @@
 #include <rte_mbuf.h>
 #include <rte_hexdump.h>
 
+#include <slankdev/exception.h>
 
 
 
