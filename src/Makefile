@@ -3,7 +3,7 @@
 prefix = ..
 
 TARGET = a.out
-SRCS   = main.cc \
+SRCS   = dpdk.cc net_device.cc rte.cc main.cc 
 
 OBJS   = $(SRCS:.cc=.o)
 
