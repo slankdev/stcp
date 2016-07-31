@@ -13,10 +13,7 @@
 #include <exception>
 #include <vector>
 
-#include <slankdev/queue.h>
-#include <slankdev/log.h>
-#include <slankdev/singleton.h>
-
+#include <stcp/config.h>
 #include <stcp/dpdk.h>
 #include <stcp/net_device.h>
 #include <stcp/rte.h>
@@ -31,7 +28,7 @@ uint16_t net_device::num_tx_rings = 1;
 
 void net_device::init()
 {
-    slankdev::log& log = slankdev::log::instance();
+    log& log = log::instance();
     log.push(name.c_str());
 
     struct rte_eth_conf port_conf;

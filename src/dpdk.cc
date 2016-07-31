@@ -18,9 +18,6 @@
 #include <exception>
 #include <vector>
 
-#include <slankdev/queue.h>
-#include <slankdev/log.h>
-#include <slankdev/singleton.h>
 #include <stcp/rte.h>
 #include <stcp/net_device.h>
 #include <stcp/dpdk.h>

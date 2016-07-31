@@ -3,35 +3,8 @@
 
 #include <stcp/dpdk.h>
 #include <stcp/rte.h>
+#include <stcp/stcp.h>
 
-
-// for class stcp
-#include <slankdev/log.h>
-#include <slankdev/util.h>
-#include <slankdev/singleton.h>
-
-
-class stcp : public slankdev::singleton<stcp> {
-    friend slankdev::singleton<stcp>;
-    public:
-        void init(int argc, char** argv)
-        {
-            slankdev::log& log = slankdev::log::instance();
-            log.open("stcp.log");
-            log.push("STCP");
-
-            log.write(slankdev::INFO, "starting...");
-            log.write(slankdev::INFO, "starting all inits");
-
-            dpdk& dpdk = dpdk::instance();
-            dpdk.init(argc, argv);
-
-            slankdev::clear_screen();
-            log.write(slankdev::INFO, "All inits were finished");
-
-            log.pop();
-        }
-};
 
 
 

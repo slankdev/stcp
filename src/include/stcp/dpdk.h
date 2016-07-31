@@ -16,11 +16,9 @@
 #include <exception>
 #include <vector>
 
-#include <slankdev/queue.h>
-#include <slankdev/log.h>
-#include <slankdev/singleton.h>
 #include <stcp/rte.h>
 #include <stcp/net_device.h>
+#include <stcp/config.h>
 
 
 
@@ -28,10 +26,8 @@
 
 
 
-
-
-class dpdk : public slankdev::singleton<dpdk> {
-    friend slankdev::singleton<dpdk>;
+class dpdk : public singleton<dpdk> {
+    friend singleton<dpdk>;
 private:
     static uint32_t num_mbufs;        /* num of mbuf that allocated in a mempool */
     static uint32_t mbuf_cache_size;  /* packet cache size in each mbufs */
@@ -45,14 +41,14 @@ public:
 
     void init(int argc, char** argv)
     {
-        slankdev::log& log = slankdev::log::instance();
+        log& log = log::instance();
         log.push("DPDK");
 
         rte::eth_dev_init(argc, argv);
         if (rte::eth_dev_count() < 1) {
             throw rte::exception("num of devices is less than 1");
         }
-        log.write(slankdev::INFO, "create memry pool");
+        log.write(INFO, "create memry pool");
         mempool = rte::pktmbuf_pool_create(
                 "SLANK", 
                 num_mbufs * rte::eth_dev_count(), 

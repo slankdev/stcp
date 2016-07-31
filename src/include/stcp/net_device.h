@@ -15,10 +15,8 @@
 #include <exception>
 #include <vector>
 
-#include <slankdev/queue.h>
-#include <slankdev/log.h>
-#include <slankdev/singleton.h>
 #include <stcp/rte.h>
+#include <stcp/config.h>
 
 
 
@@ -26,7 +24,7 @@
 
 
 #define AF_LINK 0
-#define AF_INET 1
+#define AF_INET 2
 
 typedef uint8_t af_t;
 
@@ -63,7 +61,7 @@ class if_addr {
     if_addr(af_t af) : family(af) {}
     void init(const void* d, size_t l)
     {
-        slankdev::log& log = slankdev::log::instance();
+        log& log = log::instance();
         log.push(af2str(family));
 
         switch (family) {
@@ -86,7 +84,7 @@ class if_addr {
                         raw.link.addr_bytes[0], raw.link.addr_bytes[1], 
                         raw.link.addr_bytes[2], raw.link.addr_bytes[3], 
                         raw.link.addr_bytes[3], raw.link.addr_bytes[5]);
-                log.write(slankdev::INFO, "set address %s", str);
+                log.write(INFO, "set address %s", str);
 
                 break;
             }
@@ -124,8 +122,8 @@ private:
     static uint16_t num_tx_rings;     /* num of tx_rings per port */
 
 public:
-    slankdev::queue<struct rte_mbuf, myallocator> rx;
-    slankdev::queue<struct rte_mbuf, myallocator> tx;
+    queue<struct rte_mbuf, myallocator> rx;
+    queue<struct rte_mbuf, myallocator> tx;
     std::vector<if_addr> addrs;
     std::string name;
 

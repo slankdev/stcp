@@ -24,7 +24,6 @@
 #include <rte_mbuf.h>
 #include <rte_hexdump.h>
 
-#include <slankdev/exception.h>
 
 
 struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs);
