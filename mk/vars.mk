@@ -18,8 +18,7 @@ DPDK_LDFLAGS += \
 	-Wl,--no-as-needed \
 	-Wl,-export-dynamic \
 	-L$(RTE_SDK)/$(RTE_TARGET)/lib \
-	-pthread \
-	-lpthread -ldl -lrt -lpcap \
+	-lpthread -ldl -lrt -lm -lpcap \
 	-Wl,--whole-archive \
 	-Wl,--start-group \
 	-ldpdk \
@@ -32,7 +31,7 @@ CXX       = g++
 
 CXXFLAGS += -Wall -Wextra
 CXXFLAGS += -std=c++11 
-CXXFLAGS += $(INCLUDES)
+CXXFLAGS += -m64 -pthread -march=native $(INCLUDES)
 
 
 
