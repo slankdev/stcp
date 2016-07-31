@@ -22,7 +22,6 @@ class stcp : public singleton<stcp> {
             dpdk& dpdk = dpdk::instance();
             dpdk.init(argc, argv);
 
-            clear_screen();
             log.write(INFO, "All inits were finished");
 
             log.pop();

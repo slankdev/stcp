@@ -116,10 +116,14 @@ class myallocator {
 class net_device {
 private:
     int port_id;
-    static uint16_t rx_ring_size;     /* rx ring size */
-    static uint16_t tx_ring_size;     /* tx ring size */
-    static uint16_t num_rx_rings;     /* num of rx_rings per port */
-    static uint16_t num_tx_rings;     /* num of tx_rings per port */
+    uint16_t rx_ring_size;     /* rx ring size */
+    uint16_t tx_ring_size;     /* tx ring size */
+    uint16_t num_rx_rings;     /* num of rx_rings per port */
+    uint16_t num_tx_rings;     /* num of tx_rings per port */
+
+    bool primiscuous_mode;
+    uint32_t rx_packets;
+    uint32_t tx_packets;
 
 public:
     queue<struct rte_mbuf, myallocator> rx;
@@ -129,7 +133,15 @@ public:
 
 public:
 
-    net_device(int n) : port_id(n)
+    net_device(int n) : 
+        port_id(n),
+        rx_ring_size(128),
+        tx_ring_size(512),
+        num_rx_rings(1  ),
+        num_tx_rings(1  ),
+        primiscuous_mode(true),
+        rx_packets(0), 
+        tx_packets(0)
     {
         name = "PORT" + std::to_string(n);
     }
@@ -142,6 +154,7 @@ public:
 
         rx.push(array2llist_mbuf(bufs, num_rx));
         printf("%s: recv %u packets\n", name.c_str(), num_rx);
+        rx_packets += num_rx;
         return num_rx;
     }
     uint16_t io_tx(size_t num_request_to_send)
@@ -169,11 +182,17 @@ public:
         }
 
         printf("%s: sent %u packets\n", name.c_str(), num_tx_sum);
+        tx_packets += num_tx_sum;
         return num_tx_sum;
     }
     void stat()
     {
-        printf("rx/tx = %zd/%zd \n", rx.size(), tx.size());
+        printf("%s: ", name.c_str());
+        if (primiscuous_mode) printf("PROMISC ");
+        printf("\n");
+        printf("\tRX Packets %u Queue %zu\n", rx_packets, rx.size());
+        printf("\tTX Packets %u Queue %zu\n", tx_packets, tx.size());
+
     }
 };
 

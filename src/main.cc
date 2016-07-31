@@ -29,6 +29,7 @@ static void main_recv_loop()
             }
             printf("after refrect ");
 #endif
+            clear_screen();
             dev.stat();
         }
     }
@@ -40,7 +41,9 @@ int main(int argc, char** argv)
 {
     stcp& s = stcp::instance();
     s.init(argc, argv);
+#if 0
     return 0;
+#endif
     while (true)
         main_recv_loop();
 }

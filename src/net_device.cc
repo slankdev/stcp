@@ -19,10 +19,10 @@
 #include <stcp/rte.h>
 
 
-uint16_t net_device::rx_ring_size = 128;
-uint16_t net_device::tx_ring_size = 512;
-uint16_t net_device::num_rx_rings = 1;
-uint16_t net_device::num_tx_rings = 1;
+
+
+
+
 
 
 
@@ -46,7 +46,9 @@ void net_device::init()
                 rte::eth_dev_socket_id(port_id), NULL); 
     }
     rte::eth_dev_start(port_id);
-    rte::eth_promiscuous_enable(port_id);
+
+    if (primiscuous_mode)
+        rte::eth_promiscuous_enable(port_id);
 
     if (rte::eth_dev_socket_id(port_id) > 0 && 
             rte::eth_dev_socket_id(port_id) != (int)rte::socket_id()) {
