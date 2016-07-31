@@ -31,6 +31,9 @@ uint16_t net_device::num_tx_rings = 1;
 
 void net_device::init()
 {
+    slankdev::log& log = slankdev::log::instance();
+    log.push(name.c_str());
+
     struct rte_eth_conf port_conf;
     memset(&port_conf, 0, sizeof port_conf);
     port_conf.rxmode.max_rx_pkt_len = ETHER_MAX_LEN;
@@ -57,9 +60,13 @@ void net_device::init()
         throw rte::exception(str);
     }
 
+    if_addr ifaddr(AF_LINK);
     struct ether_addr addr;
     rte::eth_macaddr_get(port_id, &addr);
-    set_hw_addr(&addr);
+    ifaddr.init(&addr, sizeof(addr));
+    addrs.push_back(ifaddr);
+
+    log.pop();
 }
 
 

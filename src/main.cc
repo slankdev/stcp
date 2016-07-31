@@ -67,6 +67,7 @@ int main(int argc, char** argv)
 {
     stcp& s = stcp::instance();
     s.init(argc, argv);
+    return 0;
     while (true)
         main_recv_loop();
 }

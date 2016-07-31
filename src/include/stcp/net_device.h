@@ -22,32 +22,83 @@
 
 
 
+#define ETHER_ADDR_LEN 6
 
 
+#define AF_LINK 0
+#define AF_INET 1
 
-enum address_family {
-    link,
-    inet
-};
+typedef uint8_t af_t;
+
+static char* af2str(af_t af)
+{
+    static char str[8];
+    switch (af) {
+        case AF_INET:
+            strcpy(str, "INET");
+            break;
+        case AF_LINK:
+            strcpy(str, "LINK");
+            break;
+        default:
+            strcpy(str, "UNKNOWN");
+            break;
+    }
+    return str;
+}
+
+
 class if_addr {
-    private:
-        std::string str_;
     public:
-        enum address_family af;
-        uint8_t data[16];
+        af_t    family;
+        struct {
+            union {
+                uint8_t data[16];
+                struct ether_addr link;
+                uint8_t in[4];
+            };
+        } raw;
 
-        if_addr(address_family a, const void* raw, size_t rawlen)
-        {
-            if (rawlen > sizeof(data))
+
+    if_addr(af_t af) : family(af) {}
+    void init(const void* d, size_t l)
+    {
+        slankdev::log& log = slankdev::log::instance();
+        log.push(af2str(family));
+
+        switch (family) {
+            case AF_INET:
+            {
+                fprintf(stderr, "Not Impl yet\n");
                 exit(-1);
+                break;
+            }
+            case AF_LINK:
+            {
+                if (l != ETHER_ADDR_LEN) {
+                    fprintf(stderr, "Invalid Address len\n");
+                    exit(-1);
+                }
+                memcpy(&raw.link, d, l);
 
-            af = a;
-            memcpy(data, raw, rawlen);
+                char str[32];
+                sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x", 
+                        raw.link.addr_bytes[0], raw.link.addr_bytes[1], 
+                        raw.link.addr_bytes[2], raw.link.addr_bytes[3], 
+                        raw.link.addr_bytes[3], raw.link.addr_bytes[5]);
+                log.write(slankdev::INFO, "set address %s", str);
+
+                break;
+            }
+            default:
+            {
+                fprintf(stderr, "Unknown address family\n");
+                exit(-1);
+                break;
+            }
         }
-        std::string& str()
-        {
-            return str_;
-        }
+        log.pop();
+    }
 };
 
 
@@ -60,11 +111,6 @@ class myallocator {
             rte::pktmbuf_free(ptr);
         }
 };
-
-
-
-
-
 
 
 
@@ -87,26 +133,9 @@ public:
 
     net_device(int n) : port_id(n)
     {
-        name = "port" + std::to_string(n);
+        name = "PORT" + std::to_string(n);
     }
     void init();
-    void set_hw_addr(struct ether_addr* addr)
-    {
-        slankdev::log& log = slankdev::log::instance();
-        log.push(name.c_str());
-
-        if_addr ifaddr(link, addr, sizeof(struct ether_addr));
-        addrs.push_back(ifaddr);
-
-        log.write(slankdev::INFO, "set address ");
-        for (int i=0; i<6; i++) {
-            printf("%02x", addr->addr_bytes[i]);
-            if (i==5) printf("\n");
-            else      printf(":");
-        }
-
-        log.pop();
-    }
     uint16_t io_rx()
     {
         struct rte_mbuf* bufs[BURST_SIZE];
