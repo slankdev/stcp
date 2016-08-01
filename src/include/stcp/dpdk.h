@@ -37,14 +37,13 @@ private:
     ~dpdk() {}                  
 
 public:
+    std::vector<net_device> devices;
+
     static dpdk& instance()
     {
         static dpdk d;
         return d;
     }
-
-
-    std::vector<net_device> devices;
 
     void init(int argc, char** argv)
     {

@@ -7,6 +7,7 @@
 #include <stcp/config.h>
     
 
+ 
 class stcp {
     private:
         stcp() {}
@@ -20,7 +21,6 @@ class stcp {
             static stcp s;
             return s;
         }
-
         void init(int argc, char** argv)
         {
             log& log = log::instance();
@@ -36,6 +36,38 @@ class stcp {
             log.write(INFO, "All inits were finished");
 
             log.pop();
+        }
+        void run()
+        {
+            dpdk& dpdk = dpdk::instance();
+            if (dpdk.devices.size() != 2) {
+                throw slankdev::exception("this pgm supports only 2 port");
+            }
+
+            while (1) {
+                for (size_t i=0; i<dpdk.devices.size(); i++) {
+                    net_device& recv_dev = dpdk.devices[i];
+                    net_device& send_dev = dpdk.devices[i^1];
+
+                    uint16_t num_rx = recv_dev.io_rx();
+                    if (unlikely(num_rx == 0)) continue;
+
+                    while (recv_dev.rx.size() > 0) {
+                        send_dev.tx.push(recv_dev.rx.pop());
+                    }
+
+                    uint16_t num_tx = send_dev.io_tx(num_rx);
+                    if (num_rx != num_tx)
+                        fprintf(stderr, "some packet droped \n");
+
+                    clear_screen();
+                    printf("==============================\n");
+                    dpdk.devices[0].stat();
+                    dpdk.devices[1].stat();
+                    printf("now: %u packets forwarded\n", num_tx);
+                    printf("==============================\n");
+                }
+            }
         }
 };
 
