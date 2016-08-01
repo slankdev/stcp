@@ -26,9 +26,9 @@
 
 
 
-class dpdk : public singleton<dpdk> {
-    friend singleton<dpdk>;
+class dpdk {
 private:
+    static bool inited;
     static uint32_t num_mbufs;        /* num of mbuf that allocated in a mempool */
     static uint32_t mbuf_cache_size;  /* packet cache size in each mbufs */
     struct rte_mempool* mempool;
@@ -37,12 +37,22 @@ private:
     ~dpdk() {}                  
 
 public:
+    static dpdk& instance()
+    {
+        static dpdk d;
+        return d;
+    }
+
+
     std::vector<net_device> devices;
 
     void init(int argc, char** argv)
     {
         log& log = log::instance();
         log.push("DPDK");
+
+        if (inited)
+            throw rte::exception("try to reinit dpdk");
 
         rte::eth_dev_init(argc, argv);
         if (rte::eth_dev_count() < 1) {
@@ -63,6 +73,7 @@ public:
             dev.init();
             devices.push_back(dev);
         }
+        inited = true;
 
         log.pop();
     }

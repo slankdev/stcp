@@ -7,7 +7,7 @@
 #include <slankdev/util.h>
 
 using slankdev::queue;
-using slankdev::singleton;
-using slankdev::log;
 using slankdev::clear_screen;
 
+struct tag1;
+using log = slankdev::log<tag1>;

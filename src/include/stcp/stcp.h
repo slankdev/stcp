@@ -7,9 +7,20 @@
 #include <stcp/config.h>
     
 
-class stcp : public singleton<stcp> {
-    friend singleton<stcp>;
+class stcp {
+    private:
+        stcp() {}
+        ~stcp() {}
+        stcp(const stcp&) = delete;
+        stcp& operator=(const stcp&) = delete;
+
     public:
+        static stcp& instance()
+        {
+            static stcp s;
+            return s;
+        }
+
         void init(int argc, char** argv)
         {
             log& log = log::instance();
