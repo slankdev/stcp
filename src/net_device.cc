@@ -47,7 +47,7 @@ void net_device::init()
     }
     rte::eth_dev_start(port_id);
 
-    if (primiscuous_mode)
+    if (promiscuous_mode)
         rte::eth_promiscuous_enable(port_id);
 
     if (rte::eth_dev_socket_id(port_id) > 0 && 

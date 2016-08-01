@@ -30,7 +30,11 @@ struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs);
 
 
 
+
 namespace rte {
+
+
+
 
 
 class exception : public std::exception {
@@ -95,5 +99,12 @@ struct rte_mbuf* pktmbuf_clone(struct rte_mbuf* md, struct rte_mempool* mp);
 
 
 
+class myallocator {
+    public:
+        void deallocate(struct rte_mbuf* ptr)
+        {
+            rte::pktmbuf_free(ptr);
+        }
+};
 
 

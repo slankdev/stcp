@@ -29,7 +29,8 @@ runeth0:
 runall:
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=eth0 \
-		--vdev=eth_pcap1,iface=lo 
+		--vdev=eth_pcap1,iface=eth1 \
+		--vdev=eth_pcap2,iface=lo 
 
 
 

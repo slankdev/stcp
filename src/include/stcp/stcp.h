@@ -6,69 +6,98 @@
 #include <stcp/dpdk.h>
 #include <stcp/config.h>
     
+#include <stcp/protocol.h>
 
- 
+
+
+
 class stcp {
-    private:
-        stcp() {}
-        ~stcp() {}
-        stcp(const stcp&) = delete;
-        stcp& operator=(const stcp&) = delete;
+private:
+    stcp() {}
+    ~stcp() {}
+    stcp(const stcp&) = delete;
+    stcp& operator=(const stcp&) = delete;
 
-    public:
-        static stcp& instance()
-        {
-            static stcp s;
-            return s;
-        }
-        void init(int argc, char** argv)
-        {
-            log& log = log::instance();
-            log.open("stcp.log");
-            log.push("STCP");
+public:
+    proto_module ether_module;
+    proto_module arp_moduele;
+    proto_module ip_module;
 
-            log.write(INFO, "starting...");
-            log.write(INFO, "starting all inits");
+public:
+    static stcp& instance()
+    {
+        static stcp s;
+        return s;
+    }
 
-            dpdk& dpdk = dpdk::instance();
-            dpdk.init(argc, argv);
+    void init(int argc, char** argv)
+    {
+        log& log = log::instance();
+        log.open("stcp.log");
+        log.push("STCP");
 
-            log.write(INFO, "All inits were finished");
+        log.write(INFO, "starting...");
+        log.write(INFO, "starting all inits");
 
-            log.pop();
-        }
-        void run()
-        {
-            dpdk& dpdk = dpdk::instance();
-            if (dpdk.devices.size() != 2) {
-                throw slankdev::exception("this pgm supports only 2 port");
-            }
+        dpdk& dpdk = dpdk::instance();
+        dpdk.init(argc, argv);
 
-            while (1) {
-                for (size_t i=0; i<dpdk.devices.size(); i++) {
-                    net_device& recv_dev = dpdk.devices[i];
-                    net_device& send_dev = dpdk.devices[i^1];
+        log.write(INFO, "All inits were finished");
 
-                    uint16_t num_rx = recv_dev.io_rx();
-                    if (unlikely(num_rx == 0)) continue;
+        if (dpdk.devices.size() < 1)
+            throw slankdev::exception("this pgm supports 2 or hisgher ports");
+        log.pop();
+    }
 
-                    while (recv_dev.rx.size() > 0) {
-                        send_dev.tx.push(recv_dev.rx.pop());
-                    }
+    void run()
+    {
+        for (size_t i=1; ; i++) {
+            lowlayer_loop();
 
-                    uint16_t num_tx = send_dev.io_tx(num_rx);
-                    if (num_rx != num_tx)
-                        fprintf(stderr, "some packet droped \n");
-
-                    clear_screen();
-                    printf("==============================\n");
-                    dpdk.devices[0].stat();
-                    dpdk.devices[1].stat();
-                    printf("now: %u packets forwarded\n", num_tx);
-                    printf("==============================\n");
-                }
+            if (i % 10000 == 0) {
+                clear_screen();
+                stat_all();
             }
         }
+    }
+
+    void lowlayer_loop()
+    {
+        dpdk& dpdk = dpdk::instance();
+
+        for (size_t i=0; i<dpdk.devices.size(); i++) {
+            device_loop(i);
+        }
+    }
+
+    void device_loop(size_t port_id)
+    {
+        dpdk& dpdk = dpdk::instance();
+        net_device& dev = dpdk.devices[port_id];
+
+        uint16_t num_rx = dev.io_rx();
+        if (unlikely(num_rx == 0)) return;
+
+        uint16_t num_reqest_to_send = dev.tx.size();
+        uint16_t num_tx = dev.io_tx(num_reqest_to_send);
+        if (num_tx != num_reqest_to_send)
+            fprintf(stderr, "some packet droped \n");
+
+    }
+
+    void stat_all()
+    {
+        dpdk& dpdk = dpdk::instance();
+
+        for (net_device& dev : dpdk.devices) {
+            printf("%s: ", dev.name.c_str());
+            if (dev.promiscuous_mode) printf("PROMISC ");
+            printf("\n");
+            printf("\tRX Packets %u Queue %zu\n", dev.rx_packets, dev.rx.size());
+            printf("\tTX Packets %u Queue %zu\n", dev.tx_packets, dev.tx.size());
+            printf("\n");
+        }
+    }
 };
 
 

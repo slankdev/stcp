@@ -102,14 +102,6 @@ class if_addr {
 
 
 
-class myallocator {
-    public:
-        void deallocate(struct rte_mbuf* ptr)
-        {
-            rte::pktmbuf_free(ptr);
-        }
-};
-
 
 
 #define BURST_SIZE 32
@@ -121,13 +113,14 @@ private:
     uint16_t num_rx_rings;     /* num of rx_rings per port */
     uint16_t num_tx_rings;     /* num of tx_rings per port */
 
-    bool primiscuous_mode;
+public:
+    bool promiscuous_mode;
     uint32_t rx_packets;
     uint32_t tx_packets;
 
 public:
-    queue<struct rte_mbuf, myallocator> rx;
-    queue<struct rte_mbuf, myallocator> tx;
+    pkt_queue rx;
+    pkt_queue tx;
     std::vector<if_addr> addrs;
     std::string name;
 
@@ -139,7 +132,7 @@ public:
         tx_ring_size(512),
         num_rx_rings(1  ),
         num_tx_rings(1  ),
-        primiscuous_mode(true),
+        promiscuous_mode(true),
         rx_packets(0), 
         tx_packets(0)
     {
@@ -184,15 +177,6 @@ public:
         printf("%s: sent %u packets\n", name.c_str(), num_tx_sum);
         tx_packets += num_tx_sum;
         return num_tx_sum;
-    }
-    void stat()
-    {
-        printf("%s: ", name.c_str());
-        if (primiscuous_mode) printf("PROMISC ");
-        printf("\n");
-        printf("\tRX Packets %u Queue %zu\n", rx_packets, rx.size());
-        printf("\tTX Packets %u Queue %zu\n", tx_packets, tx.size());
-
     }
 };
 
