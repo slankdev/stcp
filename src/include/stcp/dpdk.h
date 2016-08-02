@@ -81,6 +81,3 @@ public:
         return mempool;
     }
 };
-
-
-

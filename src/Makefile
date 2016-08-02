@@ -3,7 +3,14 @@
 prefix = ..
 
 TARGET = a.out
-SRCS   = dpdk.cc net_device.cc rte.cc main.cc 
+SRCS   = main.cc \
+		 net_device.cc \
+		 rte.cc \
+		 dpdk.cc \
+		 ifaddr.cc \
+		 stcp.cc
+		 
+
 
 OBJS   = $(SRCS:.cc=.o)
 

@@ -1,8 +1,8 @@
 
 
 
-#include <stcp/dpdk.h>
-#include <stcp/rte.h>
+// #include <stcp/dpdk.h>
+// #include <stcp/rte.h>
 #include <stcp/stcp.h>
 
 
