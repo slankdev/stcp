@@ -26,7 +26,7 @@
 
 
 #define BURST_SIZE 32
-class net_device : public proto_module {
+class ifnet : public proto_module {
 private:
     int port_id;
     uint16_t rx_ring_size;     /* rx ring size */
@@ -43,10 +43,10 @@ public:
     // pkt_queue rx;
     // pkt_queue tx;
     // std::string name;
-    std::vector<if_addr> addrs;
+    std::vector<ifaddr> addrs;
 
 public:
-    net_device(int n) : 
+    ifnet(int n) : 
         port_id(n),
         rx_ring_size(128),
         tx_ring_size(512),

@@ -4,7 +4,7 @@ prefix = ..
 
 TARGET = a.out
 SRCS   = main.cc \
-		 net_device.cc \
+		 ifnet.cc \
 		 rte.cc \
 		 dpdk.cc \
 		 ifaddr.cc \

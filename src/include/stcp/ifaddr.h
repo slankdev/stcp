@@ -25,7 +25,7 @@
 typedef uint8_t af_t;
 
 
-class if_addr {
+class ifaddr {
     public:
         af_t    family;
         struct {
@@ -36,7 +36,7 @@ class if_addr {
             };
         } raw;
 
-    if_addr(af_t af) : family(af) {}
+    ifaddr(af_t af) : family(af) {}
     void init(const void* d, size_t l);
 };
 

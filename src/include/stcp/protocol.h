@@ -2,16 +2,12 @@
 
 #pragma once
 
-
-
-
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <vector>
 #include <string>
 
-// #include <stcp/stcp.h>
 #include <stcp/rte.h>
 #include <stcp/config.h>
 
@@ -25,10 +21,9 @@ protected:
     uint16_t rx_packets;
     uint16_t tx_packets;
     std::string name;
+
 public:
-
     proto_module() : rx_packets(0), tx_packets(0) {}
-
     virtual void init() {}
     virtual void proc() {}
     virtual void stat()

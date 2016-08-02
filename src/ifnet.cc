@@ -15,7 +15,7 @@
 
 #include <stcp/config.h>
 #include <stcp/dpdk.h>
-#include <stcp/net_device.h>
+#include <stcp/ifnet.h>
 #include <stcp/rte.h>
 
 
@@ -26,7 +26,7 @@
 
 
 
-void net_device::init()
+void ifnet::init()
 {
     log& log = log::instance();
     log.push(name.c_str());
@@ -59,17 +59,17 @@ void net_device::init()
         throw rte::exception(str);
     }
 
-    if_addr ifaddr(AF_LINK);
+    ifaddr ifa(AF_LINK);
     struct ether_addr addr;
     rte::eth_macaddr_get(port_id, &addr);
-    ifaddr.init(&addr, sizeof(addr));
-    addrs.push_back(ifaddr);
+    ifa.init(&addr, sizeof(addr));
+    addrs.push_back(ifa);
 
     log.pop();
 }
 
 
-uint16_t net_device::io_rx()
+uint16_t ifnet::io_rx()
 {
     struct rte_mbuf* bufs[BURST_SIZE];
     uint16_t num_rx = rte::eth_rx_burst(port_id, 0, bufs, BURST_SIZE);
@@ -79,7 +79,7 @@ uint16_t net_device::io_rx()
     rx_packets += num_rx;
     return num_rx;
 }
-uint16_t net_device::io_tx(size_t num_request_to_send)
+uint16_t ifnet::io_tx(size_t num_request_to_send)
 {
 
     if (num_request_to_send > tx.size()) {
@@ -107,7 +107,7 @@ uint16_t net_device::io_tx(size_t num_request_to_send)
     return num_tx_sum;
 }
 
-void net_device::stat()
+void ifnet::stat()
 {
     printf("%s: ", name.c_str());
     if (promiscuous_mode) printf("PROMISC ");

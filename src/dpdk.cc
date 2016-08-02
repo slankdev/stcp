@@ -19,7 +19,7 @@
 #include <vector>
 
 #include <stcp/rte.h>
-#include <stcp/net_device.h>
+#include <stcp/ifnet.h>
 #include <stcp/dpdk.h>
 
 

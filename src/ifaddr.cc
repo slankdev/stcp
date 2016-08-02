@@ -35,7 +35,7 @@ static char* af2str(af_t af)
     return str;
 }
 
-void if_addr::init(const void* d, size_t l)
+void ifaddr::init(const void* d, size_t l)
 {
     log& log = log::instance();
     log.push(af2str(family));

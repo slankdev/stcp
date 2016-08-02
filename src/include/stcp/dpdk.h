@@ -17,7 +17,7 @@
 #include <vector>
 
 #include <stcp/rte.h>
-#include <stcp/net_device.h>
+#include <stcp/ifnet.h>
 #include <stcp/config.h>
 
 
@@ -37,7 +37,7 @@ private:
     ~dpdk() {}                  
 
 public:
-    std::vector<net_device> devices;
+    std::vector<ifnet> devices;
 
     static dpdk& instance()
     {
@@ -68,7 +68,7 @@ public:
                 );
 
         for (size_t port=0; port<rte::eth_dev_count(); port++) {
-            net_device dev(port);
+            ifnet dev(port);
             dev.init();
             devices.push_back(dev);
         }

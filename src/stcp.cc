@@ -29,7 +29,7 @@ void stcp::run()
     while (true) {
         ifs_proc();
         arp.proc();
-        // ip.proc();
+        ip.proc();
     }
 }
 
@@ -54,7 +54,7 @@ void stcp::ifs_proc()
     dpdk& dpdk = dpdk::instance();
     log& log = log::instance();
 
-    for (net_device& dev : dpdk.devices) {
+    for (ifnet& dev : dpdk.devices) {
         uint16_t num_rx = dev.io_rx();
         if (unlikely(num_rx == 0)) return;
 
@@ -98,7 +98,7 @@ void stcp::stat_all()
     dpdk& dpdk = dpdk::instance();
     clear_screen();
 
-    for (net_device& dev : dpdk.devices) {
+    for (ifnet& dev : dpdk.devices) {
         dev.stat();
     }
 

@@ -99,7 +99,7 @@ struct rte_mbuf* pktmbuf_clone(struct rte_mbuf* md, struct rte_mempool* mp);
 
 
 
-class myallocator {
+class rte_mbuf_allocator {
     public:
         void deallocate(struct rte_mbuf* ptr)
         {
