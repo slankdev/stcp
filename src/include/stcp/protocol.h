@@ -3,15 +3,12 @@
 #pragma once
 
 #include <stdio.h>
-#include <stdlib.h>
-
-#include <vector>
+#include <stdint.h>
+#include <stddef.h>
 #include <string>
 
 #include <stcp/rte.h>
 #include <stcp/config.h>
-
-
 
 
 class proto_module {
@@ -34,10 +31,10 @@ public:
         printf("\n");
     }
 
-    void rx_push(struct rte_mbuf* msg) {rx.push(msg);}
-    void tx_push(struct rte_mbuf* msg) {tx.push(msg);}
-    struct rte_mbuf* rx_pop() {return rx.pop();}
-    struct rte_mbuf* tx_pop() {return tx.pop();}
+    void rx_push(struct rte_mbuf* msg) { rx.push(msg); }
+    void tx_push(struct rte_mbuf* msg) { tx.push(msg); }
+    struct rte_mbuf* rx_pop() { return rx.pop(); }
+    struct rte_mbuf* tx_pop() { return tx.pop(); }
 };
 
 
@@ -51,5 +48,4 @@ class ip_module : public proto_module {
 public:
     ip_module() { name = "IP"; }
 };
-
 

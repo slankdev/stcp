@@ -1,14 +1,5 @@
 
-
-
-// #include <stcp/dpdk.h>
-// #include <stcp/rte.h>
 #include <stcp/stcp.h>
-
-
-
-
-
 
 int main(int argc, char** argv)
 {

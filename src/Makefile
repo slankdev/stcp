@@ -3,31 +3,27 @@
 prefix = ..
 
 TARGET = a.out
+LOGNAME = log.txt
 SRCS   = main.cc \
-		 ifnet.cc \
-		 rte.cc \
-		 dpdk.cc \
-		 ifaddr.cc \
-		 stcp.cc
-		 
+		ifnet.cc \
+		rte.cc \
+		dpdk.cc \
+		ifaddr.cc \
+		stcp.cc
 
 
 OBJS   = $(SRCS:.cc=.o)
 
 
-
 all: $(TARGET)
 
 clean:
-	$(RM) $(TARGET) $(OBJS) stcp.log
-
+	$(RM) $(TARGET) $(OBJS) $(LOGNAME)
 
 
 run:
-	@sudo rm -rf stcp.log
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=lo
-	@cat stcp.log
 
 runeth0:
 	sudo ./$(TARGET) \
@@ -38,7 +34,6 @@ runall:
 		--vdev=eth_pcap0,iface=eth0 \
 		--vdev=eth_pcap1,iface=eth1 \
 		--vdev=eth_pcap2,iface=lo 
-
 
 
 include $(prefix)/mk/vars.mk

@@ -2,27 +2,13 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 #include <stdlib.h>
-#include <inttypes.h>
-#include <errno.h>
+#include <stdint.h>
+#include <stddef.h>
 
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <exception>
-#include <vector>
-
-#include <stcp/config.h>
-#include <stcp/dpdk.h>
 #include <stcp/ifnet.h>
+#include <stcp/dpdk.h>
 #include <stcp/rte.h>
-
-
-
-
-
-
 
 
 
@@ -68,7 +54,6 @@ void ifnet::init()
     log.pop();
 }
 
-
 uint16_t ifnet::io_rx()
 {
     struct rte_mbuf* bufs[BURST_SIZE];
@@ -79,15 +64,14 @@ uint16_t ifnet::io_rx()
     rx_packets += num_rx;
     return num_rx;
 }
+
 uint16_t ifnet::io_tx(size_t num_request_to_send)
 {
-
     if (num_request_to_send > tx.size()) {
         num_request_to_send = tx.size();
     }
 
     struct rte_mbuf* bufs[BURST_SIZE];
-
     uint16_t num_tx_sum = 0;
     size_t i=0;
     for (size_t num_sent=0; num_sent<num_request_to_send; num_sent+=i) {

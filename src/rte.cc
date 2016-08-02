@@ -3,16 +3,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include <inttypes.h>
-#include <errno.h>
-
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <exception>
+#include <stdint.h>
+#include <stddef.h>
 
 #include <rte_config.h>
 #include <rte_version.h>
@@ -26,6 +19,9 @@
 
 #include <stcp/rte.h>
 
+
+
+
 struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs)
 {
     if (num_bufs <= 0) return nullptr;
@@ -38,8 +34,6 @@ struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs)
     }
     return link_head;
 }
-
-
 
 
 
@@ -110,7 +104,6 @@ int eth_promiscuous_get(uint8_t port_id)
 {
     return rte_eth_promiscuous_get(port_id);
 }
-
 
 struct rte_mempool* pktmbuf_pool_create(const char* name, uint32_t n, 
         uint32_t cache_size, uint16_t priv_size, 

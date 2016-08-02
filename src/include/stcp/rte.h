@@ -3,11 +3,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include <inttypes.h>
-#include <errno.h>
+#include <stdint.h>
+#include <stddef.h>
 
 #include <string>
 #include <iostream>
@@ -30,12 +28,7 @@ struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs);
 
 
 
-
 namespace rte {
-
-
-
-
 
 class exception : public std::exception {
     private:
@@ -47,7 +40,6 @@ class exception : public std::exception {
             if (e != 0)
                 str += strerror(e);
         } 
-
         template<class T>
         exception& operator<<(const T& t) noexcept {
             std::ostringstream os;
@@ -59,8 +51,6 @@ class exception : public std::exception {
             return str.c_str(); 
         }
 };
-
-
 
 void* mbuf2ptr(struct rte_mbuf* mbuf);
 size_t mbuf2len(struct rte_mbuf* mbuf);
@@ -97,14 +87,9 @@ struct rte_mbuf* pktmbuf_clone(struct rte_mbuf* md, struct rte_mempool* mp);
 } /* namespace rte */
 
 
-
-
 class rte_mbuf_allocator {
     public:
-        void deallocate(struct rte_mbuf* ptr)
-        {
-            rte::pktmbuf_free(ptr);
-        }
+        void deallocate(struct rte_mbuf* ptr) { rte::pktmbuf_free(ptr); }
 };
 
 

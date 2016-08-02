@@ -1,12 +1,25 @@
 
 
 
+#include <stdlib.h>
 
 #include <stcp/stcp.h>
 #include <stcp/rte.h>
 
-#include <stdlib.h>
-#include <unistd.h>
+
+
+struct ether_header {
+    uint8_t dst[6];
+    uint8_t src[6];
+    uint16_t type;
+};
+
+static uint16_t get_ether_type(struct rte_mbuf* msg)
+{
+    struct ether_header* eh;
+    eh = rte_pktmbuf_mtod(msg, struct ether_header*);
+    return rte_bswap16(eh->type);
+}
 
 
 
@@ -24,7 +37,7 @@ void stcp::init(int argc, char** argv)
 void stcp::run()
 {
     log& log = log::instance();
-    log.write(INFO, "start running");
+    log.write(INFO, "starting STCP...");
 
     while (true) {
         ifs_proc();
@@ -32,22 +45,6 @@ void stcp::run()
         ip.proc();
     }
 }
-
-
-struct ether_header {
-    uint8_t dst[6];
-    uint8_t src[6];
-    uint16_t type;
-};
-
-uint16_t get_ether_type(struct rte_mbuf* msg)
-{
-    struct ether_header* eh;
-    eh = rte_pktmbuf_mtod(msg, struct ether_header*);
-    return rte_bswap16(eh->type);
-}
-
-
 
 void stcp::ifs_proc()
 {
@@ -63,21 +60,19 @@ void stcp::ifs_proc()
         if (num_tx != num_reqest_to_send)
             fprintf(stderr, "some packet droped \n");
 
-
-
         while (dev.rx_size() > 0) {
             struct rte_mbuf* msg = dev.rx_pop();
             uint16_t etype = get_ether_type(msg);
             switch (etype) {
                 case 0x0800:
                 {
-                    printf("ip \n");
+                    log.write(INFO, "recv ip packet");
                     ip.rx_push(msg);
                     break;
                 }
                 case 0x0806:
                 {
-                    printf("arp \n");
+                    log.write(INFO, "recv arp packet");
                     arp.rx_push(msg);
                     break;
                 }
@@ -105,11 +100,4 @@ void stcp::stat_all()
     arp.stat();
     ip.stat();
 }
-
-
-
-
-
-
-
 

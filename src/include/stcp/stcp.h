@@ -20,7 +20,7 @@ private:
     stcp()
     {
         log& log = log::instance();
-        log.open("stcp.log");
+        log.open("log.txt");
         log.push("STCP");
     }
     ~stcp()
@@ -30,7 +30,6 @@ private:
     }
     stcp(const stcp&) = delete;
     stcp& operator=(const stcp&) = delete;
-
 
 public:
     static stcp& instance()
@@ -43,7 +42,6 @@ public:
     void run();
     void ifs_proc();
     void stat_all();
-
 };
 
 

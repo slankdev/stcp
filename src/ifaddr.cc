@@ -2,20 +2,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 #include <stdlib.h>
-#include <inttypes.h>
-#include <errno.h>
+#include <stdint.h>
+#include <stddef.h>
 
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <exception>
-#include <vector>
-
-#include <stcp/rte.h>
-#include <stcp/config.h>
 #include <stcp/ifaddr.h>
+#include <stcp/config.h>
 
 
 static char* af2str(af_t af)
@@ -55,13 +47,19 @@ void ifaddr::init(const void* d, size_t l)
                 }
                 memcpy(&raw.link, d, l);
 
+#if 0
                 char str[32];
                 sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x", 
                         raw.link.addr_bytes[0], raw.link.addr_bytes[1], 
                         raw.link.addr_bytes[2], raw.link.addr_bytes[3], 
                         raw.link.addr_bytes[3], raw.link.addr_bytes[5]);
                 log.write(INFO, "set address %s", str);
-
+#else
+                log.write(INFO, "set address %02x:%02x:%02x:%02x:%02x:%02x",
+                        raw.link.addr_bytes[0], raw.link.addr_bytes[1], 
+                        raw.link.addr_bytes[2], raw.link.addr_bytes[3], 
+                        raw.link.addr_bytes[3], raw.link.addr_bytes[5]);
+#endif
                 break;
             }
         default:
@@ -73,3 +71,5 @@ void ifaddr::init(const void* d, size_t l)
     }
     log.pop();
 }
+
+
