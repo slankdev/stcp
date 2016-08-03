@@ -6,8 +6,6 @@ endif
 include $(prefix)/mk/commands.mk
 include $(prefix)/mk/rules.mk
 
-
-
 INCLUDES   += -I$(prefix)/src/include \
 			 -I$(RTE_SDK)/$(RTE_TARGET)/include \
 			 -include $(RTE_SDK)/$(RTE_TARGET)/include/rte_config.h
@@ -25,11 +23,13 @@ DPDK_LDFLAGS += \
 	-Wl,--end-group \
 	-Wl,--no-whole-archive
 
-
 MAKE      = make
 CXX       = g++
 
-CXXFLAGS += -Wall -Wextra
+CXXFLAGS += -Wall -Wextra 
+ifeq ($(CXX), clang++) 
+CXXFLAGS += -Weverything # Thankyou, @herumi.
+endif
 CXXFLAGS += -std=c++11 
 CXXFLAGS += -m64 -pthread -march=native $(INCLUDES)
 
