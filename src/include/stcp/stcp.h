@@ -7,6 +7,8 @@
 #include <stcp/config.h>
     
 #include <stcp/protocol.h>
+#include <stcp/arp.h>
+#include <stcp/ip.h>
 
 
 
