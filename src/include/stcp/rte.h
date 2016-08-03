@@ -84,6 +84,15 @@ int eth_dev_socket_id(uint8_t port_id);
 struct rte_mbuf* pktmbuf_alloc(struct rte_mempool* mp);
 struct rte_mbuf* pktmbuf_clone(struct rte_mbuf* md, struct rte_mempool* mp);
 
+uint16_t pktmbuf_headroom(const struct rte_mbuf* m);
+uint16_t pktmbuf_tailroom(const struct rte_mbuf* m);
+void pktmbuf_prepend(struct rte_mbuf* m, uint16_t len);
+void pktmbuf_append(struct rte_mbuf* m, uint16_t len);
+void pktmbuf_adj(struct rte_mbuf* m, uint16_t len);
+void pktmbuf_trim(struct rte_mbuf* m, uint16_t len);
+
+
+
 template <class T>
 T mtod(struct rte_mbuf* msg)
 {

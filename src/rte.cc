@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <assert.h>
 
 #include <rte_config.h>
 #include <rte_version.h>
@@ -182,6 +183,44 @@ struct rte_mbuf* pktmbuf_clone(struct rte_mbuf* md, struct rte_mempool* mp)
     }
     return buf;
 }
+
+uint16_t pktmbuf_headroom(const struct rte_mbuf* m)
+{
+    return rte_pktmbuf_headroom(m);
+}
+uint16_t pktmbuf_tailroom(const struct rte_mbuf* m)
+{
+    return rte_pktmbuf_tailroom(m);
+}
+void pktmbuf_prepend(struct rte_mbuf* m, uint16_t len)
+{
+    char* ret = rte_pktmbuf_prepend(m, len);
+    if (ret == nullptr) {
+        throw rte::exception("rte_pktmbuf_prepend");
+    }
+}
+void pktmbuf_append(struct rte_mbuf* m, uint16_t len)
+{
+    char* ret = rte_pktmbuf_append(m, len);
+    if (ret == nullptr) {
+        throw rte::exception("rte_pktmbuf_append");
+    }
+}
+void pktmbuf_adj(struct rte_mbuf* m, uint16_t len)
+{
+    char* ret = rte_pktmbuf_adj(m, len);
+    if (ret == nullptr) {
+        throw rte::exception("rte_pktmbuf_adj");
+    }
+}
+void pktmbuf_trim(struct rte_mbuf* m, uint16_t len)
+{
+    int ret = rte_pktmbuf_trim(m, len);
+    if (ret == -1) {
+        throw rte::exception("rte_pktmbuf_trim");
+    }
+}
+
 
 
 
