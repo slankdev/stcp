@@ -28,6 +28,7 @@ void stcp::init(int argc, char** argv)
     dpdk& dpdk = dpdk::instance();
     dpdk.init(argc, argv);
     arp.init();
+    ip.init();
 }
 
 void stcp::run()
