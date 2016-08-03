@@ -1,15 +1,14 @@
-# stcp
-slank's tcp protocol stack 
+# STCP
+Slankdev's TCP/IP. This name is proto-name. Please give me cool name.
+
+## Concept
+
+ - Userland Protocol Stack
+ - Implement with C++11
+ - Packet IO-engin is DPDK
+ - Zero Copy Packet processing
 
 
-## Install
-
-```
-$ git clone https://github.com/slankdev/stcp.git 
-$ cd stcp
-$ make 
-$ sudo make install
-```
 
 ## Lisence
 
