@@ -20,7 +20,7 @@ private:
     stcp()
     {
         log& log = log::instance();
-        log.open("log.txt");
+        log.open("log.log");
         log.push("STCP");
     }
     ~stcp()

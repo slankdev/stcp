@@ -79,7 +79,7 @@ void stcp::ifs_proc()
                 default:
                 {
                     log.write(WARN, "unknown ether type 0x%04x", etype);
-                    rte::pktmbuf_free(msg);
+                    dev.drop(msg);
                     break;
                 }
             }
