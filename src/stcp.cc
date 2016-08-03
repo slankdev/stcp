@@ -6,14 +6,9 @@
 #include <stcp/stcp.h>
 #include <stcp/rte.h>
 #include <stcp/arp.h>
+#include <stcp/ethernet.h>
 
 
-
-struct ether_header {
-    uint8_t dst[6];
-    uint8_t src[6];
-    uint16_t type;
-};
 
 static uint16_t get_ether_type(struct rte_mbuf* msg)
 {

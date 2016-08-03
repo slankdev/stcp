@@ -35,7 +35,6 @@ public:
         printf("\tRX Packets %u Queue %zu\n", rx_packets, rx.size());
         printf("\tTX Packets %u Queue %zu\n", tx_packets, tx.size());
         printf("\tDrop Packets %u\n", drop_packets);
-        printf("\n");
     }
 
     void rx_push(struct rte_mbuf* msg) { rx.push(msg); rx_packets++; }

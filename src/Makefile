@@ -9,6 +9,7 @@ SRCS   = main.cc \
 		rte.cc \
 		dpdk.cc \
 		ifaddr.cc \
+		arp.cc \
 		stcp.cc
 
 
@@ -19,6 +20,9 @@ all: $(TARGET)
 
 clean:
 	$(RM) $(TARGET) $(OBJS) $(LOGNAME)
+
+re: clean all
+
 
 
 run:

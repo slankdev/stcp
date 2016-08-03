@@ -84,6 +84,13 @@ int eth_dev_socket_id(uint8_t port_id);
 struct rte_mbuf* pktmbuf_alloc(struct rte_mempool* mp);
 struct rte_mbuf* pktmbuf_clone(struct rte_mbuf* md, struct rte_mempool* mp);
 
+template <class T>
+T mtod(struct rte_mbuf* msg)
+{
+    return rte_pktmbuf_mtod(msg, T);
+}
+
+
 } /* namespace rte */
 
 
