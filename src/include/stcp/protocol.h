@@ -18,9 +18,11 @@ protected:
     uint16_t rx_packets;
     uint16_t tx_packets;
     uint16_t drop_packets;
-    std::string name;
+
 
 public:
+    std::string name;
+
     proto_module() : 
         rx_packets(0), 
         tx_packets(0),
@@ -41,17 +43,39 @@ public:
     struct rte_mbuf* rx_pop() { return rx.pop(); }
     struct rte_mbuf* tx_pop() { return tx.pop(); }
     void drop(struct rte_mbuf* msg) { rte::pktmbuf_free(msg); drop_packets++; }
+    size_t rx_size() { return rx.size(); }
+    size_t tx_size() { return tx.size(); }
 };
 
 
-class arp_module : public proto_module {
+class arp_module {
+private:
+    proto_module m;
 public:
-    arp_module() { name = "ARP"; }
+    arp_module() { m.name = "ARP"; }
+    void init() {m.init();}
+    void rx_push(struct rte_mbuf* msg){m.rx_push(msg);}
+    void tx_push(struct rte_mbuf* msg){m.tx_push(msg);}
+    struct rte_mbuf* rx_pop() {return m.rx_pop();}
+    struct rte_mbuf* tx_pop() {return m.tx_pop();}
+    void drop(struct rte_mbuf* msg) {m.drop(msg);}
+    void proc() {m.proc();}
+    void stat() {m.stat();}
 };
 
 
-class ip_module : public proto_module {
+class ip_module {
+private:
+    proto_module m;
 public:
-    ip_module() { name = "IP"; }
+    ip_module() { m.name = "IP"; }
+    void init() {m.init();}
+    void rx_push(struct rte_mbuf* msg){m.rx_push(msg);}
+    void tx_push(struct rte_mbuf* msg){m.tx_push(msg);}
+    struct rte_mbuf* rx_pop() {return m.rx_pop();}
+    struct rte_mbuf* tx_pop() {return m.tx_pop();}
+    void drop(struct rte_mbuf* msg) {m.drop(msg);}
+    void proc() {m.proc();}
+    void stat() {m.stat();}
 };
 
