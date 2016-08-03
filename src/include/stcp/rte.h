@@ -99,6 +99,12 @@ T mtod(struct rte_mbuf* msg)
     return rte_pktmbuf_mtod(msg, T);
 }
 
+template <class T>
+T pktmbuf_mtod(struct rte_mbuf* msg)
+{
+    return rte_pktmbuf_mtod(msg, T);
+}
+
 
 } /* namespace rte */
 

@@ -9,11 +9,6 @@
 
 static void print_arp_packet(struct arphdr* ah)
 {
-
-    printf("\n\n");
-    slankdev::hexdump("haa", ah, 30);
-    printf("\n\n");
-
     uint8_t d[4];
 
     printf("hwtype: %u\n", htons(ah->hwtype));
@@ -55,11 +50,7 @@ void arp_module::proc()
 {
     while (m.rx_size() > 0) {
         struct rte_mbuf* msg = m.rx_pop();
-        uint8_t *_b = rte::mtod<uint8_t*>(msg);
-
-        printf("eth size %zd \n", sizeof(struct ether_header));
-        _b += sizeof(struct ether_header);
-        struct arphdr* ah = (struct arphdr*)(_b);
+        struct arphdr* ah  = rte::pktmbuf_mtod<struct arphdr*>(msg);
         print_arp_packet(ah);
         m.drop(msg);
     }

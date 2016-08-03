@@ -60,6 +60,8 @@ void stcp::ifs_proc()
         while (dev.rx_size() > 0) {
             struct rte_mbuf* msg = dev.rx_pop();
             uint16_t etype = get_ether_type(msg);
+            mbuf_pull(msg, sizeof(struct ether_header));
+
             switch (etype) {
                 case 0x0800:
                 {
@@ -98,3 +100,18 @@ void stcp::stat_all()
     ip.stat();
 }
 
+
+
+
+void mbuf_pull(struct rte_mbuf* msg, size_t len)
+{
+    rte::pktmbuf_adj(msg, len);
+}
+
+
+void* mbuf_push(struct rte_mbuf* msg, size_t len)
+{
+    rte::pktmbuf_prepend(msg, len);
+    uint8_t* p = rte::pktmbuf_mtod<uint8_t*>(msg);
+    return (void*)p;
+}
