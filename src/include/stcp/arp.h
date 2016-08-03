@@ -15,7 +15,6 @@
 #include <stcp/ifnet.h>
 
 
-//
 class arpentry {
     ipaddr_t ip;
     struct ether_addr mac;
@@ -41,7 +40,6 @@ enum class arp_op {
     request = 1,
     replay,
 };
-
 
 
 
