@@ -42,5 +42,5 @@ runall:
 
 
 include $(prefix)/mk/vars.mk
-LDFLAGS += -lslankdev
+LDFLAGS += -lslankdev -lpgen2
 

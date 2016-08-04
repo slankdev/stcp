@@ -16,7 +16,7 @@
 
 
 class arpentry {
-    ipaddr_t ip;
+    struct ip_addr    ip;
     struct ether_addr mac;
     ifnet* iface;
 };
@@ -30,9 +30,9 @@ struct arphdr {
     uint8_t           plen;
     uint16_t          operation;
     struct ether_addr hwsrc;
-    uint32_t          psrc;
+    struct ip_addr    psrc;
     struct ether_addr hwdst;
-    uint32_t          pdst;
+    struct ip_addr    pdst;
 };
 
 
