@@ -28,6 +28,7 @@ void stcp::ifs_proc()
         uint16_t num_rx = dev.io_rx();
         if (unlikely(num_rx == 0)) return;
 
+        modules_updated = true;
         uint16_t num_reqest_to_send = dev.tx_size();
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
         if (num_tx != num_reqest_to_send)
@@ -58,7 +59,6 @@ void stcp::ifs_proc()
                     break;
                 }
             }
-            stat_all();
         }
     }
 }

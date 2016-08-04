@@ -17,9 +17,10 @@ class stcp {
 public:
     arp_module arp;
     ip_module  ip;
+    bool modules_updated;
 
 private:
-    stcp()
+    stcp() : modules_updated(false)
     {
         log& log = log::instance();
         log.open("log.log");
@@ -55,9 +56,14 @@ public:
         log.write(INFO, "starting STCP...");
 
         while (true) {
+            modules_updated = false;
+
             ifs_proc();
             arp.proc();
             ip.proc();
+
+            if (modules_updated)
+                stat_all();
         }
     }
     void stat_all()
