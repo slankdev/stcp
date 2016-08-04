@@ -15,13 +15,18 @@
 #include <stcp/ifnet.h>
 
 
-class arpentry {
+struct arpentry {
+    uint8_t port;
     struct ip_addr    ip;
     struct ether_addr mac;
-    ifnet* iface;
+
+    arpentry(ip_addr i, ether_addr e, uint8_t p)
+    {
+        ip = i;
+        mac = e;
+        port = p;
+    }
 };
-
-
 
 struct arphdr {
     uint16_t          hwtype;
@@ -36,19 +41,11 @@ struct arphdr {
 };
 
 
-enum class arp_op {
-    request = 1,
-    replay,
-};
-
-
 
 class arp_module {
 private:
     proto_module m;
-
-    pkt_queue wait_queue;
-
+    std::vector<arpentry> table;
 
 public:
     arp_module() { m.name = "ARP"; }
@@ -58,12 +55,11 @@ public:
     struct rte_mbuf* rx_pop() {return m.rx_pop();}
     struct rte_mbuf* tx_pop() {return m.tx_pop();}
     void drop(struct rte_mbuf* msg) {m.drop(msg);}
+    void add_cache(struct ip_addr& ip, struct ether_addr& mac, ifnet* iface);
 
-    void stat() 
-    {
-        m.stat();
-        printf("\tWait Packets %zd\n", wait_queue.size());
-    }
+    void stat();
     void proc();
+    void update_table(arpentry newent);
 };
+
 

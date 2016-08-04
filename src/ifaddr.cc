@@ -14,10 +14,10 @@ static char* af2str(af_t af)
 {
     static char str[8];
     switch (af) {
-        case AF_INET:
+        case STCP_AF_INET:
             strcpy(str, "INET");
             break;
-        case AF_LINK:
+        case STCP_AF_LINK:
             strcpy(str, "LINK");
             break;
         default:
@@ -33,13 +33,13 @@ void ifaddr::init(const void* d, size_t l)
     log.push(af2str(family));
 
     switch (family) {
-        case AF_INET:
+        case STCP_AF_INET:
             {
                 fprintf(stderr, "Not Impl yet\n");
                 exit(-1);
                 break;
             }
-        case AF_LINK:
+        case STCP_AF_LINK:
             {
                 if (l != ETHER_ADDR_LEN) {
                     fprintf(stderr, "Invalid Address len\n");

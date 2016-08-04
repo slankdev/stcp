@@ -45,7 +45,7 @@ void ifnet::init()
         throw rte::exception(str);
     }
 
-    ifaddr ifa(AF_LINK);
+    ifaddr ifa(STCP_AF_LINK);
     struct ether_addr addr;
     rte::eth_macaddr_get(port_id, &addr);
     ifa.init(&addr, sizeof(addr));

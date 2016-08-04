@@ -7,8 +7,8 @@
 
 #define ETHER_ADDR_LEN 6
 
-#define AF_LINK 0
-#define AF_INET 2
+#define STCP_AF_LINK 0
+#define STCP_AF_INET 2
 
 typedef uint8_t af_t;
 
