@@ -42,34 +42,30 @@ static bool is_same(struct ether_addr& a, struct ether_addr& b)
 void arp_module::update_table(arpentry newent)
 {
     for (arpentry& ent : table) {
-        if (ent.port == newent.port) {
-            if (ent.ip == newent.ip) {
-                if (is_same(ent.mac, newent.mac)) {
-                    continue;
-                } else {
-                    ent.mac = newent.mac;
-                    continue;
-                }
-            } else { /* ip isnt same */
-
+        if (ent.ip == newent.ip) {
+            if (is_same(ent.mac, newent.mac)) {
+                return;
+            } else {
+                ent.mac = newent.mac;
+                return;
             }
-        } else { /* port isnt same */
-
+        } else { /* ip isnt same */
+            continue;
         }
     }
-
+    table.push_back(newent);
 }
 
+
+// TODO This impl isn't support multi-interface. my goal is supporting that.
 void arp_module::proc() 
 {
-    // procc recv packet
     while (m.rx_size() > 0) {
         struct rte_mbuf* msg = m.rx_pop();
         struct arphdr* ah  = rte::pktmbuf_mtod<struct arphdr*>(msg);
-        uint8_t port = msg->port;
 
         if (ah->operation == htons(2)) { // TODO hard code
-            arpentry newent(ah->psrc, ah->hwsrc, port);
+            arpentry newent(ah->psrc, ah->hwsrc);
             update_table(newent);
         }
         rte::pktmbuf_free(msg);
@@ -85,7 +81,8 @@ void arp_module::stat()
     printf("\n");
     printf("\tARP-chace\n");
     printf("\t%-16s %-20s %s\n", "Address", "HWaddress", "Iface");
-    for (arpentry& a : table) {
-        printf("\t%-16s %-20s %d\n", ip2cstr(a.ip), mac2cstr(a.mac), a.port);
-    }
+    for (arpentry& a : table)
+        printf("\t%-16s %-20s\n", ip2cstr(a.ip), mac2cstr(a.mac));
 }
+
+

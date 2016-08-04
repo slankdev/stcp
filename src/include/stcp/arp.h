@@ -16,17 +16,17 @@
 
 
 struct arpentry {
-    uint8_t port;
     struct ip_addr    ip;
     struct ether_addr mac;
 
-    arpentry(ip_addr i, ether_addr e, uint8_t p)
+    arpentry(ip_addr i, ether_addr e)
     {
         ip = i;
         mac = e;
-        port = p;
     }
 };
+
+
 
 struct arphdr {
     uint16_t          hwtype;
