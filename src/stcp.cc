@@ -7,6 +7,7 @@
 #include <stcp/rte.h>
 #include <stcp/arp.h>
 #include <stcp/ethernet.h>
+#include <stcp/mbuf.h>
 
 
 
@@ -17,31 +18,6 @@ static uint16_t get_ether_type(struct rte_mbuf* msg)
     return rte_bswap16(eh->type);
 }
 
-
-
-
-void stcp::init(int argc, char** argv)
-{
-    log& log = log::instance();
-    log.write(INFO, "init...");
-
-    dpdk& dpdk = dpdk::instance();
-    dpdk.init(argc, argv);
-    arp.init();
-    ip.init();
-}
-
-void stcp::run()
-{
-    log& log = log::instance();
-    log.write(INFO, "starting STCP...");
-
-    while (true) {
-        ifs_proc();
-        arp.proc();
-        ip.proc();
-    }
-}
 
 void stcp::ifs_proc()
 {
@@ -87,31 +63,7 @@ void stcp::ifs_proc()
     }
 }
 
-void stcp::stat_all()
-{
-    dpdk& dpdk = dpdk::instance();
-    clear_screen();
-
-    for (ifnet& dev : dpdk.devices) {
-        dev.stat();
-    }
-
-    arp.stat();
-    ip.stat();
-}
 
 
 
 
-void mbuf_pull(struct rte_mbuf* msg, size_t len)
-{
-    rte::pktmbuf_adj(msg, len);
-}
-
-
-void* mbuf_push(struct rte_mbuf* msg, size_t len)
-{
-    rte::pktmbuf_prepend(msg, len);
-    uint8_t* p = rte::pktmbuf_mtod<uint8_t*>(msg);
-    return (void*)p;
-}

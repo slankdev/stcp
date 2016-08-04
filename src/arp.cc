@@ -3,12 +3,17 @@
 #include <stcp/arp.h>
 #include <arpa/inet.h>
 
-
+#include <stcp/config.h>
 
 
 
 static void print_arp_packet(struct arphdr* ah)
 {
+    // slankdev::hexdump("ARP",  ah, sizeof(struct arphdr));
+
+    printf("ether addr %zd \n", sizeof(struct ether_addr));
+    exit(0);
+    
     uint8_t d[4];
 
     printf("hwtype: %u\n", htons(ah->hwtype));
@@ -18,29 +23,29 @@ static void print_arp_packet(struct arphdr* ah)
     printf("op    : %u\n", htons(ah->operation));
 
     printf("hwsrc : ");
-    for (uint8_t o : ah->hwsrc.addr_bytes) {
-        printf("%02x:", o);
+    for (int i=0; i<6; i++) {
+        printf("%02x:", ah->hwsrc.addr_bytes[i]);
     }
     printf("\n");
 
-    uint32_t_to_char(ah->psrc, d);
-    printf("psrc  : ");
-    for (uint8_t o : d) {
-        printf("%d:", o);
-    }
+    // uint32_t_to_char(ah->psrc, d);
+    printf("psrc  : %08x", ah->psrc);
+    // for (uint8_t o : d) {
+    //     printf("%d:", o);
+    // }
     printf("\n");
 
     printf("hwdst : ");
-    for (uint8_t o : ah->hwdst.addr_bytes) {
-        printf("%d:", o);
+    for (int i=0; i<6; i++) {
+        printf("%02x:", ah->hwdst.addr_bytes[i]);
     }
     printf("\n");
 
-    uint32_t_to_char(ah->pdst, d);
-    printf("pdst  : ");
-    for (uint8_t o : d) {
-        printf("%d:", o);
-    }
+    // uint32_t_to_char(ah->pdst, d);
+    printf("pdst  : %08x", ah->pdst);
+    // for (uint8_t o : d) {
+    //     printf("%d:", o);
+    // }
     printf("\n");
 
     return ;

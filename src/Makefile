@@ -8,6 +8,7 @@ SRCS   = main.cc \
 		ifnet.cc \
 		rte.cc \
 		dpdk.cc \
+		mbuf.cc \
 		ifaddr.cc \
 		arp.cc \
 		stcp.cc

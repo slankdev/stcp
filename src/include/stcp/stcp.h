@@ -39,14 +39,40 @@ public:
         static stcp s;
         return s;
     }
+    void init(int argc, char** argv)
+    {
+        log& log = log::instance();
+        log.write(INFO, "init...");
 
-    void init(int argc, char** argv);
-    void run();
+        dpdk& dpdk = dpdk::instance();
+        dpdk.init(argc, argv);
+        arp.init();
+        ip.init();
+    }
+    void run()
+    {
+        log& log = log::instance();
+        log.write(INFO, "starting STCP...");
+
+        while (true) {
+            ifs_proc();
+            arp.proc();
+            ip.proc();
+        }
+    }
+    void stat_all()
+    {
+        dpdk& dpdk = dpdk::instance();
+        clear_screen();
+
+        for (ifnet& dev : dpdk.devices) {
+            dev.stat();
+        }
+
+        arp.stat();
+        ip.stat();
+    }
     void ifs_proc();
-    void stat_all();
 };
 
 
-
-void mbuf_pull(struct rte_mbuf* msg, size_t len);
-void* mbuf_push(struct rte_mbuf* msg, size_t len);
