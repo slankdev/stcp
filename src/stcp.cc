@@ -26,7 +26,7 @@ void stcp::ifs_proc()
 
     for (ifnet& dev : dpdk.devices) {
         uint16_t num_rx = dev.io_rx();
-        if (unlikely(num_rx == 0)) return;
+        if (unlikely(num_rx == 0)) continue;
 
         modules_updated = true;
         uint16_t num_reqest_to_send = dev.tx_size();
