@@ -10,21 +10,13 @@
 #include <stcp/config.h>
 
 
-static char* af2str(af_t af)
+const char* af2str(af_t af)
 {
-    static char str[8];
     switch (af) {
-        case STCP_AF_INET:
-            strcpy(str, "INET");
-            break;
-        case STCP_AF_LINK:
-            strcpy(str, "LINK");
-            break;
-        default:
-            strcpy(str, "UNKNOWN");
-            break;
+        case STCP_AF_LINK: return "AF_LINK";
+        case STCP_AF_INET: return "AF_INET";
+        default : return "unknown";
     }
-    return str;
 }
 
 void ifaddr::init(const void* d, size_t l)
