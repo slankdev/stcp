@@ -7,6 +7,10 @@
 
 #define IFNAMSIZ 16
 
+namespace slank {
+    
+
+
 struct sockaddr {
 	uint8_t      sa_len;		/* total length */
 	sa_family_t  sa_family;	/* address family */
@@ -54,3 +58,6 @@ struct ifreq {
         char            *ifr_data;
     };
 };
+
+
+} /* namespace */

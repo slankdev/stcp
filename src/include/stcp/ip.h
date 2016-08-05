@@ -6,6 +6,8 @@
 
 
 
+namespace slank {
+    
 
 
 
@@ -29,3 +31,6 @@ public:
     void proc() {m.proc();}
     void stat() {m.stat();}
 };
+
+
+} /* namespace */

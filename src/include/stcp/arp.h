@@ -16,6 +16,10 @@
 #include <stcp/dpdk.h>
 
 
+namespace slank {
+    
+
+
 struct arpentry {
     struct ip_addr    ip;
     struct ether_addr mac;
@@ -72,3 +76,4 @@ public:
 };
 
 
+} /* namespace */

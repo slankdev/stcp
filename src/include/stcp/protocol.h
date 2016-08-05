@@ -11,6 +11,9 @@
 #include <stcp/config.h>
 
 
+namespace slank {
+    
+
 class proto_module {
 protected:
     pkt_queue rx;
@@ -49,5 +52,6 @@ public:
 
 
 
+} /* namespace */
 
 

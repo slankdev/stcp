@@ -23,9 +23,14 @@
 #include <rte_hexdump.h>
 
 
+namespace slank {
+    
+
+
 
 struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs);
 
+} /* namespace */
 
 
 namespace rte {

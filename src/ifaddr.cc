@@ -10,6 +10,10 @@
 #include <stcp/config.h>
 
 
+namespace slank {
+    
+
+
 const char* af2str(af_t af)
 {
     switch (af) {
@@ -65,3 +69,4 @@ void ifaddr::init(const void* d, size_t l)
 }
 
 
+} /* namespace */

@@ -11,6 +11,7 @@
 #include <stcp/rte.h>
 
 
+using namespace slank;
 
 void ifnet::init()
 {
@@ -135,9 +136,11 @@ void ifnet::set_addr(af_t af, void* addr)
 void ifnet::ioctl(uint64_t request, void* arg)
 {
     switch (request) {
-        case a:
+        case (0):
         {
-
+            if (arg == nullptr)
+                throw slankdev::exception("arg is null");
+    
         }
         default:
         {

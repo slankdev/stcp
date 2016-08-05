@@ -16,6 +16,9 @@
 
 
 
+namespace slank {
+
+
 
 class dpdk {
 private:
@@ -36,3 +39,5 @@ public:
     void init(int argc, char** argv);
     struct rte_mempool* get_mempool() { return mempool; }
 };
+
+} /* namespace */

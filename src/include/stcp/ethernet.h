@@ -5,6 +5,9 @@
 #include <stcp/rte.h>
 
 
+namespace slank {
+    
+
 
 // struct ether_addr {
 //     uint8_t addr_bytes[6];
@@ -24,3 +27,6 @@ struct ether_header {
     struct ether_addr src;
     uint16_t type;
 };
+
+
+} /* namespace */

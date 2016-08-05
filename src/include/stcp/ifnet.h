@@ -11,6 +11,8 @@
 #include <stcp/protocol.h>
 
 
+namespace slank {
+    
 
 
 #define BURST_SIZE 32
@@ -47,3 +49,4 @@ public:
 
 
 
+} /* namespace */

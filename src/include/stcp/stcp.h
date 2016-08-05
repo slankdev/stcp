@@ -11,6 +11,8 @@
 #include <stcp/ip.h>
 
 
+namespace slank {
+    
 
 
 class stcp {
@@ -87,3 +89,6 @@ public:
 };
 
 
+
+
+} /* namespace */

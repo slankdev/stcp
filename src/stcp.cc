@@ -10,6 +10,7 @@
 #include <stcp/mbuf.h>
 
 
+using namespace slank;
 
 
 void stcp::user_setting()

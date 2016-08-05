@@ -8,7 +8,7 @@
 #include <pgen2.h>
 
 
-
+using namespace slank;
 
 
 static char* ip2cstr(const struct ip_addr ip)

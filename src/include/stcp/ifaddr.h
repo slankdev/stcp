@@ -10,7 +10,11 @@
 #define ETHER_ADDR_LEN 6
 #define STCP_AF_LINK 0
 #define STCP_AF_INET 2
-typedef uint8_t af_t;
+
+namespace slank {
+    
+
+using af_t=uint8_t;
 
 struct ip_addr {
     uint8_t addr_bytes[4];
@@ -47,3 +51,4 @@ public:
 
 
 
+} /* namespace */
