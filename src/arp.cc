@@ -4,11 +4,14 @@
 
 #include <stcp/arp.h>
 #include <stcp/config.h>
+#include <stcp/dpdk.h>
+#include <stcp/rte.h>
 
 #include <pgen2.h>
 
 
-using namespace slank;
+namespace slank {
+    
 
 
 static char* ip2cstr(const struct ip_addr ip)
@@ -19,6 +22,7 @@ static char* ip2cstr(const struct ip_addr ip)
             ip.addr_bytes[2], ip.addr_bytes[3]);
     return str;
 }
+
 static char* mac2cstr(const struct ether_addr mac)
 {
     static char str[32];
@@ -29,7 +33,6 @@ static char* mac2cstr(const struct ether_addr mac)
     return str;
 }
 
-
 static bool is_same(struct ether_addr& a, struct ether_addr& b)
 {
     for (int i=0; i<6; i++) 
@@ -38,9 +41,40 @@ static bool is_same(struct ether_addr& a, struct ether_addr& b)
     return true;
 }
 
-
-void arp_module::update_table(arpentry newent, uint8_t port)
+void arp_module::stat() 
 {
+    m.stat();
+    printf("\n");
+    printf("\tARP-chace\n");
+    printf("\t%-16s %-20s %s\n", "Address", "HWaddress", "Iface");
+    for (size_t i=0; i<table.size(); i++) {
+        for (arpentry& a : table[i].entrys)
+            printf("\t%-16s %-20s %zd\n", ip2cstr(a.ip), mac2cstr(a.mac), i);
+    }
+}
+
+void arp_module::proc() 
+{
+    while (m.rx_size() > 0) {
+        struct rte_mbuf* msg = m.rx_pop();
+        struct arphdr* ah  = rte::pktmbuf_mtod<struct arphdr*>(msg);
+        uint8_t port = msg->port;
+
+        if (ah->operation == htons(2)) { // TODO hard code
+            proc_update_arptable(ah, port);
+        } else if (ah->operation == htons(1)) {
+            proc_arpreply(ah, port);
+        }
+        rte::pktmbuf_free(msg);
+    }
+
+    while (m.tx_size() > 0) throw slankdev::exception("Not Impl yet");
+}
+
+void arp_module::proc_update_arptable(struct arphdr* ah, uint8_t port)
+{
+    arpentry newent(ah->psrc, ah->hwsrc);
+
     for (arpentry& ent : table[port].entrys) {
         if (ent.ip == newent.ip) {
             if (is_same(ent.mac, newent.mac)) {
@@ -56,39 +90,68 @@ void arp_module::update_table(arpentry newent, uint8_t port)
     table[port].entrys.push_back(newent);
 }
 
-
-void arp_module::proc() 
+static struct rte_mbuf* alloc_reply_packet(struct arphdr* ah, uint8_t port)
 {
-    while (m.rx_size() > 0) {
-        struct rte_mbuf* msg = m.rx_pop();
-        struct arphdr* ah  = rte::pktmbuf_mtod<struct arphdr*>(msg);
-        uint8_t port = msg->port;
+	struct ether_addr mymac;
+	memset(&mymac, 0, sizeof(mymac));
 
-        if (ah->operation == htons(2)) { // TODO hard code
-            arpentry newent(ah->psrc, ah->hwsrc);
-            update_table(newent, port);
-        } else if (ah->operation == htons(1)) {
-            // TODO 次回はここから!!!!!!
-            // printf("recv arp request \n");
-            // exit(-1);
-        }
-        rte::pktmbuf_free(msg);
-    }
+	bool macfound=false;
+	ifnet& dev = dpdk::instance().devices[port];
+	for (ifaddr& ifa : dev.addrs) {
+		if (ifa.family == af_link) {
+			mymac = ifa.raw.link;
+			macfound = true;
+		}
+	}
+	if (!macfound)
+		throw slankdev::exception("address not found");
+
+
+    dpdk& d = dpdk::instance();
+	struct rte_mbuf* msg = rte::pktmbuf_alloc(d.get_mempool());
+    msg->data_len = 64;
+    msg->pkt_len  = 64;
+	uint8_t* data = rte::pktmbuf_mtod<uint8_t*>(msg);
+	struct ether_header* eh = reinterpret_cast<struct ether_header*>(data);
+	eh->src = mymac;
+	eh->dst = ah->hwsrc;
+	eh->type = htons(0x0806);
+
+	struct arphdr* rep_ah = reinterpret_cast<struct arphdr*>(data + sizeof(struct ether_header));
+	rep_ah->hwtype = htons(1);
+	rep_ah->ptype  = htons(0x0800);
+	rep_ah->hwlen  = 6;
+	rep_ah->plen   = 4;
+	rep_ah->operation = htons(2); // 2 is reply
+	rep_ah->hwsrc = eh->src;
+	rep_ah->psrc  = ah->pdst;
+	rep_ah->hwdst = eh->dst;
+	rep_ah->pdst  = ah->psrc;
+
+	return msg;
+}
+
+static bool is_request_to_me(struct arphdr* ah, uint8_t port)
+{
+	ifnet& dev = dpdk::instance().devices[port];
+	for (ifaddr& ifa : dev.addrs) {
+		if (ifa.family == af_inet && ifa.raw.in==ah->pdst)
+			return true;
+	}
+	return false;
+}
+
+void arp_module::proc_arpreply(struct arphdr* ah, uint8_t port)
+{
+	if (is_request_to_me(ah, port)) {
+		struct rte_mbuf* msg = alloc_reply_packet(ah, port);
+
+		dpdk& d = dpdk::instance();
+		d.devices[port].tx_push(msg);
+	}
 }
 
 
 
 
-void arp_module::stat() 
-{
-    m.stat();
-    printf("\n");
-    printf("\tARP-chace\n");
-    printf("\t%-16s %-20s %s\n", "Address", "HWaddress", "Iface");
-    for (size_t i=0; i<table.size(); i++) {
-        for (arpentry& a : table[i].entrys)
-            printf("\t%-16s %-20s %zd\n", ip2cstr(a.ip), mac2cstr(a.mac), i);
-    }
-}
-
-
+} /* namespace */

@@ -56,6 +56,9 @@ private:
     proto_module m;
     std::vector<port_entry> table;
 
+    void proc_arpreply(struct arphdr* ah, uint8_t port);
+    void proc_update_arptable(struct arphdr* ah, uint8_t port);
+    
 public:
     arp_module() { m.name = "ARP"; }
     void init() 
@@ -72,7 +75,6 @@ public:
 
     void stat();
     void proc();
-    void update_table(arpentry newent, uint8_t port);
 };
 
 
