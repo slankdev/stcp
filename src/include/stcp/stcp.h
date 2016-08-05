@@ -49,11 +49,16 @@ public:
         dpdk.init(argc, argv);
         arp.init();
         ip.init();
+
+        user_setting();
     }
+    void user_setting();
     void run()
     {
         log& log = log::instance();
         log.write(INFO, "starting STCP...");
+
+        stat_all();
 
         while (true) {
             modules_updated = false;

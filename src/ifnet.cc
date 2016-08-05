@@ -99,4 +99,34 @@ void ifnet::stat()
     printf("\tRX Packets %u Queue %zu\n", rx_packets, rx.size());
     printf("\tTX Packets %u Queue %zu\n", tx_packets, tx.size());
     printf("\tDrop Packets %u \n", drop_packets);
+
+    printf("\n");
+    for (ifaddr& ifa : addrs) {
+        printf("\t%-10s ", af2str(ifa.family));
+        if (ifa.family == STCP_AF_LINK) 
+            printf("%02x:%02x:%02x:%02x:%02x:%02x " 
+                , ifa.raw.link.addr_bytes[0], ifa.raw.link.addr_bytes[1]
+                , ifa.raw.link.addr_bytes[2], ifa.raw.link.addr_bytes[3]
+                , ifa.raw.link.addr_bytes[4], ifa.raw.link.addr_bytes[5]);
+        else if (ifa.family == STCP_AF_INET)
+            printf("%d.%d.%d.%d " 
+                , ifa.raw.in.addr_bytes[0], ifa.raw.in.addr_bytes[1]
+                , ifa.raw.in.addr_bytes[2], ifa.raw.in.addr_bytes[3]);
+        printf("\n");
+    }
+    printf("\n");
+}
+
+
+void ifnet::set_addr(af_t af, void* addr)
+{
+    struct ifaddr ifa(af);
+    if (af == STCP_AF_LINK)
+        ifa.raw.link = *((struct ether_addr*)addr);
+    else if (af == STCP_AF_INET)
+        ifa.raw.in = *((struct ip_addr*)addr);
+    else 
+        throw slankdev::exception("address family not support");
+
+    addrs.push_back(ifa);
 }

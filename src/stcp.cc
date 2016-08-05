@@ -11,6 +11,21 @@
 
 
 
+
+void stcp::user_setting()
+{
+    struct ip_addr a;
+    a.addr_bytes[0] = 192;
+    a.addr_bytes[1] = 168;
+    a.addr_bytes[2] = 222;
+    a.addr_bytes[3] = 254;
+
+    dpdk& dpdk = dpdk::instance();
+    dpdk.devices[0].set_addr(STCP_AF_INET, &a);
+}
+
+
+
 static uint16_t get_ether_type(struct rte_mbuf* msg)
 {
     struct ether_header* eh;

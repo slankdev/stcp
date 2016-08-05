@@ -12,7 +12,6 @@ SRCS   = \
 		rte.cc \
 		mbuf.cc \
 		arp.cc \
-		ip.cc \
 		stcp.cc
 
 
