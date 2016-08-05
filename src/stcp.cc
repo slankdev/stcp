@@ -6,7 +6,6 @@
 #include <stcp/stcp.h>
 #include <stcp/rte.h>
 #include <stcp/arp.h>
-#include <stcp/ethernet.h>
 #include <stcp/mbuf.h>
 
 
@@ -38,6 +37,24 @@ static uint16_t get_ether_type(struct rte_mbuf* msg)
     return rte_bswap16(eh->type);
 }
 
+void stcp::run()
+{
+    log& log = log::instance();
+    log.write(INFO, "starting STCP...");
+
+    stat_all();
+
+    while (true) {
+        modules_updated = false;
+
+        ifs_proc();
+        arp.proc();
+        ip.proc();
+
+        if (modules_updated)
+            stat_all();
+    }
+}
 
 void stcp::ifs_proc()
 {

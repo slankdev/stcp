@@ -9,11 +9,11 @@
 #include <stddef.h>
 
 #include <stcp/protocol.h>
-#include <stcp/ethernet.h>
 #include <stcp/ip.h>
 #include <stcp/config.h>
 #include <stcp/ifnet.h>
 #include <stcp/dpdk.h>
+#include <stcp/types.h>
 
 
 namespace slank {
@@ -35,21 +35,6 @@ struct port_entry {
     std::vector<arpentry> entrys;
     uint8_t port;
 };
-
-
-struct arphdr {
-    uint16_t          hwtype;
-    uint16_t          ptype;
-    uint8_t           hwlen;
-    uint8_t           plen;
-    uint16_t          operation;
-    struct ether_addr hwsrc;
-    struct ip_addr    psrc;
-    struct ether_addr hwdst;
-    struct ip_addr    pdst;
-};
-
-
 
 class arp_module {
 private:

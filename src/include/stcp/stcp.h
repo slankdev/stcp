@@ -55,24 +55,8 @@ public:
         user_setting();
     }
     void user_setting();
-    void run()
-    {
-        log& log = log::instance();
-        log.write(INFO, "starting STCP...");
-
-        stat_all();
-
-        while (true) {
-            modules_updated = false;
-
-            ifs_proc();
-            arp.proc();
-            ip.proc();
-
-            if (modules_updated)
-                stat_all();
-        }
-    }
+    void ifs_proc();
+    void run();
     void stat_all()
     {
         dpdk& dpdk = dpdk::instance();
@@ -85,7 +69,6 @@ public:
         arp.stat();
         ip.stat();
     }
-    void ifs_proc();
 };
 
 

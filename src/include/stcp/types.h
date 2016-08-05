@@ -2,21 +2,16 @@
 
 #pragma once
 
+
 #include <stdint.h>
 #include <stddef.h>
+#include <rte_mbuf.h> // for struct ether_header
 
 #define IFNAMSIZ 16
 
+
+
 namespace slank {
-    
-
-enum sa_family {
-    af_link=0,
-    af_inet=2,
-};
-
-using in_port = uint16_t;
-
 
 struct ip_addr {
     uint8_t addr_bytes[4];
@@ -30,7 +25,29 @@ struct ip_addr {
     }
 };
 
+struct ether_header {
+    struct ether_addr dst;
+    struct ether_addr src;
+    uint16_t type;
+};
 
+struct arphdr {
+    uint16_t          hwtype;
+    uint16_t          ptype;
+    uint8_t           hwlen;
+    uint8_t           plen;
+    uint16_t          operation;
+    struct ether_addr hwsrc;
+    struct ip_addr    psrc;
+    struct ether_addr hwdst;
+    struct ip_addr    pdst;
+};
+
+
+enum sa_family {
+    af_link=0,
+    af_inet=2,
+};
 
 struct sockaddr {
 	uint8_t      sa_len;		/* total length */
@@ -42,7 +59,7 @@ struct sockaddr {
 struct sockaddr_in {
 	uint8_t	       sin_len;
 	sa_family	   sin_fam;
-	in_port        sin_port;
+	uint16_t       sin_port;
 	struct ip_addr sin_addr;
 	char	       sin_zero[8];
 };
