@@ -4,13 +4,15 @@ prefix = ..
 
 TARGET = a.out
 LOGNAME = log.txt
-SRCS   = main.cc \
+SRCS   = \
+		main.cc \
+		ifaddr.cc \
+		dpdk.cc \
 		ifnet.cc \
 		rte.cc \
-		dpdk.cc \
 		mbuf.cc \
-		ifaddr.cc \
 		arp.cc \
+		ip.cc \
 		stcp.cc
 
 
@@ -26,13 +28,14 @@ re: clean all
 
 
 
+
 run:
 	sudo ./$(TARGET) \
-		--vdev=eth_pcap0,iface=lo
-
-runeth0:
-	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=eth0
+
+runlo:
+	sudo ./$(TARGET) \
+		--vdev=eth_pcap0,iface=lo
 
 runall:
 	sudo ./$(TARGET) \
