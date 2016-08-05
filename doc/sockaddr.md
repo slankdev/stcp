@@ -47,7 +47,7 @@ int main()
 }
 ```
 
-現段階ではこの様にしてipアドレスを設定出きるようにする。(予定)
+現段階ではこの様にしてipアドレスを設定出きるようにした
 
 ```
 int set_address_main()
@@ -55,10 +55,15 @@ int set_address_main()
 	dpdk& d = dpdk::instance();
 	ifnet& ifn = d.devices[0];
 
-	struct 
+	struct ifreq ifr;
+	struct sockaddr_in* sin = (struct sockaddr_in*)&ifr.ifr_addr;
+	sin->sin_family = af_inet;
+	sin->sin_addr.s_addr = inet_addr("1.2.3.4");
 
 	ifn.ioctl(SIOCSIFADDR, &ifr);
 }
 
 ```
+
+
 

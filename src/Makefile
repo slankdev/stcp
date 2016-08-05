@@ -3,7 +3,7 @@
 prefix = ..
 
 TARGET = a.out
-LOGNAME = log.txt
+LOGNAME = log.log
 SRCS   = \
 		main.cc \
 		ifaddr.cc \
