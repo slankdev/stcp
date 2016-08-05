@@ -8,13 +8,14 @@
 
 #include <stcp/ifaddr.h>
 #include <stcp/config.h>
+#include <stcp/types.h>
 
 
 namespace slank {
     
 
 
-const char* af2str(af_t af)
+const char* af2str(sa_family af)
 {
     switch (af) {
         case af_link: return "AF_LINK";

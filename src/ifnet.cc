@@ -119,28 +119,38 @@ void ifnet::stat()
 }
 
 
-void ifnet::set_addr(af_t af, void* addr)
-{
-    struct ifaddr ifa(af);
-    if (af == af_link)
-        ifa.raw.link = *((struct ether_addr*)addr);
-    else if (af == af_inet)
-        ifa.raw.in = *((struct ip_addr*)addr);
-    else 
-        throw slankdev::exception("address family not support");
-
-    addrs.push_back(ifa);
-}
-
-
 void ifnet::ioctl(uint64_t request, void* arg)
 {
     switch (request) {
-        case (0):
+        case siocsifaddr:
         {
-            if (arg == nullptr)
-                throw slankdev::exception("arg is null");
-    
+            sockaddr* sa = reinterpret_cast<sockaddr*>(arg);
+            struct ifaddr ifa(sa->sa_fam);
+
+            switch (sa->sa_fam) {
+                case af_link:
+                {
+                    throw slankdev::exception("ioctl: setifaddr af_link not impl");
+                    break;
+                }
+                case af_inet:
+                {
+                    struct sockaddr_in* sin = reinterpret_cast<sockaddr_in*>(sa);
+                    ifa.raw.in = sin->sin_addr;
+                    break;
+                }
+                default:
+                {
+                    throw slankdev::exception("address family not support");
+                    break;
+                }
+            }
+            addrs.push_back(ifa);
+            break;
+        }
+        case siocgifaddr:
+        {
+            throw slankdev::exception("not impl yet");
         }
         default:
         {

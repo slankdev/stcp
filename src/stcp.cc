@@ -21,8 +21,12 @@ void stcp::user_setting()
     a.addr_bytes[2] = 222;
     a.addr_bytes[3] = 254;
 
+    struct sockaddr_in sin;
+    sin.sin_fam = af_inet;
+    sin.sin_addr = a;
+
     dpdk& dpdk = dpdk::instance();
-    dpdk.devices[0].set_addr(af_inet, &a);
+    dpdk.devices[0].ioctl(siocsifaddr, &sin);
 }
 
 

@@ -15,6 +15,14 @@ namespace slank {
     
 
 
+
+enum {
+    siocsifaddr,
+    siocgifaddr
+};
+
+
+
 #define BURST_SIZE 32
 class ifnet : public proto_module {
 private:
@@ -37,7 +45,6 @@ public:
     { name = "PORT" + std::to_string(port_id); }
 
     void init();
-    void set_addr(af_t af, void* addr);
     uint16_t io_rx();
     uint16_t io_tx(size_t num_request_to_send);
     size_t rx_size() { return rx.size(); }
