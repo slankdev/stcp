@@ -15,9 +15,6 @@ using namespace slank;
 
 void ifnet::init()
 {
-    log& log = log::instance();
-    log.push(name.c_str());
-
     struct rte_eth_conf port_conf;
     memset(&port_conf, 0, sizeof port_conf);
     port_conf.rxmode.max_rx_pkt_len = ETHER_MAX_LEN;
@@ -51,8 +48,6 @@ void ifnet::init()
     rte::eth_macaddr_get(port_id, &addr);
     ifa.init(&addr, sizeof(addr));
     addrs.push_back(ifa);
-
-    log.pop();
 }
 
 uint16_t ifnet::io_rx()

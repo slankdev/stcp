@@ -26,9 +26,6 @@ const char* af2str(sa_family af)
 
 void ifaddr::init(const void* d, size_t l)
 {
-    log& log = log::instance();
-    log.push(af2str(family));
-
     switch (family) {
         case af_inet:
             {
@@ -52,7 +49,6 @@ void ifaddr::init(const void* d, size_t l)
                 break;
             }
     }
-    log.pop();
 }
 
 

@@ -22,17 +22,8 @@ public:
     bool modules_updated;
 
 private:
-    stcp() : modules_updated(false)
-    {
-        log& log = log::instance();
-        log.open("log.log");
-        log.push("STCP");
-    }
-    ~stcp()
-    {
-        log& log = log::instance();
-        log.pop();
-    }
+    stcp() : modules_updated(false) {}
+    ~stcp() {}
     stcp(const stcp&) = delete;
     stcp& operator=(const stcp&) = delete;
 
@@ -44,9 +35,6 @@ public:
     }
     void init(int argc, char** argv)
     {
-        log& log = log::instance();
-        log.write(INFO, "init...");
-
         dpdk& dpdk = dpdk::instance();
         dpdk.init(argc, argv);
         arp.init();

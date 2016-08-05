@@ -7,7 +7,10 @@
 #include <stddef.h>
 #include <rte_mbuf.h> // for struct ether_header
 
-#define IFNAMSIZ 16
+enum vars {
+    ifnamesiz=16
+};
+// #define IFNAMSIZ 16
 
 
 

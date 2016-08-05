@@ -23,7 +23,7 @@ enum {
 
 
 
-#define BURST_SIZE 32
+#define BURST_SIZE 64
 class ifnet : public proto_module {
 private:
     uint8_t  port_id;

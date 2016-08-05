@@ -39,33 +39,27 @@ static uint16_t get_ether_type(struct rte_mbuf* msg)
 
 void stcp::run()
 {
-    log& log = log::instance();
-    log.write(INFO, "starting STCP...");
-
-    stat_all();
-
     while (true) {
-        modules_updated = false;
 
         ifs_proc();
+
         arp.proc();
         ip.proc();
 
-        if (modules_updated)
-            stat_all();
+
+
     }
 }
 
 void stcp::ifs_proc()
 {
     dpdk& dpdk = dpdk::instance();
-    log& log = log::instance();
 
     for (ifnet& dev : dpdk.devices) {
         uint16_t num_rx = dev.io_rx();
         if (unlikely(num_rx == 0)) continue;
 
-        modules_updated = true;
+        // modules_updated = true;
         uint16_t num_reqest_to_send = dev.tx_size();
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
         if (num_tx != num_reqest_to_send)
@@ -79,19 +73,16 @@ void stcp::ifs_proc()
             switch (etype) {
                 case 0x0800:
                 {
-                    log.write(INFO, "recv ip packet");
                     ip.rx_push(msg);
                     break;
                 }
                 case 0x0806:
                 {
-                    log.write(INFO, "recv arp packet");
                     arp.rx_push(msg);
                     break;
                 }
                 default:
                 {
-                    log.write(WARN, "unknown ether type 0x%04x", etype);
                     dev.drop(msg);
                     break;
                 }
