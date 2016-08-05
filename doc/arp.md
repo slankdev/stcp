@@ -16,6 +16,26 @@ ARPモジュールは以下の処理を行う。
 
 処理の手順を示す。
 
+```
+void arp_module::proc_update_arptable(struct arphdr* ah, uint8_t port)
+{
+    arpentry newent(ah->psrc, ah->hwsrc);
+
+    for (arpentry& ent : table[port].entrys) {
+        if (ent.ip == newent.ip) {
+            if (is_same(ent.mac, newent.mac)) {
+                return;
+            } else {
+                ent.mac = newent.mac;
+                return;
+            }
+        } else { /* ip isnt same */
+            continue;
+        }
+    }
+    table[port].entrys.push_back(newent);
+}
+```
 
 
 
