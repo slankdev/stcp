@@ -46,7 +46,7 @@ void ifnet::init()
         throw rte::exception(str);
     }
 
-    ifaddr ifa(STCP_AF_LINK);
+    ifaddr ifa(af_link);
     struct ether_addr addr;
     rte::eth_macaddr_get(port_id, &addr);
     ifa.init(&addr, sizeof(addr));
@@ -104,12 +104,12 @@ void ifnet::stat()
     printf("\n");
     for (ifaddr& ifa : addrs) {
         printf("\t%-10s ", af2str(ifa.family));
-        if (ifa.family == STCP_AF_LINK) 
+        if (ifa.family == af_link) 
             printf("%02x:%02x:%02x:%02x:%02x:%02x " 
                 , ifa.raw.link.addr_bytes[0], ifa.raw.link.addr_bytes[1]
                 , ifa.raw.link.addr_bytes[2], ifa.raw.link.addr_bytes[3]
                 , ifa.raw.link.addr_bytes[4], ifa.raw.link.addr_bytes[5]);
-        else if (ifa.family == STCP_AF_INET)
+        else if (ifa.family == af_inet)
             printf("%d.%d.%d.%d " 
                 , ifa.raw.in.addr_bytes[0], ifa.raw.in.addr_bytes[1]
                 , ifa.raw.in.addr_bytes[2], ifa.raw.in.addr_bytes[3]);
@@ -122,9 +122,9 @@ void ifnet::stat()
 void ifnet::set_addr(af_t af, void* addr)
 {
     struct ifaddr ifa(af);
-    if (af == STCP_AF_LINK)
+    if (af == af_link)
         ifa.raw.link = *((struct ether_addr*)addr);
-    else if (af == STCP_AF_INET)
+    else if (af == af_inet)
         ifa.raw.in = *((struct ip_addr*)addr);
     else 
         throw slankdev::exception("address family not support");

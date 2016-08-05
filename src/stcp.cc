@@ -22,7 +22,7 @@ void stcp::user_setting()
     a.addr_bytes[3] = 254;
 
     dpdk& dpdk = dpdk::instance();
-    dpdk.devices[0].set_addr(STCP_AF_INET, &a);
+    dpdk.devices[0].set_addr(af_inet, &a);
 }
 
 

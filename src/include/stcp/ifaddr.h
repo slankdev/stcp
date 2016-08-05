@@ -8,13 +8,16 @@
 #include <stddef.h>
 
 #define ETHER_ADDR_LEN 6
-#define STCP_AF_LINK 0
-#define STCP_AF_INET 2
+
+enum af_t {
+    af_link=0,
+    af_inet=2,
+};
 
 namespace slank {
     
 
-using af_t=uint8_t;
+// using af_t=uint8_t;
 
 struct ip_addr {
     uint8_t addr_bytes[4];
