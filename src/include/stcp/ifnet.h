@@ -41,6 +41,8 @@ public:
     size_t rx_size() { return rx.size(); }
     size_t tx_size() { return tx.size(); }
     void stat();
+
+    void ioctl(uint64_t request, void* arg);
 };
 
 

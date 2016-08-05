@@ -130,3 +130,20 @@ void ifnet::set_addr(af_t af, void* addr)
 
     addrs.push_back(ifa);
 }
+
+
+void ifnet::ioctl(uint64_t request, void* arg)
+{
+    switch (request) {
+        case a:
+        {
+
+        }
+        default:
+        {
+            throw slankdev::exception("not support");
+        }
+    }
+}
+
+
