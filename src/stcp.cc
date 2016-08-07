@@ -39,13 +39,18 @@ static uint16_t get_ether_type(struct rte_mbuf* msg)
 
 void stcp::run()
 {
+    stat_all();
+
     while (true) {
+        modules_updated = false;
 
         ifs_proc();
 
         arp.proc();
         ip.proc();
-
+    
+        if (modules_updated)
+            stat_all();
 
 
     }
@@ -59,7 +64,8 @@ void stcp::ifs_proc()
         uint16_t num_rx = dev.io_rx();
         if (unlikely(num_rx == 0)) continue;
 
-        // modules_updated = true;
+        modules_updated = true;
+
         uint16_t num_reqest_to_send = dev.tx_size();
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
         if (num_tx != num_reqest_to_send)
