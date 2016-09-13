@@ -53,7 +53,6 @@ private:
     std::vector<port_entry> table;
 
     void proc_arpreply(struct stcp_arphdr* ah, uint8_t port);
-    void proc_update_arptable(struct stcp_arphdr* ah, uint8_t port);
     
 public:
     arp_module() { m.name = "ARP"; }
@@ -72,6 +71,7 @@ public:
     void stat();
     void proc();
 
+    void proc_update_arptable(struct stcp_arphdr* ah, uint8_t port);
     void ioctl(uint64_t request, void* arg);
 
 private:

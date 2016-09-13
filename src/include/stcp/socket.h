@@ -33,6 +33,12 @@ struct stcp_sockaddr_in {
 };
 
 
+struct stcp_arpreq {
+    struct stcp_sockaddr arp_pa;		/* Protocol address.  */
+    struct stcp_sockaddr arp_ha;		/* Hardware address.  */
+    uint8_t              arp_ifindex;
+};
+
 // struct stcp_sockaddr_inarp {
 //     uint8_t             sin_len;
 //     uint8_t             sin_family;
