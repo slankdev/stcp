@@ -5,7 +5,7 @@ using namespace slank;
 
 int main(int argc, char** argv)
 {
-    stcp& s = stcp::instance();  
+    core& s = core::instance();  
     s.init(argc, argv);
     
 

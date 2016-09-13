@@ -15,22 +15,22 @@ namespace slank {
     
 
 
-class stcp {
+class core {
 public:
     arp_module arp;
     ip_module  ip;
     bool modules_updated;
 
 private:
-    stcp() : modules_updated(false) {}
-    ~stcp() {}
-    stcp(const stcp&) = delete;
-    stcp& operator=(const stcp&) = delete;
+    core() : modules_updated(false) {}
+    ~core() {}
+    core(const core&) = delete;
+    core& operator=(const core&) = delete;
 
 public:
-    static stcp& instance()
+    static core& instance()
     {
-        static stcp s;
+        static core s;
         return s;
     }
     void init(int argc, char** argv)
@@ -40,7 +40,6 @@ public:
         arp.init();
         ip.init();
     }
-    // void user_setting();
     void ifs_proc();
     void run();
     void stat_all()
