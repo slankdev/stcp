@@ -34,3 +34,7 @@ dpdk/*
 *.pcapng
 
 *.log
+
+GPATH
+GRTAGS
+GTAGS

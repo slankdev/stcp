@@ -43,7 +43,7 @@ void ifnet::init()
         throw rte::exception(str);
     }
 
-    ifaddr ifa(af_link);
+    ifaddr ifa(STCP_AF_LINK);
     struct ether_addr addr;
     rte::eth_macaddr_get(port_id, &addr);
     ifa.init(&addr, sizeof(addr));
@@ -99,12 +99,12 @@ void ifnet::stat()
     printf("\n");
     for (ifaddr& ifa : addrs) {
         printf("\t%-10s ", af2str(ifa.family));
-        if (ifa.family == af_link) 
+        if (ifa.family == STCP_AF_LINK) 
             printf("%02x:%02x:%02x:%02x:%02x:%02x " 
                 , ifa.raw.link.addr_bytes[0], ifa.raw.link.addr_bytes[1]
                 , ifa.raw.link.addr_bytes[2], ifa.raw.link.addr_bytes[3]
                 , ifa.raw.link.addr_bytes[4], ifa.raw.link.addr_bytes[5]);
-        else if (ifa.family == af_inet)
+        else if (ifa.family == STCP_AF_INET)
             printf("%d.%d.%d.%d " 
                 , ifa.raw.in.addr_bytes[0], ifa.raw.in.addr_bytes[1]
                 , ifa.raw.in.addr_bytes[2], ifa.raw.in.addr_bytes[3]);
@@ -119,18 +119,18 @@ void ifnet::ioctl(uint64_t request, void* arg)
     switch (request) {
         case siocsifaddr:
         {
-            sockaddr* sa = reinterpret_cast<sockaddr*>(arg);
+            stcp_sockaddr* sa = reinterpret_cast<stcp_sockaddr*>(arg);
             struct ifaddr ifa(sa->sa_fam);
 
             switch (sa->sa_fam) {
-                case af_link:
+                case STCP_AF_LINK:
                 {
                     throw slankdev::exception("ioctl: setifaddr af_link not impl");
                     break;
                 }
-                case af_inet:
+                case STCP_AF_INET:
                 {
-                    struct sockaddr_in* sin = reinterpret_cast<sockaddr_in*>(sa);
+                    struct stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(sa);
                     ifa.raw.in = sin->sin_addr;
                     break;
                 }

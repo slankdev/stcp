@@ -14,14 +14,14 @@ using namespace slank;
 
 void stcp::user_setting()
 {
-    struct ip_addr a;
+    struct stcp_ip_addr a;
     a.addr_bytes[0] = 192;
     a.addr_bytes[1] = 168;
     a.addr_bytes[2] = 222;
     a.addr_bytes[3] = 254;
 
-    struct sockaddr_in sin;
-    sin.sin_fam = af_inet;
+    struct stcp_sockaddr_in sin;
+    sin.sin_fam = STCP_AF_INET;
     sin.sin_addr = a;
 
     dpdk& dpdk = dpdk::instance();
@@ -32,8 +32,8 @@ void stcp::user_setting()
 
 static uint16_t get_ether_type(struct rte_mbuf* msg)
 {
-    struct ether_header* eh;
-    eh = rte_pktmbuf_mtod(msg, struct ether_header*);
+    struct stcp_ether_header* eh;
+    eh = rte_pktmbuf_mtod(msg, struct stcp_ether_header*);
     return rte_bswap16(eh->type);
 }
 
@@ -74,7 +74,7 @@ void stcp::ifs_proc()
         while (dev.rx_size() > 0) {
             struct rte_mbuf* msg = dev.rx_pop();
             uint16_t etype = get_ether_type(msg);
-            mbuf_pull(msg, sizeof(struct ether_header));
+            mbuf_pull(msg, sizeof(struct stcp_ether_header));
 
             switch (etype) {
                 case 0x0800:

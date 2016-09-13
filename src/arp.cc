@@ -14,7 +14,7 @@ namespace slank {
     
 
 
-static char* ip2cstr(const struct ip_addr ip)
+static char* ip2cstr(const struct stcp_ip_addr ip)
 {
     static char str[16];
     sprintf(str, "%d.%d.%d.%d", 
@@ -57,7 +57,7 @@ void arp_module::proc()
 {
     while (m.rx_size() > 0) {
         struct rte_mbuf* msg = m.rx_pop();
-        struct arphdr* ah  = rte::pktmbuf_mtod<struct arphdr*>(msg);
+        struct stcp_arphdr* ah  = rte::pktmbuf_mtod<struct stcp_arphdr*>(msg);
         uint8_t port = msg->port;
 
         if (ah->operation == htons(2)) { // TODO hard code
@@ -71,7 +71,7 @@ void arp_module::proc()
     while (m.tx_size() > 0) throw slankdev::exception("Not Impl yet");
 }
 
-void arp_module::proc_update_arptable(struct arphdr* ah, uint8_t port)
+void arp_module::proc_update_arptable(struct stcp_arphdr* ah, uint8_t port)
 {
     arpentry newent(ah->psrc, ah->hwsrc);
 
@@ -90,7 +90,7 @@ void arp_module::proc_update_arptable(struct arphdr* ah, uint8_t port)
     table[port].entrys.push_back(newent);
 }
 
-static struct rte_mbuf* alloc_reply_packet(struct arphdr* ah, uint8_t port)
+static struct rte_mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
 {
 	struct ether_addr mymac;
 	memset(&mymac, 0, sizeof(mymac));
@@ -98,7 +98,7 @@ static struct rte_mbuf* alloc_reply_packet(struct arphdr* ah, uint8_t port)
 	bool macfound=false;
 	ifnet& dev = dpdk::instance().devices[port];
 	for (ifaddr& ifa : dev.addrs) {
-		if (ifa.family == af_link) {
+		if (ifa.family == STCP_AF_LINK) {
 			mymac = ifa.raw.link;
 			macfound = true;
 		}
@@ -112,12 +112,13 @@ static struct rte_mbuf* alloc_reply_packet(struct arphdr* ah, uint8_t port)
     msg->data_len = 64;
     msg->pkt_len  = 64;
 	uint8_t* data = rte::pktmbuf_mtod<uint8_t*>(msg);
-	struct ether_header* eh = reinterpret_cast<struct ether_header*>(data);
+	struct stcp_ether_header* eh = reinterpret_cast<struct stcp_ether_header*>(data);
 	eh->src = mymac;
 	eh->dst = ah->hwsrc;
 	eh->type = htons(0x0806);
 
-	struct arphdr* rep_ah = reinterpret_cast<struct arphdr*>(data + sizeof(struct ether_header));
+	struct stcp_arphdr* rep_ah = 
+        reinterpret_cast<struct stcp_arphdr*>(data + sizeof(struct stcp_ether_header));
 	rep_ah->hwtype = htons(1);
 	rep_ah->ptype  = htons(0x0800);
 	rep_ah->hwlen  = 6;
@@ -131,17 +132,17 @@ static struct rte_mbuf* alloc_reply_packet(struct arphdr* ah, uint8_t port)
 	return msg;
 }
 
-static bool is_request_to_me(struct arphdr* ah, uint8_t port)
+static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
 {
 	ifnet& dev = dpdk::instance().devices[port];
 	for (ifaddr& ifa : dev.addrs) {
-		if (ifa.family == af_inet && ifa.raw.in==ah->pdst)
+		if (ifa.family == STCP_AF_INET && ifa.raw.in==ah->pdst)
 			return true;
 	}
 	return false;
 }
 
-void arp_module::proc_arpreply(struct arphdr* ah, uint8_t port)
+void arp_module::proc_arpreply(struct stcp_arphdr* ah, uint8_t port)
 {
 	if (is_request_to_me(ah, port)) {
 		struct rte_mbuf* msg = alloc_reply_packet(ah, port);

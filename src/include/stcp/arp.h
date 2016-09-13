@@ -21,10 +21,10 @@ namespace slank {
 
 
 struct arpentry {
-    struct ip_addr    ip;
+    struct stcp_ip_addr    ip;
     struct ether_addr mac;
 
-    arpentry(ip_addr i, ether_addr e)
+    arpentry(stcp_ip_addr i, ether_addr e)
     {
         ip = i;
         mac = e;
@@ -41,8 +41,8 @@ private:
     proto_module m;
     std::vector<port_entry> table;
 
-    void proc_arpreply(struct arphdr* ah, uint8_t port);
-    void proc_update_arptable(struct arphdr* ah, uint8_t port);
+    void proc_arpreply(struct stcp_arphdr* ah, uint8_t port);
+    void proc_update_arptable(struct stcp_arphdr* ah, uint8_t port);
     
 public:
     arp_module() { m.name = "ARP"; }

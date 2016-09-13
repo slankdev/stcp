@@ -8,28 +8,32 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define ETHER_ADDR_LEN 6
+
+
+enum {
+    STCP_ETHER_ADDR_LEN = 6
+};
 
 
 namespace slank {
     
 
 
-const char* af2str(sa_family af);
+const char* af2str(stcp_sa_family af);
 
 
 class ifaddr {
 public:
-    sa_family family;
+    stcp_sa_family family;
     struct {
         union {
             uint8_t data[16];
             struct ether_addr link;
-            struct ip_addr in;
+            struct stcp_ip_addr in;
         };
     } raw;
 
-    ifaddr(sa_family af) : family(af) {}
+    ifaddr(stcp_sa_family af) : family(af) {}
     void init(const void* d, size_t l);
 };
 

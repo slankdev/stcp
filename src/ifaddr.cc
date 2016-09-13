@@ -15,11 +15,11 @@ namespace slank {
     
 
 
-const char* af2str(sa_family af)
+const char* af2str(stcp_sa_family af)
 {
     switch (af) {
-        case af_link: return "AF_LINK";
-        case af_inet: return "AF_INET";
+        case STCP_AF_LINK: return "AF_LINK";
+        case STCP_AF_INET: return "AF_INET";
         default : return "unknown";
     }
 }
@@ -27,15 +27,15 @@ const char* af2str(sa_family af)
 void ifaddr::init(const void* d, size_t l)
 {
     switch (family) {
-        case af_inet:
+        case STCP_AF_INET:
             {
                 fprintf(stderr, "Not Impl yet\n");
                 exit(-1);
                 break;
             }
-        case af_link:
+        case STCP_AF_LINK:
             {
-                if (l != ETHER_ADDR_LEN) {
+                if (l != STCP_ETHER_ADDR_LEN) {
                     fprintf(stderr, "Invalid Address len\n");
                     exit(-1);
                 }
