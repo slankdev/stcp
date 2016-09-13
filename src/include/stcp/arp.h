@@ -75,8 +75,8 @@ public:
     void ioctl(uint64_t request, void* arg);
 
 private:
-    void ioctl_siocaarpent(const stcp_sockaddr_inarp* sinarp);
-    void ioctl_siocdarpent(const stcp_sockaddr_inarp* sinarp);
+    void ioctl_siocaarpent(const void* sinarp);
+    void ioctl_siocdarpent(const void* sinarp);
 };
 
 

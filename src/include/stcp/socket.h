@@ -33,15 +33,15 @@ struct stcp_sockaddr_in {
 };
 
 
-struct stcp_sockaddr_inarp {
-    uint8_t             sin_len;
-    uint8_t             sin_family;
-    uint16_t            sin_port;
-    struct stcp_in_addr sin_addr;
-    struct stcp_in_addr sin_srcaddr;
-    uint16_t            sin_tos;
-    uint16_t            sin_other;
-};
+// struct stcp_sockaddr_inarp {
+//     uint8_t             sin_len;
+//     uint8_t             sin_family;
+//     uint16_t            sin_port;
+//     struct stcp_in_addr sin_addr;
+//     struct stcp_in_addr sin_srcaddr;
+//     uint16_t            sin_tos;
+//     uint16_t            sin_other;
+// };
 
 
 // struct stcp_sockaddr_ll {
@@ -118,34 +118,34 @@ struct stcp_ifreq {
 
 
 
-class socket {
-private:
-    void socket_inet(int type, int protocol);
-    void socket_link(int type, int protocol);
-
-public:
-    socket(stcp_sa_family domain, int type, int protocol) {
-        switch (domain) {
-            case STCP_AF_INET:
-            {
-                socket_inet(type, protocol);
-                break;
-            }
-            case STCP_AF_LINK:
-            {
-                socket_link(type, protocol);
-                break;
-                break;
-            }
-            default:
-            {
-                throw slankdev::exception("not supported");
-                break;
-            }
-        }
-    }
-
-};
+// class socket {
+// private:
+//     void socket_inet(int type, int protocol);
+//     void socket_link(int type, int protocol);
+//
+// public:
+//     socket(stcp_sa_family domain, int type, int protocol) {
+//         switch (domain) {
+//             case STCP_AF_INET:
+//             {
+//                 socket_inet(type, protocol);
+//                 break;
+//             }
+//             case STCP_AF_LINK:
+//             {
+//                 socket_link(type, protocol);
+//                 break;
+//                 break;
+//             }
+//             default:
+//             {
+//                 throw slankdev::exception("not supported");
+//                 break;
+//             }
+//         }
+//     }
+//
+// };
 
 
 

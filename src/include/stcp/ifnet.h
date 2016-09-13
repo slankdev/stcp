@@ -18,8 +18,10 @@ namespace slank {
 
 
 enum {
-    stcp_siocsifaddr,
-    stcp_siocgifaddr
+    STCP_SIOCSIFADDR,
+    STCP_SIOCGIFADDR,
+    STCP_SIOCSIFHWADDR,
+    STCP_SIOCGIFHWADDR,
 };
 
 
@@ -58,8 +60,10 @@ public:
     void ioctl(uint64_t request, void* arg);
 
 private:
-    void ioctl_siocsifaddr(const stcp_ifreq* sa);
-    void ioctl_siocgifaddr(stcp_ifreq* sa);
+    void ioctl_siocsifaddr(const stcp_ifreq* ifr);
+    void ioctl_siocgifaddr(stcp_ifreq* ifr);
+    void ioctl_siocsifhwaddr(const stcp_ifreq* ifr);
+    void ioctl_siocgifhwaddr(stcp_ifreq* ifr);
 };
 
 

@@ -158,15 +158,17 @@ void arp_module::ioctl(uint64_t request, void* arg)
         case stcp_siocaarpent:
         {
             /* add arp record */
-            const stcp_sockaddr_inarp* ent = reinterpret_cast<const stcp_sockaddr_inarp*>(arg);
-            ioctl_siocaarpent(ent);
+            // const stcp_sockaddr_inarp* ent = reinterpret_cast<const stcp_sockaddr_inarp*>(arg);
+            // ioctl_siocaarpent(ent);
+            ioctl_siocaarpent(arg);
             break;
         }
         case stcp_siocdarpent:
         {
             /* add arp record */
-            const stcp_sockaddr_inarp* ent = reinterpret_cast<const stcp_sockaddr_inarp*>(arg);
-            ioctl_siocdarpent(ent);
+            // const stcp_sockaddr_inarp* ent = reinterpret_cast<const stcp_sockaddr_inarp*>(arg);
+            // ioctl_siocdarpent(ent);
+            ioctl_siocdarpent(arg);
             break;
         }
         default:
@@ -177,12 +179,12 @@ void arp_module::ioctl(uint64_t request, void* arg)
     }
 }
 
-void arp_module::ioctl_siocaarpent(const stcp_sockaddr_inarp* sinarp)
+void arp_module::ioctl_siocaarpent(const void* sinarp)
 {
     printf("%p\n", sinarp);
 }
 
-void arp_module::ioctl_siocdarpent(const stcp_sockaddr_inarp* sinarp)
+void arp_module::ioctl_siocdarpent(const void* sinarp)
 {
     printf("%p\n", sinarp);
 }
