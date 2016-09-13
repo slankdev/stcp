@@ -11,8 +11,7 @@ SRCS   = \
 		ifnet.cc \
 		rte.cc \
 		mbuf.cc \
-		arp.cc \
-		stcp.cc
+		arp.cc
 
 
 OBJS   = $(SRCS:.cc=.o)
