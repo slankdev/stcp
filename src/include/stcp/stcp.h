@@ -75,20 +75,20 @@ public:
 
                 switch (etype) {
                     case 0x0800:
-                        {
-                            ip.rx_push(msg);
-                            break;
-                        }
+                    {
+                        ip.rx_push(msg);
+                        break;
+                    }
                     case 0x0806:
-                        {
-                            arp.rx_push(msg);
-                            break;
-                        }
+                    {
+                        arp.rx_push(msg);
+                        break;
+                    }
                     default:
-                        {
-                            dev.drop(msg);
-                            break;
-                        }
+                    {
+                        dev.drop(msg);
+                        break;
+                    }
                 }
             }
         }

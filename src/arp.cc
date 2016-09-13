@@ -14,7 +14,7 @@ namespace slank {
     
 
 
-static char* ip2cstr(const struct stcp_ip_addr ip)
+static char* ip2cstr(const struct stcp_in_addr ip)
 {
     static char str[16];
     sprintf(str, "%d.%d.%d.%d", 
@@ -152,7 +152,40 @@ void arp_module::proc_arpreply(struct stcp_arphdr* ah, uint8_t port)
 	}
 }
 
+void arp_module::ioctl(uint64_t request, void* arg)
+{
+    switch (request) {
+        case stcp_siocaarpent:
+        {
+            /* add arp record */
+            const arpentry* ent = reinterpret_cast<const arpentry*>(arg);
+            ioctl_siocaarpent(ent);
+            break;
+        }
+        case stcp_siocdarpent:
+        {
+            /* add arp record */
+            const arpentry* ent = reinterpret_cast<const arpentry*>(arg);
+            ioctl_siocdarpent(ent);
+            break;
+        }
+        default:
+        {
+            throw slankdev::exception("invalid arguments");
+            break;
+        }
+    }
+}
 
+void arp_module::ioctl_siocaarpent(const arpentry* ent)
+{
+    slankdev::hexdump("tet", ent, sizeof(arpentry));
+}
+
+void arp_module::ioctl_siocdarpent(const arpentry* ent)
+{
+    slankdev::hexdump("tet", ent, sizeof(arpentry));
+}
 
 
 } /* namespace */

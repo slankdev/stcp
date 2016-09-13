@@ -14,9 +14,9 @@
 namespace slank {
     
 
-struct stcp_ip_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
+struct stcp_in_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
-    stcp_ip_addr a;
+    stcp_in_addr a;
     a.addr_bytes[0] = o1;
     a.addr_bytes[1] = o2;
     a.addr_bytes[2] = o3;
@@ -25,7 +25,7 @@ struct stcp_ip_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o
 }
 
 
-struct stcp_ip_addr stcp_inet_addr(const char* fmt)
+struct stcp_in_addr stcp_inet_addr(const char* fmt)
 {
     int o[4];
     int ret = sscanf(fmt, "%d.%d.%d.%d", &o[0], &o[1], &o[2], &o[3]);

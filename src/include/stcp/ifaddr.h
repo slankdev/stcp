@@ -22,8 +22,8 @@ namespace slank {
 
 const char* af2str(stcp_sa_family af);
 
-struct stcp_ip_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
-struct stcp_ip_addr stcp_inet_addr(const char* fmt);
+struct stcp_in_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
+struct stcp_in_addr stcp_inet_addr(const char* fmt);
 
 
 class ifaddr {
@@ -33,7 +33,7 @@ public:
         union {
             uint8_t data[16];
             struct ether_addr link;
-            struct stcp_ip_addr in;
+            struct stcp_in_addr in;
         };
     } raw;
 

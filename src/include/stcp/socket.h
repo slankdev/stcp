@@ -14,6 +14,7 @@ enum {
 enum stcp_sa_family {
     STCP_AF_LINK=0,
     STCP_AF_INET=2,
+    STCP_AF_ARP,
 };
 
 struct stcp_sockaddr {
@@ -27,21 +28,45 @@ struct stcp_sockaddr_in {
 	uint8_t	            sin_len;
 	stcp_sa_family      sin_fam;
 	uint16_t            sin_port;
-	struct stcp_ip_addr sin_addr;
+	struct stcp_in_addr sin_addr;
 	char	            sin_zero[8];
 };
 
-struct stcp_sockaddr_dl {
-	uint8_t	  sdl_len;	/* Total length of sockaddr */
-	uint8_t   sdl_family;	/* AF_LINK */
-	uint16_t  sdl_index;	/* if != 0, system given index for interface */
-	uint8_t	  sdl_type;	/* interface type */
-	uint8_t	  sdl_nlen;	/* interface name length, no trailing 0 reqd. */
-	uint8_t	  sdl_alen;	/* link level address length */
-	uint8_t	  sdl_slen;	/* link layer selector length */
-	char      sdl_data[46];	/* minimum work area, can be larger;
-			                 contains both if name and ll address */
+
+struct stcp_sockaddr_inarp {
+    uint8_t         sin_len;
+    uint8_t         sin_family;
+    uint16_t        sin_port;
+    struct	in_addr sin_addr;
+    struct	in_addr sin_srcaddr;
+    uint16_t	sin_tos;
+    uint16_t	sin_other;
 };
+
+
+// struct stcp_sockaddr_ll {
+//     uint16_t sll_family;
+//     uint16_t sll_protocol;
+//     int      sll_ifindex;
+//     uint16_t sll_hatype;
+//     uint8_t  sll_pkttype;
+//     uint8_t  sll_halen;
+//     uint8_t  sll_addr[8];
+// };
+
+
+
+// struct stcp_sockaddr_dl {
+// 	uint8_t	  sdl_len;	#<{(| Total length of sockaddr |)}>#
+// 	uint8_t   sdl_family;	#<{(| AF_LINK |)}>#
+// 	uint16_t  sdl_index;	#<{(| if != 0, system given index for interface |)}>#
+// 	uint8_t	  sdl_type;	#<{(| interface type |)}>#
+// 	uint8_t	  sdl_nlen;	#<{(| interface name length, no trailing 0 reqd. |)}>#
+// 	uint8_t	  sdl_alen;	#<{(| link level address length |)}>#
+// 	uint8_t	  sdl_slen;	#<{(| link layer selector length |)}>#
+// 	char      sdl_data[46];	#<{(| minimum work area, can be larger;
+// 			                 contains both if name and ll address |)}>#
+// };
 
 
 /* 

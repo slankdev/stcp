@@ -19,12 +19,17 @@
 namespace slank {
     
 
+enum {
+    stcp_siocaarpent,
+    stcp_siocdarpent
+};
+
 
 struct arpentry {
-    struct stcp_ip_addr    ip;
+    struct stcp_in_addr    ip;
     struct ether_addr mac;
 
-    arpentry(stcp_ip_addr i, ether_addr e)
+    arpentry(stcp_in_addr i, ether_addr e)
     {
         ip = i;
         mac = e;
@@ -60,6 +65,12 @@ public:
 
     void stat();
     void proc();
+
+    void ioctl(uint64_t request, void* arg);
+
+private:
+    void ioctl_siocaarpent(const arpentry* ent);
+    void ioctl_siocdarpent(const arpentry* ent);
 };
 
 

@@ -15,10 +15,10 @@
 namespace slank {
 
 
-struct stcp_ip_addr {
+struct stcp_in_addr {
     uint8_t addr_bytes[4];
 
-    bool operator==(const struct stcp_ip_addr& rhs) 
+    bool operator==(const struct stcp_in_addr& rhs) 
     {
         for (int i=0; i<4; i++) {
             if (addr_bytes[i] != rhs.addr_bytes[i]) return false;
@@ -40,9 +40,9 @@ struct stcp_arphdr {
     uint8_t             plen;
     uint16_t            operation;
     struct ether_addr   hwsrc;
-    struct stcp_ip_addr psrc;
+    struct stcp_in_addr psrc;
     struct ether_addr   hwdst;
-    struct stcp_ip_addr pdst;
+    struct stcp_in_addr pdst;
 };
 
 
