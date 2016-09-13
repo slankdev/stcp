@@ -58,8 +58,8 @@ public:
     void ioctl(uint64_t request, void* arg);
 
 private:
-    void ioctl_siocsifaddr(const stcp_sockaddr* sa);
-    void ioctl_siocgifaddr(stcp_sockaddr* sa);
+    void ioctl_siocsifaddr(const stcp_ifreq* sa);
+    void ioctl_siocgifaddr(stcp_ifreq* sa);
 };
 
 

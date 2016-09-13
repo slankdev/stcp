@@ -119,13 +119,13 @@ void ifnet::ioctl(uint64_t request, void* arg)
     switch (request) {
         case stcp_siocsifaddr:
         {
-            stcp_sockaddr* sa = reinterpret_cast<stcp_sockaddr*>(arg);
+            stcp_ifreq* sa = reinterpret_cast<stcp_ifreq*>(arg);
             ioctl_siocsifaddr(sa);
             break;
         }
         case stcp_siocgifaddr:
         {
-            stcp_sockaddr* sa = reinterpret_cast<stcp_sockaddr*>(arg);
+            stcp_ifreq* sa = reinterpret_cast<stcp_ifreq*>(arg);
             ioctl_siocgifaddr(sa);
             break;
         }
@@ -138,26 +138,20 @@ void ifnet::ioctl(uint64_t request, void* arg)
 }
 
 
-void ifnet::ioctl_siocsifaddr(const stcp_sockaddr* sa)
+void ifnet::ioctl_siocsifaddr(const stcp_ifreq* ifr)
 {
-    struct ifaddr ifa(sa->sa_fam);
-    if (sa->sa_fam != STCP_AF_INET) {
-        throw slankdev::exception("invalid arguments");
-    }
+    struct ifaddr ifa(STCP_AF_INET);
 
-    const struct stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(sa);
+    const struct stcp_sockaddr_in* sin = 
+        reinterpret_cast<const stcp_sockaddr_in*>(&ifr->if_addr);
     ifa.raw.in = sin->sin_addr;
 
     addrs.push_back(ifa);
 }
 
-void ifnet::ioctl_siocgifaddr(stcp_sockaddr* sa)
+void ifnet::ioctl_siocgifaddr(stcp_ifreq* ifr)
 {
-    if (sa->sa_fam != STCP_AF_INET) {
-        throw slankdev::exception("invalid arguments");
-    }
-
-    struct stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(sa);
+    struct stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifr->if_addr);
     for (ifaddr ifa : addrs) {
         if (ifa.family == STCP_AF_INET) {
             sin->sin_fam  = STCP_AF_INET;
