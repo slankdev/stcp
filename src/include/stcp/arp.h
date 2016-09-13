@@ -14,6 +14,7 @@
 #include <stcp/ifnet.h>
 #include <stcp/dpdk.h>
 #include <stcp/types.h>
+#include <stcp/socket.h>
 
 
 namespace slank {
@@ -24,6 +25,11 @@ enum {
     stcp_siocdarpent
 };
 
+// struct stcp_arpentry {
+//     stcp_sockaddr_in in;
+//     stcp_sockaddr_dl dl;
+//     uint8_t port;
+// };
 
 struct arpentry {
     struct stcp_in_addr    ip;
@@ -69,8 +75,8 @@ public:
     void ioctl(uint64_t request, void* arg);
 
 private:
-    void ioctl_siocaarpent(const arpentry* ent);
-    void ioctl_siocdarpent(const arpentry* ent);
+    void ioctl_siocaarpent(const stcp_sockaddr_inarp* sinarp);
+    void ioctl_siocdarpent(const stcp_sockaddr_inarp* sinarp);
 };
 
 

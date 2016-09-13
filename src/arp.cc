@@ -158,14 +158,14 @@ void arp_module::ioctl(uint64_t request, void* arg)
         case stcp_siocaarpent:
         {
             /* add arp record */
-            const arpentry* ent = reinterpret_cast<const arpentry*>(arg);
+            const stcp_sockaddr_inarp* ent = reinterpret_cast<const stcp_sockaddr_inarp*>(arg);
             ioctl_siocaarpent(ent);
             break;
         }
         case stcp_siocdarpent:
         {
             /* add arp record */
-            const arpentry* ent = reinterpret_cast<const arpentry*>(arg);
+            const stcp_sockaddr_inarp* ent = reinterpret_cast<const stcp_sockaddr_inarp*>(arg);
             ioctl_siocdarpent(ent);
             break;
         }
@@ -177,14 +177,14 @@ void arp_module::ioctl(uint64_t request, void* arg)
     }
 }
 
-void arp_module::ioctl_siocaarpent(const arpentry* ent)
+void arp_module::ioctl_siocaarpent(const stcp_sockaddr_inarp* sinarp)
 {
-    slankdev::hexdump("tet", ent, sizeof(arpentry));
+    printf("%p\n", sinarp);
 }
 
-void arp_module::ioctl_siocdarpent(const arpentry* ent)
+void arp_module::ioctl_siocdarpent(const stcp_sockaddr_inarp* sinarp)
 {
-    slankdev::hexdump("tet", ent, sizeof(arpentry));
+    printf("%p\n", sinarp);
 }
 
 

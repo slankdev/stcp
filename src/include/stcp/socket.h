@@ -34,13 +34,13 @@ struct stcp_sockaddr_in {
 
 
 struct stcp_sockaddr_inarp {
-    uint8_t         sin_len;
-    uint8_t         sin_family;
-    uint16_t        sin_port;
-    struct	in_addr sin_addr;
-    struct	in_addr sin_srcaddr;
-    uint16_t	sin_tos;
-    uint16_t	sin_other;
+    uint8_t             sin_len;
+    uint8_t             sin_family;
+    uint16_t            sin_port;
+    struct stcp_in_addr sin_addr;
+    struct stcp_in_addr sin_srcaddr;
+    uint16_t            sin_tos;
+    uint16_t            sin_other;
 };
 
 
