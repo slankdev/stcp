@@ -9,6 +9,7 @@
 #include <stcp/config.h>
 #include <stcp/ifaddr.h>
 #include <stcp/protocol.h>
+#include <stcp/socket.h>
 
 
 namespace slank {
@@ -17,8 +18,8 @@ namespace slank {
 
 
 enum {
-    siocsifaddr,
-    siocgifaddr
+    stcp_siocsifaddr,
+    stcp_siocgifaddr
 };
 
 
@@ -55,6 +56,10 @@ public:
     void stat();
 
     void ioctl(uint64_t request, void* arg);
+
+private:
+    void ioctl_siocsifaddr(const stcp_sockaddr* sa);
+    void ioctl_siocgifaddr(stcp_sockaddr* sa);
 };
 
 

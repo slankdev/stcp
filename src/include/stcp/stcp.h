@@ -39,10 +39,8 @@ public:
         dpdk.init(argc, argv);
         arp.init();
         ip.init();
-
-        user_setting();
     }
-    void user_setting();
+    // void user_setting();
     void ifs_proc();
     void run();
     void stat_all()

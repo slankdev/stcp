@@ -117,41 +117,55 @@ void ifnet::stat()
 void ifnet::ioctl(uint64_t request, void* arg)
 {
     switch (request) {
-        case siocsifaddr:
+        case stcp_siocsifaddr:
         {
             stcp_sockaddr* sa = reinterpret_cast<stcp_sockaddr*>(arg);
-            struct ifaddr ifa(sa->sa_fam);
-
-            switch (sa->sa_fam) {
-                case STCP_AF_LINK:
-                {
-                    throw slankdev::exception("ioctl: setifaddr af_link not impl");
-                    break;
-                }
-                case STCP_AF_INET:
-                {
-                    struct stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(sa);
-                    ifa.raw.in = sin->sin_addr;
-                    break;
-                }
-                default:
-                {
-                    throw slankdev::exception("address family not support");
-                    break;
-                }
-            }
-            addrs.push_back(ifa);
+            ioctl_siocsifaddr(sa);
             break;
         }
-        case siocgifaddr:
+        case stcp_siocgifaddr:
         {
-            throw slankdev::exception("not impl yet");
+            stcp_sockaddr* sa = reinterpret_cast<stcp_sockaddr*>(arg);
+            ioctl_siocgifaddr(sa);
+            break;
         }
         default:
         {
-            throw slankdev::exception("not support");
+            throw slankdev::exception("invalid arguments");
+            break;
         }
     }
+}
+
+
+void ifnet::ioctl_siocsifaddr(const stcp_sockaddr* sa)
+{
+    struct ifaddr ifa(sa->sa_fam);
+    if (sa->sa_fam != STCP_AF_INET) {
+        throw slankdev::exception("invalid arguments");
+    }
+
+    const struct stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(sa);
+    ifa.raw.in = sin->sin_addr;
+
+    addrs.push_back(ifa);
+}
+
+void ifnet::ioctl_siocgifaddr(stcp_sockaddr* sa)
+{
+    if (sa->sa_fam != STCP_AF_INET) {
+        throw slankdev::exception("invalid arguments");
+    }
+
+    struct stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(sa);
+    for (ifaddr ifa : addrs) {
+        if (ifa.family == STCP_AF_INET) {
+            sin->sin_fam  = STCP_AF_INET;
+            sin->sin_addr = ifa.raw.in;
+            return;
+        }
+    }
+    throw slankdev::exception("not fount inet address");
 }
 
 
