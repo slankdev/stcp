@@ -21,17 +21,47 @@ struct stcp_sockaddr {
 	uint8_t         sa_len;		/* total length */
 	stcp_sa_family  sa_fam;	/* address family */
 	uint8_t         sa_data[14];	/* actually longer; address value */
+
+public:
+    bool operator==(const stcp_sockaddr& rhs) const
+    {
+        return memcmp(this, &rhs, sizeof(stcp_sockaddr)) == 0;
+    }
+    bool operator!=(const stcp_sockaddr& rhs) const
+    {
+        return !(*this == rhs);
+    }
+    stcp_sockaddr& operator=(const stcp_sockaddr& rhs)
+    {
+        sa_len = rhs.sa_len;
+        sa_fam = rhs.sa_fam;
+        memcpy(sa_data, rhs.sa_data, sizeof(sa_data));
+        return *this;
+    }
 };
 
 struct stcp_in_addr {
     uint8_t addr_bytes[4];
 
-    bool operator==(const struct stcp_in_addr& rhs) 
+public:
+    bool operator==(const stcp_in_addr& rhs) const 
     {
         for (int i=0; i<4; i++) {
-            if (addr_bytes[i] != rhs.addr_bytes[i]) return false;
+            if (addr_bytes[i] != rhs.addr_bytes[i]) 
+                return false;
         }
         return true;
+    }
+    bool operator!=(const stcp_in_addr& rhs) const
+    {
+        return !(*this == rhs);
+    }
+    stcp_in_addr& operator=(const stcp_in_addr& rhs)
+    {
+        for (int i=0; i<4; i++) {
+            this->addr_bytes[i] = rhs.addr_bytes[i];
+        }
+        return *this;
     }
 };
 
@@ -40,7 +70,29 @@ struct stcp_sockaddr_in {
 	stcp_sa_family      sin_fam;
 	uint16_t            sin_port;
 	struct stcp_in_addr sin_addr;
-	char	            sin_zero[8];
+	uint8_t	            sin_zero[8];
+
+public:
+    bool operator==(const stcp_sockaddr_in& rhs) const
+    {
+        bool r1 = (sin_len  == rhs.sin_len );
+        bool r2 = (sin_fam  == rhs.sin_fam );
+        bool r3 = (sin_port == rhs.sin_port);
+        bool r4 = (sin_addr == rhs.sin_addr);
+        return r1 && r2 && r3 && r4;
+    }
+    bool operator!=(const stcp_sockaddr_in& rhs) const
+    {
+        return !(*this==rhs);
+    }
+    stcp_sockaddr_in& operator=(const stcp_sockaddr_in& rhs)
+    {
+        sin_len  = rhs.sin_len ;
+        sin_fam  = rhs.sin_fam ;
+        sin_port = rhs.sin_port;
+        sin_addr = rhs.sin_addr;
+        return *this;
+    }
 };
 
 
@@ -49,9 +101,28 @@ struct stcp_arpreq {
     struct stcp_sockaddr arp_ha;		/* Hardware address.  */
     uint8_t              arp_ifindex;
 
+public:
     stcp_arpreq() {}
     stcp_arpreq(const stcp_sockaddr* pa, const stcp_sockaddr* ha, uint8_t index) :
         arp_pa(*pa), arp_ha(*ha), arp_ifindex(index) {}
+    bool operator==(const stcp_arpreq& rhs) const
+    {
+        bool r1 = (arp_pa      == rhs.arp_pa     );
+        bool r2 = (arp_ha      == rhs.arp_ha     );
+        bool r3 = (arp_ifindex == rhs.arp_ifindex);
+        return r1 && r2 && r3;
+    }
+    bool operator!=(const stcp_arpreq& rhs) const
+    {
+        return !(*this==rhs);
+    }
+    stcp_arpreq& operator=(const stcp_arpreq& rhs)
+    {
+        arp_pa      = rhs.arp_pa;
+        arp_ha      = rhs.arp_ha;
+        arp_ifindex = rhs.arp_ifindex;
+        return *this;
+    }
 };
 // ERASE
 // struct stcp_sockaddr_inarp {

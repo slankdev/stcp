@@ -45,11 +45,7 @@ static bool p_sockaddr_is_same(const stcp_sockaddr* a, const stcp_sockaddr* b)
 {
     const stcp_sockaddr_in* sina = reinterpret_cast<const stcp_sockaddr_in*>(a);
     const stcp_sockaddr_in* sinb = reinterpret_cast<const stcp_sockaddr_in*>(b);
-    for (int i=0; i<4; i++) {
-        if (sina->sin_addr.addr_bytes[i] != sinb->sin_addr.addr_bytes[i])
-            return false;
-    }
-    return true;
+    return ( sina->sin_addr == sinb->sin_addr );
 }
 
 
