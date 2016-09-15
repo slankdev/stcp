@@ -10,9 +10,41 @@
 #include <stcp/dpdk.h>
 #include <stcp/rte.h>
 #include <stcp/stcp.h>
+#include <stcp/socket.h>
 
 
-using namespace slank;
+
+namespace slank {
+
+struct stcp_in_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
+{
+    stcp_in_addr a;
+    a.addr_bytes[0] = o1;
+    a.addr_bytes[1] = o2;
+    a.addr_bytes[2] = o3;
+    a.addr_bytes[3] = o4;
+    return a;
+}
+
+struct stcp_in_addr stcp_inet_addr(const char* fmt)
+{
+    int32_t o[4];
+    int ret = sscanf(fmt, "%d.%d.%d.%d", &o[0], &o[1], &o[2], &o[3]);
+    if (ret != 4)
+        throw slankdev::exception("invalid format");
+
+    for (int i=0; i<4; i++) {
+        if (o[i] < 0 || 255 < o[i])
+            throw slankdev::exception("invalid format");
+    }
+
+    return stcp_inet_addr(
+       uint8_t(o[0]),
+       uint8_t(o[1]),
+       uint8_t(o[2]),
+       uint8_t(o[3]));
+}
+
 
 void ifnet::init()
 {
@@ -91,6 +123,16 @@ uint16_t ifnet::io_tx(size_t num_request_to_send)
     tx_packets += num_tx_sum;
     return num_tx_sum;
 }
+
+static const char* af2str(stcp_sa_family af)
+{
+    switch (af) {
+        case STCP_AF_LINK: return "AF_LINK";
+        case STCP_AF_INET: return "AF_INET";
+        default : return "unknown";
+    }
+}
+
 
 void ifnet::stat()
 {
@@ -258,4 +300,6 @@ void ifnet::ioctl_siocsarp(const stcp_arpreq* req)
     c.arp.proc_update_arptable(&ah, req->arp_ifindex);
 }
 
+
+} /* slank */
 

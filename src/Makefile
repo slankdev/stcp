@@ -6,13 +6,13 @@ TARGET = a.out
 LOGNAME = log.log
 SRCS   = \
 		main.cc \
-		ifaddr.cc \
 		dpdk.cc \
 		ifnet.cc \
 		rte.cc \
 		mbuf.cc \
 		arp.cc
 
+		# ifaddr.cc \
 
 OBJS   = $(SRCS:.cc=.o)
 
