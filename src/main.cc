@@ -32,15 +32,33 @@ static void start_up()
     /* add arp-record */
     struct stcp_arpreq req;
     req.arp_ifindex = 0;
-    req.arp_ha.sa_data[0] = 0xff;
-    req.arp_ha.sa_data[1] = 0xff;
-    req.arp_ha.sa_data[2] = 0xff;
-    req.arp_ha.sa_data[3] = 0xff;
-    req.arp_ha.sa_data[4] = 0xff;
-    req.arp_ha.sa_data[5] = 0xff;
+    req.arp_ha.sa_data[0] = 0xee;
+    req.arp_ha.sa_data[1] = 0xee;
+    req.arp_ha.sa_data[2] = 0xee;
+    req.arp_ha.sa_data[3] = 0xee;
+    req.arp_ha.sa_data[4] = 0xee;
+    req.arp_ha.sa_data[5] = 0xee;
     sin = reinterpret_cast<stcp_sockaddr_in*>(&req.arp_pa);
     sin->sin_addr = stcp_inet_addr(192, 168, 222, 111);
     s.arp.ioctl(STCP_SIOCAARPENT, &req);
+
+    sin->sin_addr = stcp_inet_addr(192, 168, 222, 112);
+    s.arp.ioctl(STCP_SIOCAARPENT, &req);
+    sin->sin_addr = stcp_inet_addr(192, 168, 222, 113);
+    s.arp.ioctl(STCP_SIOCAARPENT, &req);
+
+    /* del arp-record */
+    // req.arp_ifindex = 0;
+    // sin->sin_addr = stcp_inet_addr(192, 168, 222, 111);
+    // s.arp.ioctl(STCP_SIOCDARPENT, &req);
+
+    std::vector<stcp_arpreq>* tbl;
+    s.arp.ioctl(STCP_SIOCGARPENT, &tbl);
+    for (size_t i=0; i<tbl->size(); i++) {
+        printf("%zd: %s %d\n", i, p_sockaddr_to_str(&(*tbl)[i].arp_pa), 
+                (*tbl)[i].arp_ifindex);
+    }
+    exit(-1);
 }
 
 

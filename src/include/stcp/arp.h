@@ -22,9 +22,12 @@ namespace slank {
 
 enum {
     STCP_SIOCAARPENT,
-    STCP_SIOCDARPENT
+    STCP_SIOCDARPENT,
+    STCP_SIOCGARPENT,
 };
 
+char* p_sockaddr_to_str(const struct stcp_sockaddr* sa);
+char* hw_sockaddr_to_str(const struct stcp_sockaddr* sa);
 
 
 class arp_module {
@@ -39,8 +42,8 @@ public:
     void init() 
     {
         m.init();
-        dpdk& d = dpdk::instance();
-        table.resize(d.devices.size());
+        // dpdk& d = dpdk::instance();
+        // table.resize(d.devices.size());
     }
     void rx_push(struct rte_mbuf* msg){m.rx_push(msg);}
     void tx_push(struct rte_mbuf* msg){m.tx_push(msg);}
@@ -56,7 +59,8 @@ public:
 
 private:
     void ioctl_siocaarpent(stcp_arpreq* req);
-    // void ioctl_siocdarpent(stcp_arpreq* req);
+    void ioctl_siocdarpent(stcp_arpreq* req);
+    void ioctl_siocgarpent(std::vector<stcp_arpreq>** tbl);
 };
 
 

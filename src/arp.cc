@@ -14,7 +14,7 @@ namespace slank {
     
 
 
-static char* p_sockaddr_to_str(const struct stcp_sockaddr* sa)
+char* p_sockaddr_to_str(const struct stcp_sockaddr* sa)
 {
     static char str[16];
     const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(sa);
@@ -23,7 +23,7 @@ static char* p_sockaddr_to_str(const struct stcp_sockaddr* sa)
             sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
     return str;
 }
-static char* hw_sockaddr_to_str(const struct stcp_sockaddr* sa)
+char* hw_sockaddr_to_str(const struct stcp_sockaddr* sa)
 {
     static char str[32];
     sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x", 
@@ -174,6 +174,19 @@ void arp_module::ioctl(uint64_t request, void* arg)
             ioctl_siocaarpent(req);
             break;
         }
+        case STCP_SIOCDARPENT:
+        {
+            stcp_arpreq* req = reinterpret_cast<stcp_arpreq*>(arg);
+            ioctl_siocdarpent(req);
+            break;
+        }
+        case STCP_SIOCGARPENT:
+        {
+            std::vector<stcp_arpreq>** tbl = 
+                reinterpret_cast<std::vector<stcp_arpreq>**>(arg);
+            ioctl_siocgarpent(tbl);
+            break;
+        }
         default:
         {
             throw slankdev::exception("invalid arguments");
@@ -200,6 +213,27 @@ void arp_module::ioctl_siocaarpent(stcp_arpreq* req)
     table.push_back(*req);
 }
 
+
+/* 
+ * This functino evaluate only arp_pa and arp_ifindex,
+ * because arp_ha is not need deleteing arp-record.
+ */
+void arp_module::ioctl_siocdarpent(stcp_arpreq* req)
+{
+    for (size_t i=0; i<table.size(); i++) {
+        if (hw_sockaddr_is_same(&req->arp_pa, &table[i].arp_pa) &&
+                table[i].arp_ifindex == req->arp_ifindex) {
+            table.erase(table.begin() + i);
+            return ;
+        }
+    }
+    throw slankdev::exception("arp record not found");
+}
+
+void arp_module::ioctl_siocgarpent(std::vector<stcp_arpreq>** tbl)
+{
+    *tbl = &table;
+}
 
 
 } /* namespace */
