@@ -20,7 +20,7 @@ enum stcp_sa_family {
 struct stcp_sockaddr {
 	uint8_t         sa_len;		/* total length */
 	stcp_sa_family  sa_fam;	/* address family */
-	char            sa_data[14];	/* actually longer; address value */
+	uint8_t         sa_data[14];	/* actually longer; address value */
 };
 
 struct stcp_in_addr {
@@ -48,8 +48,12 @@ struct stcp_arpreq {
     struct stcp_sockaddr arp_pa;		/* Protocol address.  */
     struct stcp_sockaddr arp_ha;		/* Hardware address.  */
     uint8_t              arp_ifindex;
-};
 
+    stcp_arpreq() {}
+    stcp_arpreq(const stcp_sockaddr* pa, const stcp_sockaddr* ha, uint8_t index) :
+        arp_pa(*pa), arp_ha(*ha), arp_ifindex(index) {}
+};
+// ERASE
 // struct stcp_sockaddr_inarp {
 //     uint8_t             sin_len;
 //     uint8_t             sin_family;
@@ -59,7 +63,6 @@ struct stcp_arpreq {
 //     uint16_t            sin_tos;
 //     uint16_t            sin_other;
 // };
-
 
 // struct stcp_sockaddr_ll {
 //     uint16_t sll_family;

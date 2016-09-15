@@ -14,32 +14,44 @@ namespace slank {
     
 
 
-static char* ip2cstr(const struct stcp_in_addr ip)
+static char* p_sockaddr_to_str(const struct stcp_sockaddr* sa)
 {
     static char str[16];
+    const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(sa);
     sprintf(str, "%d.%d.%d.%d", 
-            ip.addr_bytes[0], ip.addr_bytes[1],
-            ip.addr_bytes[2], ip.addr_bytes[3]);
+            sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1],
+            sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
     return str;
 }
-
-static char* mac2cstr(const struct ether_addr mac)
+static char* hw_sockaddr_to_str(const struct stcp_sockaddr* sa)
 {
     static char str[32];
     sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x", 
-            mac.addr_bytes[0], mac.addr_bytes[1],
-            mac.addr_bytes[2], mac.addr_bytes[3],
-            mac.addr_bytes[4], mac.addr_bytes[5]);
+            sa->sa_data[0], sa->sa_data[1],
+            sa->sa_data[2], sa->sa_data[3],
+            sa->sa_data[4], sa->sa_data[5]);
     return str;
 }
-
-static bool is_same(struct ether_addr& a, struct ether_addr& b)
+static bool hw_sockaddr_is_same(const stcp_sockaddr* a, const stcp_sockaddr* b)
 {
-    for (int i=0; i<6; i++) 
-        if (a.addr_bytes[i] != b.addr_bytes[i])
+    for (int i=0; i<6; i++) {
+        if (a->sa_data[i] != b->sa_data[i])
             return false;
+    }
     return true;
 }
+
+static bool p_sockaddr_is_same(const stcp_sockaddr* a, const stcp_sockaddr* b)
+{
+    const stcp_sockaddr_in* sina = reinterpret_cast<const stcp_sockaddr_in*>(a);
+    const stcp_sockaddr_in* sinb = reinterpret_cast<const stcp_sockaddr_in*>(b);
+    for (int i=0; i<4; i++) {
+        if (sina->sin_addr.addr_bytes[i] != sinb->sin_addr.addr_bytes[i])
+            return false;
+    }
+    return true;
+}
+
 
 void arp_module::stat() 
 {
@@ -47,9 +59,10 @@ void arp_module::stat()
     printf("\n");
     printf("\tARP-chace\n");
     printf("\t%-16s %-20s %s\n", "Address", "HWaddress", "Iface");
-    for (size_t i=0; i<table.size(); i++) {
-        for (arpentry& a : table[i].entrys)
-            printf("\t%-16s %-20s %zd\n", ip2cstr(a.ip), mac2cstr(a.mac), i);
+    for (stcp_arpreq& a : table) {
+        printf("\t%-16s %-20s %d\n",
+                p_sockaddr_to_str(&a.arp_pa), 
+                hw_sockaddr_to_str(&a.arp_ha), a.arp_ifindex);
     }
 }
 
@@ -75,21 +88,16 @@ void arp_module::proc()
 
 void arp_module::proc_update_arptable(struct stcp_arphdr* ah, uint8_t port)
 {
-    arpentry newent(ah->psrc, ah->hwsrc);
+    stcp_sockaddr     sa_pa;
+    stcp_sockaddr     sa_ha;
+    stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
 
-    for (arpentry& ent : table[port].entrys) {
-        if (ent.ip == newent.ip) {
-            if (is_same(ent.mac, newent.mac)) {
-                return;
-            } else {
-                ent.mac = newent.mac;
-                return;
-            }
-        } else { /* ip isnt same */
-            continue;
-        }
-    }
-    table[port].entrys.push_back(newent);
+    sin_pa->sin_addr = ah->psrc;
+    for (int i=0; i<6; i++)
+        sa_ha.sa_data[i] = ah->hwsrc.addr_bytes[i];
+
+    stcp_arpreq req(&sa_pa, &sa_ha, port);
+    ioctl_siocaarpent(&req);
 }
 
 #if 0
@@ -164,20 +172,10 @@ void arp_module::proc_arpreply(struct stcp_arphdr* ah, uint8_t port)
 void arp_module::ioctl(uint64_t request, void* arg)
 {
     switch (request) {
-        case stcp_siocaarpent:
+        case STCP_SIOCAARPENT:
         {
-            /* add arp record */
-            // const stcp_sockaddr_inarp* ent = reinterpret_cast<const stcp_sockaddr_inarp*>(arg);
-            // ioctl_siocaarpent(ent);
-            ioctl_siocaarpent(arg);
-            break;
-        }
-        case stcp_siocdarpent:
-        {
-            /* add arp record */
-            // const stcp_sockaddr_inarp* ent = reinterpret_cast<const stcp_sockaddr_inarp*>(arg);
-            // ioctl_siocdarpent(ent);
-            ioctl_siocdarpent(arg);
+            stcp_arpreq* req = reinterpret_cast<stcp_arpreq*>(arg);
+            ioctl_siocaarpent(req);
             break;
         }
         default:
@@ -188,15 +186,24 @@ void arp_module::ioctl(uint64_t request, void* arg)
     }
 }
 
-void arp_module::ioctl_siocaarpent(const void* sinarp)
+void arp_module::ioctl_siocaarpent(stcp_arpreq* req)
 {
-    printf("%p\n", sinarp);
+    for (stcp_arpreq& ent : table) {
+        if (p_sockaddr_is_same(&ent.arp_pa, &req->arp_pa)) {
+            if (hw_sockaddr_is_same(&ent.arp_ha, &req->arp_ha)) {
+                return;
+            } else {
+                for (int i=0; i<6; i++)
+                    ent.arp_ha.sa_data[i] = req->arp_ha.sa_data[i];
+                return;
+            }
+        } else { /* ip isnt same */
+            continue;
+        }
+    }
+    table.push_back(*req);
 }
 
-void arp_module::ioctl_siocdarpent(const void* sinarp)
-{
-    printf("%p\n", sinarp);
-}
 
 
 } /* namespace */

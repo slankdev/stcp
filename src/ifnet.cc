@@ -191,12 +191,6 @@ void ifnet::ioctl(uint64_t request, void* arg)
             ioctl_siocgifhwaddr(ifr);
             break;
         }
-        case STCP_SIOCSARP:
-        {
-            const stcp_arpreq* req = reinterpret_cast<const stcp_arpreq*>(arg);
-            ioctl_siocsarp(req);
-            break;
-        }
         default:
         {
             throw slankdev::exception("invalid arguments");
@@ -284,21 +278,22 @@ void ifnet::ioctl_siocgifhwaddr(stcp_ifreq* ifr)
 
 
 
-void ifnet::ioctl_siocsarp(const stcp_arpreq* req)
-{
-    struct ether_addr ha;
-    for (int i=0; i<6; i++)
-        ha.addr_bytes[i] = req->arp_ha.sa_data[i];
-    const stcp_sockaddr_in* pa = reinterpret_cast<const stcp_sockaddr_in*>(&req->arp_pa);
-
-    struct stcp_arphdr ah;
-    ah.operation = 2;
-    ah.hwsrc = ha;
-    ah.psrc  = pa->sin_addr;
-
-    core& c = core::instance();
-    c.arp.proc_update_arptable(&ah, req->arp_ifindex);
-}
+// ERASE
+// void ifnet::ioctl_siocsarp(const stcp_arpreq* req)
+// {
+//     struct ether_addr ha;
+//     for (int i=0; i<6; i++)
+//         ha.addr_bytes[i] = req->arp_ha.sa_data[i];
+//     const stcp_sockaddr_in* pa = reinterpret_cast<const stcp_sockaddr_in*>(&req->arp_pa);
+//
+//     struct stcp_arphdr ah;
+//     ah.operation = 2;
+//     ah.hwsrc = ha;
+//     ah.psrc  = pa->sin_addr;
+//
+//     core& c = core::instance();
+//     c.arp.proc_update_arptable(&ah, req->arp_ifindex);
+// }
 
 
 } /* slank */

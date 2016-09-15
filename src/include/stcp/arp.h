@@ -21,36 +21,16 @@ namespace slank {
     
 
 enum {
-    stcp_siocaarpent,
-    stcp_siocdarpent
+    STCP_SIOCAARPENT,
+    STCP_SIOCDARPENT
 };
 
-// struct stcp_arpentry {
-//     stcp_sockaddr_in in;
-//     stcp_sockaddr_dl dl;
-//     uint8_t port;
-// };
 
-struct arpentry {
-    struct stcp_in_addr    ip;
-    struct ether_addr mac;
-
-    arpentry(stcp_in_addr i, ether_addr e)
-    {
-        ip = i;
-        mac = e;
-    }
-};
-
-struct port_entry {
-    std::vector<arpentry> entrys;
-    uint8_t port;
-};
 
 class arp_module {
 private:
     proto_module m;
-    std::vector<port_entry> table;
+    std::vector<stcp_arpreq> table;
 
     void proc_arpreply(struct stcp_arphdr* ah, uint8_t port);
     
@@ -75,8 +55,8 @@ public:
     void ioctl(uint64_t request, void* arg);
 
 private:
-    void ioctl_siocaarpent(const void* sinarp);
-    void ioctl_siocdarpent(const void* sinarp);
+    void ioctl_siocaarpent(stcp_arpreq* req);
+    // void ioctl_siocdarpent(stcp_arpreq* req);
 };
 
 

@@ -7,6 +7,7 @@ using namespace slank;
 static void start_up()
 {
     dpdk& dpdk = dpdk::instance();
+    core& s = core::instance();  
     struct stcp_sockaddr_in* sin;
 
     /* set ip addr */
@@ -31,15 +32,15 @@ static void start_up()
     /* add arp-record */
     struct stcp_arpreq req;
     req.arp_ifindex = 0;
-    req.arp_ha.sa_data[0] = 0xee;
-    req.arp_ha.sa_data[1] = 0xee;
-    req.arp_ha.sa_data[2] = 0xee;
-    req.arp_ha.sa_data[3] = 0xee;
-    req.arp_ha.sa_data[4] = 0xee;
-    req.arp_ha.sa_data[5] = 0xee;
+    req.arp_ha.sa_data[0] = 0xff;
+    req.arp_ha.sa_data[1] = 0xff;
+    req.arp_ha.sa_data[2] = 0xff;
+    req.arp_ha.sa_data[3] = 0xff;
+    req.arp_ha.sa_data[4] = 0xff;
+    req.arp_ha.sa_data[5] = 0xff;
     sin = reinterpret_cast<stcp_sockaddr_in*>(&req.arp_pa);
     sin->sin_addr = stcp_inet_addr(192, 168, 222, 111);
-    dpdk.devices[0].ioctl(STCP_SIOCSARP, &req);
+    s.arp.ioctl(STCP_SIOCAARPENT, &req);
 }
 
 
