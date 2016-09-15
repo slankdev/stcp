@@ -44,10 +44,14 @@ void ifnet::init()
         throw rte::exception(str);
     }
 
-    ifaddr ifa(STCP_AF_LINK);
+
+
     struct ether_addr addr;
     rte::eth_macaddr_get(port_id, &addr);
-    ifa.init(&addr, sizeof(addr));
+    stcp_sockaddr s;
+    for (int i=0; i<6; i++)
+        s.sa_data[i] = addr.addr_bytes[i];
+    ifaddr ifa(STCP_AF_LINK, &s);
     addrs.push_back(ifa);
 }
 
@@ -100,15 +104,18 @@ void ifnet::stat()
     printf("\n");
     for (ifaddr& ifa : addrs) {
         printf("\t%-10s ", af2str(ifa.family));
-        if (ifa.family == STCP_AF_LINK) 
+        if (ifa.family == STCP_AF_LINK) {
             printf("%02x:%02x:%02x:%02x:%02x:%02x " 
-                , ifa.raw.link.addr_bytes[0], ifa.raw.link.addr_bytes[1]
-                , ifa.raw.link.addr_bytes[2], ifa.raw.link.addr_bytes[3]
-                , ifa.raw.link.addr_bytes[4], ifa.raw.link.addr_bytes[5]);
-        else if (ifa.family == STCP_AF_INET)
+                , ifa.raw.sa_data[0], ifa.raw.sa_data[1]
+                , ifa.raw.sa_data[2], ifa.raw.sa_data[3]
+                , ifa.raw.sa_data[4], ifa.raw.sa_data[5]);
+        } else if (ifa.family == STCP_AF_INET) {
+            struct stcp_sockaddr_in* sin = 
+                reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
             printf("%d.%d.%d.%d " 
-                , ifa.raw.in.addr_bytes[0], ifa.raw.in.addr_bytes[1]
-                , ifa.raw.in.addr_bytes[2], ifa.raw.in.addr_bytes[3]);
+                , sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1]
+                , sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
+        }
         printf("\n");
     }
     printf("\n");
@@ -160,30 +167,33 @@ void ifnet::ioctl(uint64_t request, void* arg)
 void ifnet::ioctl_siocsifaddr(const stcp_ifreq* ifr)
 {
     bool in_addr_setted = false;
-    const struct stcp_sockaddr_in* sin = 
-        reinterpret_cast<const stcp_sockaddr_in*>(&ifr->if_addr);
 
     for (size_t i=0; i<addrs.size(); i++) {
         if (addrs[i].family == STCP_AF_INET) {
-            addrs[i].raw.in = sin->sin_addr;
+            const struct stcp_sockaddr_in* sin = 
+                reinterpret_cast<const stcp_sockaddr_in*>(&ifr->if_addr);
+            stcp_sockaddr_in* s = reinterpret_cast<stcp_sockaddr_in*>(&addrs[i].raw);
+            s->sin_addr = sin->sin_addr;
             in_addr_setted = true;
         }
     }
     
     if (in_addr_setted == false) {
-        struct ifaddr ifa_new(STCP_AF_INET);
-        ifa_new.raw.in = sin->sin_addr;
+        struct ifaddr ifa_new(STCP_AF_INET, &ifr->if_addr);
         addrs.push_back(ifa_new);
     }
 }
 
 void ifnet::ioctl_siocgifaddr(stcp_ifreq* ifr)
 {
-    struct stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifr->if_addr);
     for (ifaddr ifa : addrs) {
         if (ifa.family == STCP_AF_INET) {
+            struct stcp_sockaddr_in* sin = 
+                reinterpret_cast<stcp_sockaddr_in*>(&ifr->if_addr);
+            struct stcp_sockaddr_in* s =
+                reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
             sin->sin_fam  = STCP_AF_INET;
-            sin->sin_addr = ifa.raw.in;
+            sin->sin_addr = s->sin_addr;
             return;
         }
     }
@@ -197,24 +207,18 @@ void ifnet::ioctl_siocsifhwaddr(const stcp_ifreq* ifr)
 
     for (size_t i=0; i<addrs.size(); i++) {
         if (addrs[i].family == STCP_AF_LINK) {
-            addrs[i].raw.link.addr_bytes[0] = ifr->if_hwaddr.sa_data[0];
-            addrs[i].raw.link.addr_bytes[1] = ifr->if_hwaddr.sa_data[1];
-            addrs[i].raw.link.addr_bytes[2] = ifr->if_hwaddr.sa_data[2];
-            addrs[i].raw.link.addr_bytes[3] = ifr->if_hwaddr.sa_data[3];
-            addrs[i].raw.link.addr_bytes[4] = ifr->if_hwaddr.sa_data[4];
-            addrs[i].raw.link.addr_bytes[5] = ifr->if_hwaddr.sa_data[5];
+            addrs[i].raw.sa_data[0] = ifr->if_hwaddr.sa_data[0];
+            addrs[i].raw.sa_data[1] = ifr->if_hwaddr.sa_data[1];
+            addrs[i].raw.sa_data[2] = ifr->if_hwaddr.sa_data[2];
+            addrs[i].raw.sa_data[3] = ifr->if_hwaddr.sa_data[3];
+            addrs[i].raw.sa_data[4] = ifr->if_hwaddr.sa_data[4];
+            addrs[i].raw.sa_data[5] = ifr->if_hwaddr.sa_data[5];
             in_addr_setted = true;
         }
     }
     
     if (in_addr_setted == false) {
-        struct ifaddr ifa_new(STCP_AF_LINK);
-        ifa_new.raw.link.addr_bytes[0] = ifr->if_hwaddr.sa_data[0];
-        ifa_new.raw.link.addr_bytes[1] = ifr->if_hwaddr.sa_data[1];
-        ifa_new.raw.link.addr_bytes[2] = ifr->if_hwaddr.sa_data[2];
-        ifa_new.raw.link.addr_bytes[3] = ifr->if_hwaddr.sa_data[3];
-        ifa_new.raw.link.addr_bytes[4] = ifr->if_hwaddr.sa_data[4];
-        ifa_new.raw.link.addr_bytes[5] = ifr->if_hwaddr.sa_data[5];
+        struct ifaddr ifa_new(STCP_AF_LINK, &ifr->if_hwaddr);
         addrs.push_back(ifa_new);
     }
 }
@@ -224,12 +228,12 @@ void ifnet::ioctl_siocgifhwaddr(stcp_ifreq* ifr)
 {
     for (ifaddr ifa : addrs) {
         if (ifa.family == STCP_AF_LINK) {
-            ifr->if_hwaddr.sa_data[0] = ifa.raw.link.addr_bytes[0];
-            ifr->if_hwaddr.sa_data[1] = ifa.raw.link.addr_bytes[1];
-            ifr->if_hwaddr.sa_data[2] = ifa.raw.link.addr_bytes[2];
-            ifr->if_hwaddr.sa_data[3] = ifa.raw.link.addr_bytes[3];
-            ifr->if_hwaddr.sa_data[4] = ifa.raw.link.addr_bytes[4];
-            ifr->if_hwaddr.sa_data[5] = ifa.raw.link.addr_bytes[5];
+            ifr->if_hwaddr.sa_data[0] = ifa.raw.sa_data[0];
+            ifr->if_hwaddr.sa_data[1] = ifa.raw.sa_data[1];
+            ifr->if_hwaddr.sa_data[2] = ifa.raw.sa_data[2];
+            ifr->if_hwaddr.sa_data[3] = ifa.raw.sa_data[3];
+            ifr->if_hwaddr.sa_data[4] = ifa.raw.sa_data[4];
+            ifr->if_hwaddr.sa_data[5] = ifa.raw.sa_data[5];
             return;
         }
     }

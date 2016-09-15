@@ -63,7 +63,9 @@ void arp_module::proc()
         if (ah->operation == htons(2)) { // TODO hard code
             proc_update_arptable(ah, port);
         } else if (ah->operation == htons(1)) {
+#if 0
             proc_arpreply(ah, port);
+#endif
         }
         rte::pktmbuf_free(msg);
     }
@@ -90,6 +92,7 @@ void arp_module::proc_update_arptable(struct stcp_arphdr* ah, uint8_t port)
     table[port].entrys.push_back(newent);
 }
 
+#if 0
 static struct rte_mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
 {
 	struct ether_addr mymac;
@@ -131,17 +134,22 @@ static struct rte_mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
 
 	return msg;
 }
+#endif
 
+#if 0
 static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
 {
 	ifnet& dev = dpdk::instance().devices[port];
 	for (ifaddr& ifa : dev.addrs) {
-		if (ifa.family == STCP_AF_INET && ifa.raw.in==ah->pdst)
+        stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
+		if (ifa.family == STCP_AF_INET && sin->sin_addr==ah->pdst)
 			return true;
 	}
 	return false;
 }
+#endif
 
+#if 0
 void arp_module::proc_arpreply(struct stcp_arphdr* ah, uint8_t port)
 {
 	if (is_request_to_me(ah, port)) {
@@ -151,6 +159,7 @@ void arp_module::proc_arpreply(struct stcp_arphdr* ah, uint8_t port)
 		d.devices[port].tx_push(msg);
 	}
 }
+#endif
 
 void arp_module::ioctl(uint64_t request, void* arg)
 {

@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <rte_mbuf.h> // for struct ether_header
+#include <stcp/socket.h>
 
 
 
@@ -15,17 +16,6 @@
 namespace slank {
 
 
-struct stcp_in_addr {
-    uint8_t addr_bytes[4];
-
-    bool operator==(const struct stcp_in_addr& rhs) 
-    {
-        for (int i=0; i<4; i++) {
-            if (addr_bytes[i] != rhs.addr_bytes[i]) return false;
-        }
-        return true;
-    }
-};
 
 struct stcp_ether_header {
     struct ether_addr dst;

@@ -29,16 +29,32 @@ struct stcp_in_addr stcp_inet_addr(const char* fmt);
 class ifaddr {
 public:
     stcp_sa_family family;
-    struct {
-        union {
-            uint8_t data[16];
-            struct ether_addr link;
-            struct stcp_in_addr in;
-        };
-    } raw;
-
-    ifaddr(stcp_sa_family af) : family(af) {}
-    void init(const void* d, size_t l);
+    struct stcp_sockaddr raw;
+    // ifaddr(stcp_sa_family af) : family(af) {}
+    ifaddr(stcp_sa_family af, const stcp_sockaddr* addr) : family(af)
+    {
+        switch (family) {
+            case STCP_AF_LINK:
+            {
+                for (int i=0; i<6; i++) {
+                    raw.sa_data[i] = addr->sa_data[i];
+                }
+                break;
+            }
+            case STCP_AF_INET:
+            {
+                stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&raw);
+                const stcp_sockaddr_in* sin_addr= reinterpret_cast<const stcp_sockaddr_in*>(addr);
+                sin->sin_addr = sin_addr->sin_addr;
+                break;
+            }
+            default:
+            {
+                throw slankdev::exception("address family is not support");
+                break;
+            }
+        }
+    }
 };
 
 
