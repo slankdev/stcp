@@ -10,6 +10,7 @@ SRCS   = \
 		ifnet.cc \
 		rte.cc \
 		mbuf.cc \
+		socket.cc \
 		arp.cc
 
 		# ifaddr.cc \

@@ -36,7 +36,26 @@ public:
         static dpdk d;
         return d;
     }
-    void init(int argc, char** argv);
+    void init(int argc, char** argv)
+    {
+
+        rte::eth_dev_init(argc, argv);
+        mempool = rte::pktmbuf_pool_create(
+                mp_name.c_str(), 
+                num_mbufs * rte::eth_dev_count(), 
+                mbuf_cache_size, 
+                0, 
+                RTE_MBUF_DEFAULT_BUF_SIZE, 
+                rte::socket_id()
+                );
+
+        for (size_t port=0; port<rte::eth_dev_count(); port++) {
+            ifnet dev(port);
+            dev.init();
+            devices.push_back(dev);
+        }
+    }
+
     struct rte_mempool* get_mempool() { return mempool; }
 };
 

@@ -9,11 +9,7 @@
 #include <stddef.h>
 
 #include <stcp/protocol.h>
-#include <stcp/ip.h>
 #include <stcp/config.h>
-#include <stcp/ifnet.h>
-#include <stcp/dpdk.h>
-#include <stcp/types.h>
 #include <stcp/socket.h>
 
 
@@ -26,8 +22,49 @@ enum {
     STCP_SIOCGARPENT,
 };
 
-char* p_sockaddr_to_str(const struct stcp_sockaddr* sa);
-char* hw_sockaddr_to_str(const struct stcp_sockaddr* sa);
+
+struct stcp_arphdr {
+    uint16_t            hwtype;
+    uint16_t            ptype;
+    uint8_t             hwlen;
+    uint8_t             plen;
+    uint16_t            operation;
+    struct ether_addr   hwsrc;
+    struct stcp_in_addr psrc;
+    struct ether_addr   hwdst;
+    struct stcp_in_addr pdst;
+};
+
+
+
+struct stcp_arpreq {
+    struct stcp_sockaddr arp_pa;		/* Protocol address.  */
+    struct stcp_sockaddr arp_ha;		/* Hardware address.  */
+    uint8_t              arp_ifindex;
+
+public:
+    stcp_arpreq() {}
+    stcp_arpreq(const stcp_sockaddr* pa, const stcp_sockaddr* ha, uint8_t index) :
+        arp_pa(*pa), arp_ha(*ha), arp_ifindex(index) {}
+    bool operator==(const stcp_arpreq& rhs) const
+    {
+        bool r1 = (arp_pa      == rhs.arp_pa     );
+        bool r2 = (arp_ha      == rhs.arp_ha     );
+        bool r3 = (arp_ifindex == rhs.arp_ifindex);
+        return r1 && r2 && r3;
+    }
+    bool operator!=(const stcp_arpreq& rhs) const
+    {
+        return !(*this==rhs);
+    }
+    stcp_arpreq& operator=(const stcp_arpreq& rhs)
+    {
+        arp_pa      = rhs.arp_pa;
+        arp_ha      = rhs.arp_ha;
+        arp_ifindex = rhs.arp_ifindex;
+        return *this;
+    }
+};
 
 
 class arp_module {

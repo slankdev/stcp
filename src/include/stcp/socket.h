@@ -2,9 +2,21 @@
 
 #pragma once 
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stddef.h>
+
+
 
 
 namespace slank {
+
+struct stcp_in_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
+struct stcp_in_addr stcp_inet_addr(const char* fmt);
+char* p_sockaddr_to_str(const struct stcp_sockaddr* sa);
+char* hw_sockaddr_to_str(const struct stcp_sockaddr* sa);
 
 
 enum {
@@ -18,9 +30,9 @@ enum stcp_sa_family {
 };
 
 struct stcp_sockaddr {
-	uint8_t         sa_len;		/* total length */
-	stcp_sa_family  sa_fam;	/* address family */
-	uint8_t         sa_data[14];	/* actually longer; address value */
+	uint8_t         sa_len;       /* total length */
+	stcp_sa_family  sa_fam;	      /* address family */
+	uint8_t         sa_data[14];  /* actually longer; address value */
 
 public:
     bool operator==(const stcp_sockaddr& rhs) const
@@ -96,34 +108,6 @@ public:
 };
 
 
-struct stcp_arpreq {
-    struct stcp_sockaddr arp_pa;		/* Protocol address.  */
-    struct stcp_sockaddr arp_ha;		/* Hardware address.  */
-    uint8_t              arp_ifindex;
-
-public:
-    stcp_arpreq() {}
-    stcp_arpreq(const stcp_sockaddr* pa, const stcp_sockaddr* ha, uint8_t index) :
-        arp_pa(*pa), arp_ha(*ha), arp_ifindex(index) {}
-    bool operator==(const stcp_arpreq& rhs) const
-    {
-        bool r1 = (arp_pa      == rhs.arp_pa     );
-        bool r2 = (arp_ha      == rhs.arp_ha     );
-        bool r3 = (arp_ifindex == rhs.arp_ifindex);
-        return r1 && r2 && r3;
-    }
-    bool operator!=(const stcp_arpreq& rhs) const
-    {
-        return !(*this==rhs);
-    }
-    stcp_arpreq& operator=(const stcp_arpreq& rhs)
-    {
-        arp_pa      = rhs.arp_pa;
-        arp_ha      = rhs.arp_ha;
-        arp_ifindex = rhs.arp_ifindex;
-        return *this;
-    }
-};
 // ERASE
 // struct stcp_sockaddr_inarp {
 //     uint8_t             sin_len;

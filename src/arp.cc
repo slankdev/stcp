@@ -14,24 +14,6 @@ namespace slank {
     
 
 
-char* p_sockaddr_to_str(const struct stcp_sockaddr* sa)
-{
-    static char str[16];
-    const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(sa);
-    sprintf(str, "%d.%d.%d.%d", 
-            sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1],
-            sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
-    return str;
-}
-char* hw_sockaddr_to_str(const struct stcp_sockaddr* sa)
-{
-    static char str[32];
-    sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x", 
-            sa->sa_data[0], sa->sa_data[1],
-            sa->sa_data[2], sa->sa_data[3],
-            sa->sa_data[4], sa->sa_data[5]);
-    return str;
-}
 static bool hw_sockaddr_is_same(const stcp_sockaddr* a, const stcp_sockaddr* b)
 {
     for (int i=0; i<6; i++) {

@@ -6,7 +6,6 @@
 
 #include <stcp/dpdk.h>
 #include <stcp/config.h>
-#include <stcp/rte.h>
 #include <stcp/mbuf.h>
     
 #include <stcp/protocol.h>
@@ -23,9 +22,6 @@ static uint16_t get_ether_type(struct rte_mbuf* msg)
     eh = rte_pktmbuf_mtod(msg, struct stcp_ether_header*);
     return rte_bswap16(eh->type);
 }
-
-
-
 
 
 class core {

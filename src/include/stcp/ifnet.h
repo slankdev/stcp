@@ -15,8 +15,6 @@
 namespace slank {
     
 
-struct stcp_in_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
-struct stcp_in_addr stcp_inet_addr(const char* fmt);
 
 
 
@@ -26,11 +24,7 @@ enum {
     STCP_SIOCGIFADDR,
     STCP_SIOCSIFHWADDR,
     STCP_SIOCGIFHWADDR,
-    // STCP_SIOCSARP,
-    // STCP_SIOCDARP,
-    // STCP_SIOCGARP,
 };
-
 
 enum {
     BURST_SIZE = 64,
