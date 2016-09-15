@@ -49,8 +49,6 @@ for (net_device& dev : dpdk.devices) {
 }
 ```
 
-
-
 ## arp モジュール
 
 
