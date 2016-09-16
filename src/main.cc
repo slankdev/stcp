@@ -6,8 +6,7 @@ using namespace slank;
 
 static void start_up()
 {
-    // core& s = core::instance();  
-    dpdk& dpdk = dpdk::instance();
+    dpdk_core& dpdk = core::instance().dpdk;
     struct stcp_sockaddr_in* sin;
 
     /* set ip addr */
@@ -16,7 +15,6 @@ static void start_up()
     sin = reinterpret_cast<stcp_sockaddr_in*>(&ifr.if_addr);
     sin->sin_addr = stcp_inet_addr(192, 168, 222, 10);
     dpdk.devices[0].ioctl(STCP_SIOCSIFADDR, &ifr);
-
 
     /* set hw addr */
     memset(&ifr, 0, sizeof ifr);

@@ -29,6 +29,7 @@ public:
     arp_module arp;
     ip_module  ip;
     bool modules_updated;
+    dpdk_core dpdk;
 
 private:
     core() : modules_updated(false) {}
@@ -44,15 +45,12 @@ public:
     }
     void init(int argc, char** argv)
     {
-        dpdk& dpdk = dpdk::instance();
         dpdk.init(argc, argv);
         arp.init();
         ip.init();
     }
     void ifs_proc()
     {
-        dpdk& dpdk = dpdk::instance();
-
         for (ifnet& dev : dpdk.devices) {
             uint16_t num_rx = dev.io_rx();
             if (unlikely(num_rx == 0)) continue;
@@ -108,7 +106,6 @@ public:
 
     void stat_all()
     {
-        dpdk& dpdk = dpdk::instance();
         clear_screen();
 
         for (ifnet& dev : dpdk.devices) {

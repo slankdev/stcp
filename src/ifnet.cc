@@ -25,7 +25,7 @@ void ifnet::init()
     port_conf.rxmode.max_rx_pkt_len = ETHER_MAX_LEN;
     rte::eth_dev_configure(port_id, num_rx_rings, num_tx_rings, &port_conf);
 
-    dpdk& d = dpdk::instance();
+    dpdk_core& d = core::instance().dpdk;
     for (uint16_t ring=0; ring<num_rx_rings; ring++) {
         rte::eth_rx_queue_setup(port_id, ring, rx_ring_size,
                 rte::eth_dev_socket_id(port_id), NULL, d.get_mempool()); 
@@ -249,23 +249,6 @@ void ifnet::ioctl_siocgifhwaddr(stcp_ifreq* ifr)
 }
 
 
-
-// ERASE
-// void ifnet::ioctl_siocsarp(const stcp_arpreq* req)
-// {
-//     struct ether_addr ha;
-//     for (int i=0; i<6; i++)
-//         ha.addr_bytes[i] = req->arp_ha.sa_data[i];
-//     const stcp_sockaddr_in* pa = reinterpret_cast<const stcp_sockaddr_in*>(&req->arp_pa);
-//
-//     struct stcp_arphdr ah;
-//     ah.operation = 2;
-//     ah.hwsrc = ha;
-//     ah.psrc  = pa->sin_addr;
-//
-//     core& c = core::instance();
-//     c.arp.proc_update_arptable(&ah, req->arp_ifindex);
-// }
 
 
 } /* slank */

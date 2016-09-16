@@ -65,7 +65,6 @@ private:
     void ioctl_siocgifaddr(stcp_ifreq* ifr);
     void ioctl_siocsifhwaddr(const stcp_ifreq* ifr);
     void ioctl_siocgifhwaddr(stcp_ifreq* ifr);
-
 };
 
 

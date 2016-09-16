@@ -108,16 +108,6 @@ public:
 };
 
 
-// ERASE
-// struct stcp_sockaddr_inarp {
-//     uint8_t             sin_len;
-//     uint8_t             sin_family;
-//     uint16_t            sin_port;
-//     struct stcp_in_addr sin_addr;
-//     struct stcp_in_addr sin_srcaddr;
-//     uint16_t            sin_tos;
-//     uint16_t            sin_other;
-// };
 
 // struct stcp_sockaddr_ll {
 //     uint16_t sll_family;
@@ -183,7 +173,6 @@ struct stcp_ifreq {
         int             if_ifindex;
         int             if_metric;
         int             if_mtu;
-        // struct ifmap    ifr_map;
         char            if_slave[STCP_IFNAMSIZ];
         char            if_newname[STCP_IFNAMSIZ];
         char            *if_data;
@@ -193,33 +182,24 @@ struct stcp_ifreq {
 
 
 
+// class socket_impl {
+// public:
+//     virtual void open(stcp_sa_family domain);
+//     virtual void close();
+//     virtual void ioctl();
+//     // virtual void write();
+//     // virtual size_t read();
+// };
+//
 // class socket {
 // private:
-//     void socket_inet(int type, int protocol);
-//     void socket_link(int type, int protocol);
-//
+//     socket_impl* sock;
 // public:
-//     socket(stcp_sa_family domain, int type, int protocol) {
-//         switch (domain) {
-//             case STCP_AF_INET:
-//             {
-//                 socket_inet(type, protocol);
-//                 break;
-//             }
-//             case STCP_AF_LINK:
-//             {
-//                 socket_link(type, protocol);
-//                 break;
-//                 break;
-//             }
-//             default:
-//             {
-//                 throw slankdev::exception("not supported");
-//                 break;
-//             }
-//         }
+//     socket(stcp_sa_family domain)
+//     {
 //     }
 //
+//     void 
 // };
 
 

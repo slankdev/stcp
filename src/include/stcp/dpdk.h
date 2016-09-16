@@ -20,22 +20,18 @@ namespace slank {
 
 
 
-class dpdk {
+class dpdk_core {
 private:
     static uint32_t num_mbufs;        /* num of mbuf that allocated in a mempool */
     static uint32_t mbuf_cache_size;  /* packet cache size in each mbufs         */
     static std::string mp_name;       /* memory pool name                        */
     struct rte_mempool* mempool;
-    dpdk() : mempool(nullptr) {}
-    ~dpdk() {}                  
 
 public:
+    dpdk_core() : mempool(nullptr) {}
+    ~dpdk_core() {}                  
+
     std::vector<ifnet> devices;
-    static dpdk& instance()
-    {
-        static dpdk d;
-        return d;
-    }
     void init(int argc, char** argv)
     {
 
@@ -55,7 +51,6 @@ public:
             devices.push_back(dev);
         }
     }
-
     struct rte_mempool* get_mempool() { return mempool; }
 };
 
