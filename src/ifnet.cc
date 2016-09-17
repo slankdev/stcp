@@ -249,6 +249,19 @@ void ifnet::ioctl_siocgifhwaddr(stcp_ifreq* ifr)
 }
 
 
+// void ifnet::write(const void* buf, size_t bufsize)
+// {
+//     struct rte_mbuf mbuf = rte::pktmbuf_alloc();
+//     printf("%p, %zd \n", buf, bufsize);
+// }
+//
+//
+// size_t ifnet::read(void* buf, size_t bufsize)
+// {
+//     printf("%p, %zd \n", buf, bufsize);
+//     throw slankdev::exception("not impl yet");
+//     return 0;
+// }
 
 
 } /* slank */

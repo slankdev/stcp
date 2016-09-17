@@ -59,6 +59,8 @@ public:
     void stat();
 
     void ioctl(uint64_t request, void* arg);
+    // void write(const void* buf, size_t bufsize);
+    // size_t read(void* buf, size_t bufsize);
 
 private:
     void ioctl_siocsifaddr(const stcp_ifreq* ifr);
