@@ -7,9 +7,44 @@ dpdkクラスのインスタンスを持ってきて、そこから
 そこに対してread/writeなどを行えるようにすれば
 socketオブジェクトは簡単に実装できそう
 
+様々なsocketに対する統一したインターフェースの操作は
+socket_implクラスを継承して操作を行う
+
+```
+class socket_impl {
+	void read();
+	void write();
+	void ioctl();
+	void close();
+	void open();
+};
+
+class socket_af_link : public socket_impl {};
+class socket_af_inet : public socket_impl {};
+class socket_af_arp  : public socket_impl {};
+```
+
+
+## 各ソケットに対する参照方法
+
 
 
 ## Ethernetに関するsocket
+
+AF_LINKのソケットを確保してそれに対して操作を行う。
+
+
+```
+stcp_ifreq ifr;
+ifr.if_ifindex = 0;
+
+socket sock(AF_LINK, STCP_TBD, STCP_TBD);
+sock.ioctl(SIOC_BINDTODEVICE, &ifr);
+
+sock.ioctl(...);
+sock.write(...);
+sock.read(...);
+```
 
 ### MACアドレスの参照
 
@@ -111,3 +146,5 @@ req.arp_ifindex = 0;
 sin->sin_addr = stcp_inet_addr(192, 168, 222, 111);
 s.arp.ioctl(STCP_SIOCDARPENT, &req);
 ```
+
+
