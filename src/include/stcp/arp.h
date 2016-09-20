@@ -80,8 +80,6 @@ private:
 private:
     proto_module m;
     std::vector<stcp_arpreq> table;
-
-    void proc_arpreply(struct stcp_arphdr* ah, uint8_t port);
     
 public:
     arp_module() : use_dynamic_arp(false) { m.name = "ARP"; }

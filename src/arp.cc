@@ -6,6 +6,7 @@
 #include <stcp/config.h>
 #include <stcp/dpdk.h>
 #include <stcp/rte.h>
+#include <stcp/stcp.h>
 
 #include <pgen2.h>
 
@@ -13,6 +14,46 @@
 namespace slank {
     
 
+
+static mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
+{
+	stcp_sockaddr mymac;
+    for (int i=0; i<6; i++)
+        mymac.sa_data[i] = 0xff;
+	for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
+		if (ifa.family == STCP_AF_LINK) {
+			mymac = ifa.raw;
+		}
+	}
+
+	mbuf* msg = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
+    msg->data_len = sizeof(stcp_arphdr);
+    msg->pkt_len  = sizeof(stcp_arphdr);
+
+	stcp_arphdr* rep_ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
+	rep_ah->hwtype = rte::bswap16(0x0001);
+	rep_ah->ptype  = rte::bswap16(0x0800);
+	rep_ah->hwlen  = 6;
+	rep_ah->plen   = 4;
+	rep_ah->operation = rte::bswap16(STCP_ARPOP_REPLY);
+    for (int i=0; i<6; i++) 
+        rep_ah->hwsrc.addr_bytes[i] = mymac.sa_data[i];
+	rep_ah->psrc  = ah->pdst;
+	rep_ah->hwdst = ah->hwsrc;
+	rep_ah->pdst  = ah->psrc;
+
+	return msg;
+}
+
+static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
+{
+	for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
+        stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
+		if (ifa.family == STCP_AF_INET && sin->sin_addr==ah->pdst)
+			return true;
+	}
+	return false;
+}
 
 static bool hw_sockaddr_is_same(const stcp_sockaddr* a, const stcp_sockaddr* b)
 {
@@ -51,7 +92,7 @@ void arp_module::proc()
         struct stcp_arphdr* ah  = rte::pktmbuf_mtod<struct stcp_arphdr*>(msg);
         uint8_t port = msg->port;
 
-        if (ah->operation == htons(2)) { // TODO hard code
+        if (ah->operation == htons(STCP_ARPOP_REPLY)) {
             stcp_sockaddr     sa_pa;
             stcp_sockaddr     sa_ha;
             stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
@@ -63,86 +104,19 @@ void arp_module::proc()
             stcp_arpreq req(&sa_pa, &sa_ha, port);
             ioctl_siocaarpent(&req);
 
-        } else if (ah->operation == htons(1)) {
-#if 0
-            proc_arpreply(ah, port);
-#endif
+        } else if (ah->operation == htons(STCP_ARPOP_REQUEST)) {
+            if (is_request_to_me(ah, port)) {
+                mbuf* msg = alloc_reply_packet(ah, port);
+                stcp_sockaddr sa;
+                sa.sa_fam = STCP_AF_ARP;
+                core::instance().ether.tx_push(port, msg, &sa);
+            }
         }
         rte::pktmbuf_free(msg);
     }
 
-    while (m.tx_size() > 0) throw slankdev::exception("Not Impl yet");
 }
 
-
-#if 0
-static mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
-{
-	struct ether_addr mymac;
-	memset(&mymac, 0, sizeof(mymac));
-
-	bool macfound=false;
-	ifnet& dev = dpdk::instance().devices[port];
-	for (ifaddr& ifa : dev.addrs) {
-		if (ifa.family == STCP_AF_LINK) {
-			mymac = ifa.raw.link;
-			macfound = true;
-		}
-	}
-	if (!macfound)
-		throw slankdev::exception("address not found");
-
-
-    dpdk& d = dpdk::instance();
-	mbuf* msg = rte::pktmbuf_alloc(d.get_mempool());
-    msg->data_len = 64;
-    msg->pkt_len  = 64;
-	uint8_t* data = rte::pktmbuf_mtod<uint8_t*>(msg);
-	struct stcp_ether_header* eh = reinterpret_cast<struct stcp_ether_header*>(data);
-	eh->src = mymac;
-	eh->dst = ah->hwsrc;
-	eh->type = htons(0x0806);
-
-	struct stcp_arphdr* rep_ah = 
-        reinterpret_cast<struct stcp_arphdr*>(data + sizeof(struct stcp_ether_header));
-	rep_ah->hwtype = htons(1);
-	rep_ah->ptype  = htons(0x0800);
-	rep_ah->hwlen  = 6;
-	rep_ah->plen   = 4;
-	rep_ah->operation = htons(2); // 2 is reply
-	rep_ah->hwsrc = eh->src;
-	rep_ah->psrc  = ah->pdst;
-	rep_ah->hwdst = eh->dst;
-	rep_ah->pdst  = ah->psrc;
-
-	return msg;
-}
-#endif
-
-#if 0
-static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
-{
-	ifnet& dev = dpdk::instance().devices[port];
-	for (ifaddr& ifa : dev.addrs) {
-        stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
-		if (ifa.family == STCP_AF_INET && sin->sin_addr==ah->pdst)
-			return true;
-	}
-	return false;
-}
-#endif
-
-#if 0
-void arp_module::proc_arpreply(struct stcp_arphdr* ah, uint8_t port)
-{
-	if (is_request_to_me(ah, port)) {
-		mbuf* msg = alloc_reply_packet(ah, port);
-
-		dpdk& d = dpdk::instance();
-		d.devices[port].tx_push(msg);
-	}
-}
-#endif
 
 void arp_module::ioctl(uint64_t request, void* arg)
 {

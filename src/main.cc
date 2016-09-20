@@ -96,20 +96,16 @@ static void send_packet_test_eth_mod()
 
 int main(int argc, char** argv)
 {
-    try {
-        core& s = core::instance();  
-        s.init(argc, argv);
+    core& s = core::instance();  
+    s.init(argc, argv);
 
-        /* start up routines */
-        set_addr();
-        add_arp_record();
+    /* start up routines */
+    set_addr();
+    add_arp_record();
 
-        // send_packet_test_raw_dev();
-        send_packet_test_eth_mod();
+    // send_packet_test_raw_dev();
+    send_packet_test_eth_mod();
 
-        s.run();
-    } catch (std::exception& e) {
-        printf("%s \n", e.what());
-    }
+    s.run();
 }
 
