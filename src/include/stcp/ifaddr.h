@@ -3,7 +3,6 @@
 
 #include <stcp/config.h>
 #include <stcp/rte.h> // struct ether_addr
-#include <stcp/types.h>
 #include <stcp/socket.h>
 
 #include <stdint.h>

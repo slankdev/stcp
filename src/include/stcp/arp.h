@@ -86,11 +86,11 @@ private:
 public:
     arp_module() : use_dynamic_arp(false) { m.name = "ARP"; }
     void init() {m.init();}
-    void rx_push(struct rte_mbuf* msg){m.rx_push(msg);}
-    void tx_push(struct rte_mbuf* msg){m.tx_push(msg);}
-    struct rte_mbuf* rx_pop() {return m.rx_pop();}
-    struct rte_mbuf* tx_pop() {return m.tx_pop();}
-    void drop(struct rte_mbuf* msg) {m.drop(msg);}
+    void rx_push(mbuf* msg){m.rx_push(msg);}
+    void tx_push(mbuf* msg){m.tx_push(msg);}
+    mbuf* rx_pop() {return m.rx_pop();}
+    mbuf* tx_pop() {return m.tx_pop();}
+    void drop(mbuf* msg) {m.drop(msg);}
 
     void stat();
     void proc();

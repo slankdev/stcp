@@ -18,7 +18,7 @@
 
 namespace slank {
 
-uint16_t get_ether_type(struct rte_mbuf* msg);
+uint16_t get_ether_type(mbuf* msg);
 
 struct stcp_ether_header {
     struct ether_addr dst;
@@ -45,11 +45,11 @@ public:
     { m.name = "Ether";}
 
     void init() {m.init();}
-    void rx_push(struct rte_mbuf* msg){m.rx_push(msg);}
-    void tx_push(uint8_t port, struct rte_mbuf* msg, const stcp_sockaddr* dst);
-    struct rte_mbuf* rx_pop() {return m.rx_pop();}
-    struct rte_mbuf* tx_pop() {return m.tx_pop();}
-    void drop(struct rte_mbuf* msg) {m.drop(msg);}
+    void rx_push(mbuf* msg){m.rx_push(msg);}
+    void tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst);
+    mbuf* rx_pop() {return m.rx_pop();}
+    mbuf* tx_pop() {return m.tx_pop();}
+    void drop(mbuf* msg) {m.drop(msg);}
     void stat() {m.stat();}
     void proc();
 

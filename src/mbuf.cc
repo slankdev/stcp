@@ -3,19 +3,19 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <stcp/rte.h>
+#include <stcp/config.h>
 
 
 namespace slank {
     
 
-void mbuf_pull(struct rte_mbuf* msg, size_t len)
+void mbuf_pull(mbuf* msg, size_t len)
 {
     rte::pktmbuf_adj(msg, len);
 }
 
 
-void* mbuf_push(struct rte_mbuf* msg, size_t len)
+void* mbuf_push(mbuf* msg, size_t len)
 {
     rte::pktmbuf_prepend(msg, len);
     uint8_t* p = rte::pktmbuf_mtod<uint8_t*>(msg);
@@ -23,7 +23,7 @@ void* mbuf_push(struct rte_mbuf* msg, size_t len)
 }
 
 
-void copy_to_mbuf(struct rte_mbuf* mbuf, const void* buf, size_t bufsize)
+void copy_to_mbuf(mbuf* mbuf, const void* buf, size_t bufsize)
 {
     // if (mbuf->pkt_len < bufsize) {
         /* 

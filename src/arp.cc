@@ -47,7 +47,7 @@ void arp_module::stat()
 void arp_module::proc() 
 {
     while (m.rx_size() > 0) {
-        struct rte_mbuf* msg = m.rx_pop();
+        mbuf* msg = m.rx_pop();
         struct stcp_arphdr* ah  = rte::pktmbuf_mtod<struct stcp_arphdr*>(msg);
         uint8_t port = msg->port;
 
@@ -76,7 +76,7 @@ void arp_module::proc()
 
 
 #if 0
-static struct rte_mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
+static mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
 {
 	struct ether_addr mymac;
 	memset(&mymac, 0, sizeof(mymac));
@@ -94,7 +94,7 @@ static struct rte_mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
 
 
     dpdk& d = dpdk::instance();
-	struct rte_mbuf* msg = rte::pktmbuf_alloc(d.get_mempool());
+	mbuf* msg = rte::pktmbuf_alloc(d.get_mempool());
     msg->data_len = 64;
     msg->pkt_len  = 64;
 	uint8_t* data = rte::pktmbuf_mtod<uint8_t*>(msg);
@@ -136,7 +136,7 @@ static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
 void arp_module::proc_arpreply(struct stcp_arphdr* ah, uint8_t port)
 {
 	if (is_request_to_me(ah, port)) {
-		struct rte_mbuf* msg = alloc_reply_packet(ah, port);
+		mbuf* msg = alloc_reply_packet(ah, port);
 
 		dpdk& d = dpdk::instance();
 		d.devices[port].tx_push(msg);

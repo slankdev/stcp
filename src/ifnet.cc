@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <stcp/config.h>
 #include <stcp/ifnet.h>
 #include <stcp/dpdk.h>
 #include <stcp/rte.h>
@@ -20,7 +21,7 @@ namespace slank {
 
 void ifnet::init()
 {
-    struct rte_eth_conf port_conf;
+    eth_conf port_conf;
     memset(&port_conf, 0, sizeof port_conf);
     port_conf.rxmode.max_rx_pkt_len = ETHER_MAX_LEN;
     rte::eth_dev_configure(port_id, num_rx_rings, num_tx_rings, &port_conf);
@@ -61,7 +62,7 @@ void ifnet::init()
 
 uint16_t ifnet::io_rx()
 {
-    struct rte_mbuf* bufs[BURST_SIZE];
+    mbuf* bufs[BURST_SIZE];
     uint16_t num_rx = rte::eth_rx_burst(port_id, 0, bufs, BURST_SIZE);
     if (unlikely(num_rx == 0)) return 0;
 
@@ -76,7 +77,7 @@ uint16_t ifnet::io_tx(size_t num_request_to_send)
         num_request_to_send = tx.size();
     }
 
-    struct rte_mbuf* bufs[BURST_SIZE];
+    mbuf* bufs[BURST_SIZE];
     uint16_t num_tx_sum = 0;
     size_t i=0;
     for (size_t num_sent=0; num_sent<num_request_to_send; num_sent+=i) {
@@ -256,7 +257,7 @@ void ifnet::ioctl_siocgifhwaddr(stcp_ifreq* ifr)
 void ifnet::write(const void* buf, size_t bufsize)
 {
     
-    struct rte_mbuf* mbuf = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
+    mbuf* mbuf = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
     copy_to_mbuf(mbuf, buf, bufsize);
     rte::pktmbuf_dump(stdout, mbuf, bufsize);
     tx_push(mbuf);

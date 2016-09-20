@@ -7,14 +7,14 @@
 namespace slank {
 
 
-uint16_t get_ether_type(struct rte_mbuf* msg)
+uint16_t get_ether_type(mbuf* msg)
 {
     stcp_ether_header* eh;
     eh = rte::pktmbuf_mtod<stcp_ether_header*>(msg);
     return rte::bswap16(eh->type);
 }
 
-void ether_module::tx_push(uint8_t port, struct rte_mbuf* msg, const stcp_sockaddr* dst)
+void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
 {
     
     uint8_t ether_src[6];
@@ -87,7 +87,7 @@ void ether_module::tx_push(uint8_t port, struct rte_mbuf* msg, const stcp_sockad
 
 void ether_module::sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst)
 {
-    struct rte_mbuf* msg = 
+    mbuf* msg = 
         rte::pktmbuf_alloc(::slank::core::instance().dpdk.get_mempool());
     copy_to_mbuf(msg, buf, bufsize);
  
@@ -99,7 +99,7 @@ void ether_module::sendto(const void* buf, size_t bufsize, const stcp_sockaddr* 
 void ether_module::proc() 
 {
     while (m.rx_size() > 0) {
-        struct rte_mbuf* msg = m.rx_pop();
+        mbuf* msg = m.rx_pop();
         uint16_t etype = get_ether_type(msg);
         mbuf_pull(msg, sizeof(stcp_ether_header));
 
@@ -125,7 +125,7 @@ void ether_module::proc()
 
     while (m.tx_size() > 0) {
         core& c = core::instance();
-        struct rte_mbuf* msg = m.tx_pop();
+        mbuf* msg = m.tx_pop();
         for (ifnet& dev : c.dpdk.devices) {
             dev.tx_push(msg);
         }

@@ -58,7 +58,7 @@ public:
 
             modules_updated = true;
             while (dev.rx_size() > 0) {
-                struct rte_mbuf* msg = dev.rx_pop();
+                mbuf* msg = dev.rx_pop();
                 ether.rx_push(msg);
             }
         }
