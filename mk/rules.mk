@@ -4,7 +4,7 @@
 .SUFFIXES: .out .c .cc .o .h 
 .cc.o: 
 	@echo " CXX $@"
-	@$(CXX) $(CXXFLAGS) -c $< -o $@ 
+	@$(CXX) $(CXXFLAGS) -c -g $< -o $@ 
 
 
 $(TARGET): $(OBJS)

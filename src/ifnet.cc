@@ -249,13 +249,34 @@ void ifnet::ioctl_siocgifhwaddr(stcp_ifreq* ifr)
 }
 
 
-// void ifnet::write(const void* buf, size_t bufsize)
-// {
-//     struct rte_mbuf mbuf = rte::pktmbuf_alloc();
-//     printf("%p, %zd \n", buf, bufsize);
-// }
-//
-//
+
+static void copy_to_mbuf(struct rte_mbuf* mbuf, const void* buf, size_t bufsize)
+{
+    // if (mbuf->pkt_len < bufsize) {
+        /* 
+         * TODO 
+         * Support realloc mbuf
+         */
+        // throw slankdev::exception("mbuf do not have such space");
+    // }
+    mbuf->pkt_len  = bufsize;
+    mbuf->data_len = bufsize;
+    memcpy(rte::pktmbuf_mtod<uint8_t*>(mbuf), buf, bufsize);
+
+}
+
+
+
+void ifnet::write(const void* buf, size_t bufsize)
+{
+    
+    struct rte_mbuf* mbuf = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
+    copy_to_mbuf(mbuf, buf, bufsize);
+    rte::pktmbuf_dump(stdout, mbuf, bufsize);
+    tx_push(mbuf);
+}
+
+
 // size_t ifnet::read(void* buf, size_t bufsize)
 // {
 //     printf("%p, %zd \n", buf, bufsize);
