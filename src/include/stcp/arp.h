@@ -69,13 +69,15 @@ public:
 
 class arp_module {
 private:
+    bool use_dynamic_arp;
+private:
     proto_module m;
     std::vector<stcp_arpreq> table;
 
     void proc_arpreply(struct stcp_arphdr* ah, uint8_t port);
     
 public:
-    arp_module() { m.name = "ARP"; }
+    arp_module() : use_dynamic_arp(false) { m.name = "ARP"; }
     void init() 
     {
         m.init();
@@ -90,6 +92,7 @@ public:
     void proc();
 
     void ioctl(uint64_t request, void* arg);
+    void arp_resolv(uint8_t port, stcp_sockaddr *dst, uint8_t* dsten);
 
 private:
     void ioctl_siocaarpent(stcp_arpreq* req);

@@ -39,6 +39,21 @@ struct stcp_in_addr stcp_inet_addr(const char* fmt)
        uint8_t(o[3]));
 }
 
+struct stcp_sockaddr stcp_inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6)
+{
+    stcp_sockaddr sa;
+    memset(&sa, 0, sizeof sa);
+
+    sa.sa_fam = STCP_AF_LINK;
+    sa.sa_data[0] = o1;
+    sa.sa_data[1] = o2;
+    sa.sa_data[2] = o3;
+    sa.sa_data[3] = o4;
+    sa.sa_data[4] = o5;
+    sa.sa_data[5] = o6;
+
+    return sa;
+}
 
 char* p_sockaddr_to_str(const struct stcp_sockaddr* sa)
 {

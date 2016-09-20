@@ -215,4 +215,25 @@ void arp_module::ioctl_siocgarpent(std::vector<stcp_arpreq>** tbl)
 }
 
 
+void arp_module::arp_resolv(uint8_t port, stcp_sockaddr *dst, uint8_t* dsten)
+{
+    for (stcp_arpreq& req : table) {
+        stcp_sockaddr_in* req_in = reinterpret_cast<stcp_sockaddr_in*>(&req.arp_pa);
+        stcp_sockaddr_in* dst_in = reinterpret_cast<stcp_sockaddr_in*>(dst);
+        if (req_in->sin_addr==dst_in->sin_addr && req.arp_ifindex==port) {
+            for (int i=0; i<6; i++)
+                dsten[i] = req.arp_ha.sa_data[i];
+            return;
+        }
+    }
+
+    if (use_dynamic_arp) {
+        throw slankdev::exception("use_dynamic_arp is not impled yet");
+    } else {
+        throw slankdev::exception("no sush record in arp-table");
+    }
+}
+
+
+
 } /* namespace */
