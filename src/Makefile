@@ -13,7 +13,6 @@ SRCS   = \
 		socket.cc \
 		arp.cc
 
-		# ifaddr.cc \
 
 OBJS   = $(SRCS:.cc=.o)
 
