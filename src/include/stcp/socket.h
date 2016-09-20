@@ -165,6 +165,7 @@ struct stcp_ifreq {
 #else
 struct stcp_ifreq {
     char if_name[STCP_IFNAMSIZ]; /* Interface name */
+    uint8_t if_index;
     union {
         struct stcp_sockaddr if_addr;
         struct stcp_sockaddr if_dstaddr;
@@ -172,7 +173,7 @@ struct stcp_ifreq {
         struct stcp_sockaddr if_netmask;
         struct stcp_sockaddr if_hwaddr;
         short           if_flags;
-        int             if_ifindex;
+        // int             if_ifindex;
         int             if_metric;
         int             if_mtu;
         char            if_slave[STCP_IFNAMSIZ];

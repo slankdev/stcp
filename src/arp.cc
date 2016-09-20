@@ -18,8 +18,9 @@ namespace slank {
 static mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
 {
 	stcp_sockaddr mymac;
-    for (int i=0; i<6; i++)
+    for (int i=0; i<6; i++) {
         mymac.sa_data[i] = 0xff;
+    }
 	for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
 		if (ifa.family == STCP_AF_LINK) {
 			mymac = ifa.raw;
@@ -36,8 +37,9 @@ static mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
 	rep_ah->hwlen  = 6;
 	rep_ah->plen   = 4;
 	rep_ah->operation = rte::bswap16(STCP_ARPOP_REPLY);
-    for (int i=0; i<6; i++) 
+    for (int i=0; i<6; i++) {
         rep_ah->hwsrc.addr_bytes[i] = mymac.sa_data[i];
+    }
 	rep_ah->psrc  = ah->pdst;
 	rep_ah->hwdst = ah->hwsrc;
 	rep_ah->pdst  = ah->psrc;
