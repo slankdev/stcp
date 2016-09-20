@@ -52,7 +52,17 @@ void arp_module::proc()
         uint8_t port = msg->port;
 
         if (ah->operation == htons(2)) { // TODO hard code
-            proc_update_arptable(ah, port);
+            stcp_sockaddr     sa_pa;
+            stcp_sockaddr     sa_ha;
+            stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
+
+            sin_pa->sin_addr = ah->psrc;
+            for (int i=0; i<6; i++)
+                sa_ha.sa_data[i] = ah->hwsrc.addr_bytes[i];
+
+            stcp_arpreq req(&sa_pa, &sa_ha, port);
+            ioctl_siocaarpent(&req);
+
         } else if (ah->operation == htons(1)) {
 #if 0
             proc_arpreply(ah, port);
@@ -64,19 +74,6 @@ void arp_module::proc()
     while (m.tx_size() > 0) throw slankdev::exception("Not Impl yet");
 }
 
-void arp_module::proc_update_arptable(struct stcp_arphdr* ah, uint8_t port)
-{
-    stcp_sockaddr     sa_pa;
-    stcp_sockaddr     sa_ha;
-    stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
-
-    sin_pa->sin_addr = ah->psrc;
-    for (int i=0; i<6; i++)
-        sa_ha.sa_data[i] = ah->hwsrc.addr_bytes[i];
-
-    stcp_arpreq req(&sa_pa, &sa_ha, port);
-    ioctl_siocaarpent(&req);
-}
 
 #if 0
 static struct rte_mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)

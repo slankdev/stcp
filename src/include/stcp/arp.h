@@ -79,8 +79,6 @@ public:
     void init() 
     {
         m.init();
-        // dpdk& d = dpdk::instance();
-        // table.resize(d.devices.size());
     }
     void rx_push(struct rte_mbuf* msg){m.rx_push(msg);}
     void tx_push(struct rte_mbuf* msg){m.tx_push(msg);}
@@ -91,7 +89,6 @@ public:
     void stat();
     void proc();
 
-    void proc_update_arptable(struct stcp_arphdr* ah, uint8_t port);
     void ioctl(uint64_t request, void* arg);
 
 private:
