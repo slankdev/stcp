@@ -22,6 +22,13 @@ enum {
     STCP_SIOCGARPENT,
 };
 
+enum stcp_arpop : uint16_t {
+    STCP_ARPOP_REQUEST    = 1,
+    STCP_ARPOP_REPLY      = 2,  
+    STCP_ARPOP_REVREQUEST = 3,
+    STCP_ARPOP_REVREPLY   = 4,
+};
+
 
 struct stcp_arphdr {
     uint16_t            hwtype;
@@ -78,10 +85,7 @@ private:
     
 public:
     arp_module() : use_dynamic_arp(false) { m.name = "ARP"; }
-    void init() 
-    {
-        m.init();
-    }
+    void init() {m.init();}
     void rx_push(struct rte_mbuf* msg){m.rx_push(msg);}
     void tx_push(struct rte_mbuf* msg){m.tx_push(msg);}
     struct rte_mbuf* rx_pop() {return m.rx_pop();}
@@ -92,7 +96,7 @@ public:
     void proc();
 
     void ioctl(uint64_t request, void* arg);
-    void arp_resolv(uint8_t port, stcp_sockaddr *dst, uint8_t* dsten);
+    void arp_resolv(uint8_t port, const stcp_sockaddr *dst, uint8_t* dsten);
 
 private:
     void ioctl_siocaarpent(stcp_arpreq* req);

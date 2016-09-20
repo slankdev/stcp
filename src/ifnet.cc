@@ -250,20 +250,6 @@ void ifnet::ioctl_siocgifhwaddr(stcp_ifreq* ifr)
 
 
 
-static void copy_to_mbuf(struct rte_mbuf* mbuf, const void* buf, size_t bufsize)
-{
-    // if (mbuf->pkt_len < bufsize) {
-        /* 
-         * TODO 
-         * Support realloc mbuf
-         */
-        // throw slankdev::exception("mbuf do not have such space");
-    // }
-    mbuf->pkt_len  = bufsize;
-    mbuf->data_len = bufsize;
-    memcpy(rte::pktmbuf_mtod<uint8_t*>(mbuf), buf, bufsize);
-
-}
 
 
 

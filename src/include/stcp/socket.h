@@ -25,8 +25,9 @@ enum {
 };
 
 enum stcp_sa_family {
-    STCP_AF_LINK=0,
-    STCP_AF_INET=2,
+    STCP_AF_PACKET,
+    STCP_AF_LINK,
+    STCP_AF_INET,
     STCP_AF_ARP,
 };
 

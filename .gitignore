@@ -38,3 +38,4 @@ dpdk/*
 GPATH
 GRTAGS
 GTAGS
+GSYMS

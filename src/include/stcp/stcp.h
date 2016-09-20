@@ -9,6 +9,7 @@
 #include <stcp/mbuf.h>
     
 #include <stcp/protocol.h>
+#include <stcp/ethernet.h>
 #include <stcp/arp.h>
 #include <stcp/ip.h>
 
@@ -16,23 +17,18 @@
 namespace slank {
     
 
-static uint16_t get_ether_type(struct rte_mbuf* msg)
-{
-    struct stcp_ether_header* eh;
-    eh = rte_pktmbuf_mtod(msg, struct stcp_ether_header*);
-    return rte_bswap16(eh->type);
-}
 
 
 class core {
 public:
-    arp_module arp;
     ip_module  ip;
+    arp_module arp;
+    ether_module ether;
     bool modules_updated;
     dpdk_core dpdk;
 
 private:
-    core() : modules_updated(false) {}
+    core() :  ether(arp, ip), modules_updated(false) {}
     ~core() {}
     core(const core&) = delete;
     core& operator=(const core&) = delete;
@@ -63,26 +59,7 @@ public:
             modules_updated = true;
             while (dev.rx_size() > 0) {
                 struct rte_mbuf* msg = dev.rx_pop();
-                uint16_t etype = get_ether_type(msg);
-                mbuf_pull(msg, sizeof(struct stcp_ether_header));
-
-                switch (etype) {
-                    case 0x0800:
-                    {
-                        ip.rx_push(msg);
-                        break;
-                    }
-                    case 0x0806:
-                    {
-                        arp.rx_push(msg);
-                        break;
-                    }
-                    default:
-                    {
-                        dev.drop(msg);
-                        break;
-                    }
-                }
+                ether.rx_push(msg);
             }
         }
     }
@@ -94,8 +71,10 @@ public:
             modules_updated = false;
 
             ifs_proc();
+            ether.proc();
             arp.proc();
             ip.proc();
+
 
             if (modules_updated)
                 stat_all();
@@ -111,6 +90,7 @@ public:
             dev.stat();
         }
 
+        ether.stat();
         arp.stat();
         ip.stat();
     }

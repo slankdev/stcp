@@ -120,3 +120,22 @@ BSDでいうとarpresolveの機能である。黄色い本に手順がかいて�
  1. ARPリクエストを送信する。その間送信待ちをするパケットはARPエントリ待ちのキューに確保する
 
 これはIPヘッダなどの用意が必要なため後回しにする。
+
+
+```
+static void arp_resolv_test()
+{
+    uint8_t ha[6];
+    stcp_sockaddr pa;
+    stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&pa);
+    sin->sin_addr = stcp_inet_addr(192, 168, 222, 100);
+
+    arp_module&  a = core::instance().arp;
+    a.arp_resolv(0, &pa, ha);
+
+    // for (int i=0; i<6; i++)
+    //     printf("%02x:", ha[i]);
+    // printf("\n");
+    // exit(0);
+}
+```
