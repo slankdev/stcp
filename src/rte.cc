@@ -224,7 +224,18 @@ void pktmbuf_trim(struct rte_mbuf* m, uint16_t len)
     }
 }
 
-
+uint16_t bswap16(uint16_t x)
+{
+    return rte_bswap16(x);
+}
+uint32_t bswap32(uint32_t x)
+{
+    return rte_bswap32(x);
+}
+uint64_t bswap64(uint64_t x)
+{
+    return rte_bswap64(x);
+}
 
 
 } /* namespace rte */

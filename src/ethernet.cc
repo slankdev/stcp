@@ -11,7 +11,7 @@ uint16_t get_ether_type(struct rte_mbuf* msg)
 {
     stcp_ether_header* eh;
     eh = rte::pktmbuf_mtod<stcp_ether_header*>(msg);
-    return rte_bswap16(eh->type);
+    return rte::bswap16(eh->type);
 }
 
 void ether_module::tx_push(uint8_t port, struct rte_mbuf* msg, const stcp_sockaddr* dst)
@@ -31,7 +31,7 @@ void ether_module::tx_push(uint8_t port, struct rte_mbuf* msg, const stcp_sockad
         case STCP_AF_ARP:
         {
             stcp_arphdr* ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
-            switch(rte_bswap16(ah->operation)) {
+            switch(rte::bswap16(ah->operation)) {
                 case STCP_ARPOP_REQUEST:
                 case STCP_ARPOP_REPLY:
                     ether_type = htons(STCP_ETHERTYPE_ARP);

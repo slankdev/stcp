@@ -96,6 +96,10 @@ void pktmbuf_append(struct rte_mbuf* m, uint16_t len);
 void pktmbuf_adj(struct rte_mbuf* m, uint16_t len);
 void pktmbuf_trim(struct rte_mbuf* m, uint16_t len);
 
+uint16_t bswap16(uint16_t x);
+uint32_t bswap32(uint32_t x);
+uint64_t bswap64(uint64_t x);
+
 
 
 template <class T>
