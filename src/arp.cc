@@ -1,6 +1,5 @@
 
 
-#include <arpa/inet.h>
 
 #include <stcp/arp.h>
 #include <stcp/config.h>
@@ -90,7 +89,7 @@ void arp_module::proc()
         struct stcp_arphdr* ah  = rte::pktmbuf_mtod<struct stcp_arphdr*>(msg);
         uint8_t port = msg->port;
 
-        if (ah->operation == htons(STCP_ARPOP_REPLY)) {
+        if (ah->operation == rte::bswap16(STCP_ARPOP_REPLY)) {
             stcp_sockaddr     sa_pa;
             stcp_sockaddr     sa_ha;
             stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
@@ -102,7 +101,7 @@ void arp_module::proc()
             stcp_arpreq req(&sa_pa, &sa_ha, port);
             ioctl_siocaarpent(&req);
 
-        } else if (ah->operation == htons(STCP_ARPOP_REQUEST)) {
+        } else if (ah->operation == rte::bswap16(STCP_ARPOP_REQUEST)) {
             if (is_request_to_me(ah, port)) {
 
                 mbuf* msg = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());

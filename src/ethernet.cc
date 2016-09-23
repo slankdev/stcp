@@ -25,7 +25,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
     switch (dst->sa_fam) {
         case STCP_AF_INET:
         {
-            ether_type = htons(STCP_ETHERTYPE_IP);
+            ether_type = rte::bswap16(STCP_ETHERTYPE_IP);
 
             if (msg->udata64 == ARPREQ_ALREADY_SENT) { // The arpreq was already sent
                 arp.arp_resolv(port, dst, ether_dst, true);
@@ -48,11 +48,11 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
             switch(rte::bswap16(ah->operation)) {
                 case STCP_ARPOP_REQUEST:
                 case STCP_ARPOP_REPLY:
-                    ether_type = htons(STCP_ETHERTYPE_ARP);
+                    ether_type = rte::bswap16(STCP_ETHERTYPE_ARP);
                     break;
                 case STCP_ARPOP_REVREQUEST:
                 case STCP_ARPOP_REVREPLY:
-                    ether_type = htons(STCP_ETHERTYPE_REVARP);
+                    ether_type = rte::bswap16(STCP_ETHERTYPE_REVARP);
                     break;
                 default:
                     std::string errstr = 
