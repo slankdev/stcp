@@ -8,7 +8,7 @@ static void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
 static void set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6);
 static void add_arp_record(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
 static void send_packet_test_eth_mod();
-static void add_defgw(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
+static void add_rtentry();
 
 
 
@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     set_ip_addr(192, 168, 222, 10);
     set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
     add_arp_record(192, 168, 222, 1  );
-    add_defgw(192, 168, 222, 100);
+    add_rtentry();
 
     send_packet_test_eth_mod();
     s.run();
@@ -30,18 +30,22 @@ int main(int argc, char** argv)
 
 /*-------------------*/
 
-static void add_defgw(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
+static void add_rtentry()
 {
     ip_module& ip = core::instance().ip;
-
     stcp_rtentry rt;
-    rt.rt_route.inet_addr(o1, o2, o3, o4);
-    rt.rt_mask.inet_addr(255, 255, 255, 0);
-    rt.rt_gateway = rt.rt_route;
-    rt.rt_ifa.inet_addr(0, 0, 0, 0);
+
+
+    // rt.rt_gateway.inet_addr(192, 168, 222, 100);
+    // rt.rt_port = 0;
+    // ip.ioctl(STCP_SIOCADDRT, &rt);
+
+    rt.rt_route.inet_addr(192, 168, 222, 0);
+    rt.rt_genmask.inet_addr(255, 255, 255, 0);
+    rt.rt_flags = STCP_RTF_MASK | STCP_RTF_LOCAL;
     rt.rt_port = 0;
-    rt.rt_flags = STCP_RTF_GATEWAY | STCP_RTF_MASK;
-    ip.ioctl(STCP_SIOCSETGW, &rt);
+    ip.ioctl(STCP_SIOCADDRT, &rt);
+    
 }
 
 static void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
