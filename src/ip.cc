@@ -11,35 +11,6 @@ namespace slank {
 
 
 
-static void print_rtentry(const stcp_rtentry* rt)
-{
-    std::string str_dest;
-    if (rt->rt_flags & STCP_RTF_GATEWAY) {
-        str_dest = "defalt";
-    } else if (rt->rt_flags & STCP_RTF_LOCAL) {
-        str_dest = "link-local";
-    } else {
-        str_dest = p_sockaddr_to_str(&rt->rt_route);
-    }
-
-    std::string flag_str = "";
-    if (rt->rt_flags & STCP_RTF_GATEWAY  )   flag_str += "G";
-    if (rt->rt_flags & STCP_RTF_MASK     )   flag_str += "M";
-    if (rt->rt_flags & STCP_RTF_LOCAL    )   flag_str += "L";
-    if (rt->rt_flags & STCP_RTF_BROADCAST)   flag_str += "B";
-
-    printf("\t%-16s%-16s",
-            str_dest.c_str(),
-            p_sockaddr_to_str(&rt->rt_gateway));
-    printf("%-16s%-6s%-3u\n", 
-            p_sockaddr_to_str(&rt->rt_genmask),
-            flag_str.c_str(),
-            rt->rt_port
-    );
-}
-
-
-
 void ip_module::stat()
 {
     m.stat();
@@ -47,7 +18,31 @@ void ip_module::stat()
     printf("\tRouting-Table\n");
     printf("\t%-16s%-16s%-16s%-6s%-3s\n", "Destination", "Gateway", "Genmask", "Flags", "if");
     for (stcp_rtentry& rt : rttable) {
-        print_rtentry(&rt);
+
+        std::string str_dest;
+        if (rt.rt_flags & STCP_RTF_GATEWAY) {
+            str_dest = "defalt";
+        } else if (rt.rt_flags & STCP_RTF_LOCAL) {
+            str_dest = "link-local";
+        } else {
+            str_dest = p_sockaddr_to_str(&rt.rt_route);
+        }
+
+        std::string flag_str = "";
+        if (rt.rt_flags & STCP_RTF_GATEWAY  )   flag_str += "G";
+        if (rt.rt_flags & STCP_RTF_MASK     )   flag_str += "M";
+        if (rt.rt_flags & STCP_RTF_LOCAL    )   flag_str += "L";
+        if (rt.rt_flags & STCP_RTF_BROADCAST)   flag_str += "B";
+
+        printf("\t%-16s%-16s",
+                str_dest.c_str(),
+                p_sockaddr_to_str(&rt.rt_gateway));
+        printf("%-16s%-6s%-3u\n", 
+                p_sockaddr_to_str(&rt.rt_genmask),
+                flag_str.c_str(),
+                rt.rt_port
+        );
+
     }
 }
 
