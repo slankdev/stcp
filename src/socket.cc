@@ -74,4 +74,21 @@ char* hw_sockaddr_to_str(const struct stcp_sockaddr* sa)
     return str;
 }
 
+
+
+void stcp_sockaddr::inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
+{
+    stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(this);
+    sin->sin_fam = STCP_AF_INET;
+    sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
+}
+void stcp_sockaddr::inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6)
+{
+    sa_fam = STCP_AF_LINK;
+    *this = stcp_inet_hwaddr(o1, o2, o3, o4, o5, o6);
+}
+
+
+
+
 } /* namespace slank */

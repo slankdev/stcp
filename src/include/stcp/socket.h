@@ -31,6 +31,10 @@ enum stcp_sa_family : uint16_t {
     STCP_AF_PACKET,
 };
 
+
+
+
+
 struct stcp_sockaddr {
 	uint8_t         sa_len;       /* total length */
 	stcp_sa_family  sa_fam;	      /* address family */
@@ -52,6 +56,9 @@ public:
         memcpy(sa_data, rhs.sa_data, sizeof(sa_data));
         return *this;
     }
+
+    void inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
+    void inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6);
 };
 
 struct stcp_in_addr {
