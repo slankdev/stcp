@@ -12,6 +12,7 @@ SRCS   = \
 		mbuf.cc \
 		socket.cc \
 		ethernet.cc \
+		ip.cc \
 		arp.cc
 
 
