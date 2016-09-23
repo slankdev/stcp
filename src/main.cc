@@ -4,6 +4,46 @@
 using namespace slank;
 
 
+static void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
+static void set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6);
+static void add_arp_record(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
+static void send_packet_test_eth_mod();
+static void add_defgw(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
+
+
+
+int main(int argc, char** argv)
+{
+    core& s = core::instance();  
+    s.init(argc, argv);
+
+    set_ip_addr(192, 168, 222, 10);
+    set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
+    add_arp_record(192, 168, 222, 1  );
+    add_defgw(192, 168, 222, 100);
+
+    send_packet_test_eth_mod();
+    s.run();
+}
+
+
+
+/*-------------------*/
+
+static void add_defgw(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
+{
+    ip_module& ip = core::instance().ip;
+
+    stcp_rtentry rt;
+    rt.rt_route.inet_addr(o1, o2, o3, o4);
+    rt.rt_mask.inet_addr(255, 255, 255, 0);
+    rt.rt_gateway = rt.rt_route;
+    rt.rt_ifa.inet_addr(0, 0, 0, 0);
+    rt.rt_port = 0;
+    rt.rt_flags = STCP_RTF_GATEWAY | STCP_RTF_MASK;
+    ip.ioctl(STCP_SIOCSETGW, &rt);
+}
+
 static void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
     dpdk_core& dpdk = core::instance().dpdk;
@@ -14,7 +54,6 @@ static void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
     sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
     dpdk.devices[0].ioctl(STCP_SIOCSIFADDR, &ifr);
 }
-
 
 static void set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6)
 {
@@ -31,9 +70,6 @@ static void set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t 
     dpdk.devices[0].ioctl(STCP_SIOCSIFHWADDR, &ifr);
 }
 
-
-
-
 static void add_arp_record(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
     struct stcp_arpreq req;
@@ -44,7 +80,6 @@ static void add_arp_record(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
     sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
     core::instance().arp.ioctl(STCP_SIOCAARPENT, &req);
 }
-
 
 static void send_packet_test_eth_mod()
 {
@@ -74,20 +109,5 @@ static void send_packet_test_eth_mod()
     sin->sin_fam = STCP_AF_INET;
     sin->sin_addr = stcp_inet_addr(192, 168, 222, 100);
     eth.sendto(buf, sizeof(buf), &dst);
-}
-
-
-int main(int argc, char** argv)
-{
-    core& s = core::instance();  
-    s.init(argc, argv);
-
-    set_ip_addr(192, 168, 222, 10);
-    set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
-    add_arp_record(192, 168, 222, 100);
-    add_arp_record(192, 168, 222, 1  );
-
-    send_packet_test_eth_mod();
-    s.run();
 }
 
