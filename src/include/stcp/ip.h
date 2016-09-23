@@ -20,11 +20,10 @@ enum : uint64_t {
 
 
 enum : uint32_t {
-    STCP_RTF_DUMMY     = 1 << 0;
-    STCP_RTF_GATEWAY   = 1 << 1,
-    STCP_RTF_MASK      = 1 << 2,
-    STCP_RTF_LOCAL     = 1 << 4,
-    STCP_RTF_BROADCAST = 1 << 5,
+    STCP_RTF_GATEWAY   = 1 << 0,
+    STCP_RTF_MASK      = 1 << 1,
+    STCP_RTF_LOCAL     = 1 << 2,
+    STCP_RTF_BROADCAST = 1 << 3,
 };
 
 
@@ -54,7 +53,7 @@ struct stcp_rtentry {
 
     stcp_rtentry() :
         rt_port(0), rt_flags(0) {}
-    const char* c_str();
+    // const char* c_str();
 };
 
 

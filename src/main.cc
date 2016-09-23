@@ -35,10 +35,9 @@ static void add_rtentry()
     ip_module& ip = core::instance().ip;
     stcp_rtentry rt;
 
-
-    // rt.rt_gateway.inet_addr(192, 168, 222, 100);
-    // rt.rt_port = 0;
-    // ip.ioctl(STCP_SIOCADDRT, &rt);
+    rt.rt_gateway.inet_addr(192, 168, 222, 100);
+    rt.rt_port = 0;
+    ip.ioctl(STCP_SIOCADDGW, &rt);
 
     rt.rt_route.inet_addr(192, 168, 222, 0);
     rt.rt_genmask.inet_addr(255, 255, 255, 0);
