@@ -12,14 +12,15 @@ namespace slank {
 
 
 enum : uint64_t {
-    // STCP_SIOCADDRT,
+    STCP_SIOCADDRT,
     // STCP_SIOCDELRT,
     // STCP_SIOCGETRTS,
-    STCP_SIOCSETGW,
+    STCP_SIOCADDGW,
 };
 
 
 enum : uint32_t {
+    STCP_RTF_DUMMY     = 1 << 0;
     STCP_RTF_GATEWAY   = 1 << 1,
     STCP_RTF_MASK      = 1 << 2,
     STCP_RTF_LOCAL     = 1 << 4,
@@ -45,16 +46,14 @@ struct stcp_ip_header {
 
 struct stcp_rtentry {
     stcp_sockaddr  rt_route;   /* route destination        */
-    stcp_sockaddr  rt_mask;    /* netmask                  */
+    stcp_sockaddr  rt_genmask;    /* netmask                  */
     stcp_sockaddr  rt_gateway; /* next hop address         */
-    stcp_sockaddr  rt_ifa;     /* interface address to use */
+    // stcp_sockaddr  rt_ifa;     #<{(| interface address to use |)}>#
     uint8_t        rt_port;       /* interface index to use   */
     uint32_t       rt_flags;   /* up/down?, host/net       */
-    uint64_t       rt_mtu;     /* MTU for this path        */
-    uint64_t       rt_rmx;     /* Num of Metrix            */
 
     stcp_rtentry() :
-        rt_port(0), rt_flags(0), rt_mtu(0), rt_rmx(0) {}
+        rt_port(0), rt_flags(0) {}
     const char* c_str();
 };
 
@@ -82,7 +81,8 @@ public:
 
 public:
     void ioctl(uint64_t request, void* args);
-    void ioctl_siocsetgw(const stcp_rtentry* rt);
+    void ioctl_siocaddrt(const stcp_rtentry* rt);
+    void ioctl_siocaddgw(stcp_rtentry* rt);
 };
 
 
