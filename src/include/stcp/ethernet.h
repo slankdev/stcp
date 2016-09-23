@@ -18,7 +18,6 @@
 
 namespace slank {
 
-uint16_t get_ether_type(mbuf* msg);
 
 struct stcp_ether_header {
     struct ether_addr dst;

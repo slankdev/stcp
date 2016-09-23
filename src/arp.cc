@@ -26,6 +26,7 @@ static void get_mymac(ether_addr* mymac, uint8_t port)
     throw slankdev::exception("not found my link address");
 }
 
+
 static void get_myip(stcp_in_addr* myip, uint8_t port)
 {
     for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
@@ -39,19 +40,7 @@ static void get_myip(stcp_in_addr* myip, uint8_t port)
 }
 
 
-
-
-
-static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
-{
-	for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
-        stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
-		if (ifa.family == STCP_AF_INET && sin->sin_addr==ah->pdst)
-			return true;
-	}
-	return false;
-}
-
+// TODO #15 this function will be included in sockaddr-class
 static bool hw_sockaddr_is_same(const stcp_sockaddr* a, const stcp_sockaddr* b)
 {
     for (int i=0; i<6; i++) {
@@ -61,6 +50,7 @@ static bool hw_sockaddr_is_same(const stcp_sockaddr* a, const stcp_sockaddr* b)
     return true;
 }
 
+// TODO #15 this function will be included in sockaddr-class
 static bool p_sockaddr_is_same(const stcp_sockaddr* a, const stcp_sockaddr* b)
 {
     const stcp_sockaddr_in* sina = reinterpret_cast<const stcp_sockaddr_in*>(a);
@@ -77,9 +67,20 @@ void arp_module::stat()
     printf("\t%-16s %-20s %s\n", "Address", "HWaddress", "Iface");
     for (stcp_arpreq& a : table) {
         printf("\t%-16s %-20s %d\n",
-                p_sockaddr_to_str(&a.arp_pa), 
-                hw_sockaddr_to_str(&a.arp_ha), a.arp_ifindex);
+                p_sockaddr_to_str(&a.arp_pa),  // TODO #15 this function will be included in sockaddr-class
+                hw_sockaddr_to_str(&a.arp_ha), a.arp_ifindex); // TODO #15 this function will be included in sockaddr-class
     }
+}
+
+
+static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
+{
+	for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
+        stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
+		if (ifa.family == STCP_AF_INET && sin->sin_addr==ah->pdst)
+			return true;
+	}
+	return false;
 }
 
 void arp_module::proc() 
@@ -90,6 +91,12 @@ void arp_module::proc()
         uint8_t port = msg->port;
 
         if (ah->operation == rte::bswap16(STCP_ARPOP_REPLY)) {
+
+            /*
+             * Proc ARP-Reply Packet 
+             * to ARP-Table.
+             */
+                
             stcp_sockaddr     sa_pa;
             stcp_sockaddr     sa_ha;
             stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
@@ -100,9 +107,14 @@ void arp_module::proc()
 
             stcp_arpreq req(&sa_pa, &sa_ha, port);
             ioctl_siocaarpent(&req);
+            rte::pktmbuf_free(msg);
 
         } else if (ah->operation == rte::bswap16(STCP_ARPOP_REQUEST)) {
             if (is_request_to_me(ah, port)) {
+
+                /* 
+                 * Reply ARP-Reply Packet
+                 */
 
                 mbuf* msg = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
                 msg->data_len = sizeof(stcp_arphdr);
@@ -120,24 +132,20 @@ void arp_module::proc()
                 rep_ah->hwdst = ah->hwsrc;
                 rep_ah->pdst  = ah->psrc;
 
-                stcp_sockaddr sa;
+                stcp_sockaddr sa; // TODO #15 fix this init
                 sa.sa_fam = STCP_AF_ARP;
                 core::instance().ether.tx_push(port, msg, &sa);
             }
         }
-        rte::pktmbuf_free(msg);
     }
 
     while (m.tx_size() > 0) {
         mbuf* msg = m.tx_pop();
-        uint8_t port = msg->port;
 
-        stcp_sockaddr sa;
+        stcp_sockaddr sa; // TODO #15 fix this init
         sa.sa_fam = STCP_AF_ARP;
-        core& c = core::instance();
-        c.ether.tx_push(port, msg, &sa);
+        core::instance().ether.tx_push(msg->port, msg, &sa);
     }
-
 }
 
 
@@ -165,17 +173,26 @@ void arp_module::ioctl(uint64_t request, void* arg)
         }
         default:
         {
-            throw slankdev::exception("invalid arguments");
+            std::string errstr = "invalid arguments " + std::to_string(request);
+            throw slankdev::exception(errstr.c_str());
             break;
         }
     }
 }
 
+/*
+ * IOCTL SocketIO Add ARP Entry
+ *
+ * Description
+ * This function evaluate only these variable of stcp_arpreq.
+ *  - req->arp_ha
+ *  - req->arp_ha.sa_data[0-6]
+ */
 void arp_module::ioctl_siocaarpent(stcp_arpreq* req)
 {
     for (stcp_arpreq& ent : table) {
         if (p_sockaddr_is_same(&ent.arp_pa, &req->arp_pa)) {
-            if (hw_sockaddr_is_same(&ent.arp_ha, &req->arp_ha)) {
+            if (hw_sockaddr_is_same(&ent.arp_ha, &req->arp_ha)) { // TODO #15
                 return;
             } else {
                 for (int i=0; i<6; i++)
@@ -191,8 +208,11 @@ void arp_module::ioctl_siocaarpent(stcp_arpreq* req)
 
 
 /* 
- * This functino evaluate only arp_pa and arp_ifindex,
- * because arp_ha is not need deleteing arp-record.
+ * IOCTL SocketIO Delete ARP Entry
+ *
+ * Description
+ * This functino evaluate only these variables of stcp_arpreq.
+ *  - arp_ifindex
  */
 void arp_module::ioctl_siocdarpent(stcp_arpreq* req)
 {
@@ -206,13 +226,28 @@ void arp_module::ioctl_siocdarpent(stcp_arpreq* req)
     throw slankdev::exception("arp record not found");
 }
 
+
+/*
+ * IOCTL SocketIO Get ARP Entrys
+ *
+ * Description
+ *  User can get raw-arptable's pointer. and it is no-const pointer.
+ *  But now, I don't assume unsafe operation to arptable's pointer.
+ *  So this function's argument will be const pointer to be safety.
+ */
 void arp_module::ioctl_siocgarpent(std::vector<stcp_arpreq>** tbl)
 {
     *tbl = &table;
 }
 
 
-void arp_module::arp_resolv(uint8_t port, const stcp_sockaddr *dst, uint8_t* dsten, bool checkcacheonly)
+
+
+// TODO to change as below.
+// void arp_module::arp_resolv(
+//         uint8_t port, const stcp_sockaddr *dst, ether_addr* dsten, bool checkcacheonly)
+void arp_module::arp_resolv(
+        uint8_t port, const stcp_sockaddr *dst, uint8_t* dsten, bool checkcacheonly)
 {
     const stcp_sockaddr_in* dst_in = reinterpret_cast<const stcp_sockaddr_in*>(dst);
     for (stcp_arpreq& req : table) {
@@ -237,6 +272,8 @@ void arp_module::arp_resolv(uint8_t port, const stcp_sockaddr *dst, uint8_t* dst
         throw slankdev::exception("no such record in arp-table");
     }
 }
+
+
 
 
 void arp_module::arp_request(uint8_t port, const stcp_in_addr* tip)

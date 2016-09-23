@@ -8,12 +8,6 @@
 namespace slank {
 
 
-uint16_t get_ether_type(mbuf* msg)
-{
-    stcp_ether_header* eh;
-    eh = rte::pktmbuf_mtod<stcp_ether_header*>(msg);
-    return rte::bswap16(eh->type);
-}
 
 void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
 {
@@ -118,7 +112,9 @@ void ether_module::proc()
 {
     while (m.rx_size() > 0) {
         mbuf* msg = rx_pop();
-        uint16_t etype = get_ether_type(msg);
+
+        stcp_ether_header* eh = rte::pktmbuf_mtod<stcp_ether_header*>(msg);
+        uint16_t etype = rte::bswap16(eh->type);
         mbuf_pull(msg, sizeof(stcp_ether_header));
 
         switch (etype) {
@@ -134,17 +130,15 @@ void ether_module::proc()
             }
             default:
             {
-                drop(msg);
+                drop(msg); // TODO #18
                 break;
             }
         }
-
     }
 
     while (m.tx_size() > 0) {
-        core& c = core::instance();
         mbuf* msg = m.tx_pop();
-        for (ifnet& dev : c.dpdk.devices) {
+        for (ifnet& dev : core::instance().dpdk.devices) {
             dev.tx_push(msg);
         }
     }

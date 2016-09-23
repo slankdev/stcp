@@ -98,7 +98,7 @@ private:
     std::vector<stcp_arpreq> table;
     
 public:
-    std::queue<wait_ent> wait;
+    std::queue<wait_ent> wait; // TODO rename this variable as easy-to-understand.
 
 public:
     arp_module() : use_dynamic_arp(true) { m.name = "ARP"; }
