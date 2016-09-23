@@ -9,6 +9,39 @@
 
 namespace slank {
 
+bool operator==(const stcp_sockaddr& sa, const ether_addr& addr)
+{
+    if (sa.sa_fam != STCP_AF_LINK)
+        return false;
+
+    for (int i=0; i<6; i++) {
+        if (sa.sa_data[i] != addr.addr_bytes[i])
+            return false;
+    }
+    return true;
+}
+bool operator!=(const stcp_sockaddr& sa, const ether_addr& addr)
+{
+    return !(sa == addr);
+}
+bool operator==(const stcp_sockaddr& sa, const stcp_in_addr& addr)
+{
+    if (sa.sa_fam != STCP_AF_INET)
+        return false;
+
+    const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(&sa);
+    for (int i=0; i<4; i++) {
+        if (sin->sin_addr.addr_bytes[i] != addr.addr_bytes[i])
+            return false;
+    }
+    return true;
+}
+bool operator!=(const stcp_sockaddr& sa, const stcp_in_addr& addr)
+{
+    return !(sa == addr);
+}
+
+
 
 struct stcp_in_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {

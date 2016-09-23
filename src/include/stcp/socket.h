@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <stcp/config.h>
 
 
 
@@ -41,6 +42,8 @@ struct stcp_sockaddr {
 	uint8_t         sa_data[14];  /* actually longer; address value */
 
 public:
+    // stcp_sockaddr(stcp_sa_family fam) : sa_fam(fam) {} // TODO imple this func
+
     bool operator==(const stcp_sockaddr& rhs) const
     {
         return memcmp(this, &rhs, sizeof(stcp_sockaddr)) == 0;
@@ -59,6 +62,11 @@ public:
 
     void inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
     void inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6);
+
+    friend bool operator==(const stcp_sockaddr& sa, const ether_addr& addr);
+    friend bool operator!=(const stcp_sockaddr& sa, const ether_addr& addr);
+    friend bool operator==(const stcp_sockaddr& sa, const stcp_in_addr& addr);
+    friend bool operator!=(const stcp_sockaddr& sa, const stcp_in_addr& addr);
 };
 
 struct stcp_in_addr {
