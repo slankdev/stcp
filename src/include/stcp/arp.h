@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <queue>
 
 #include <stcp/protocol.h>
 #include <stcp/config.h>
@@ -15,6 +16,9 @@
 
 namespace slank {
     
+enum pack_stat : uint64_t {
+    ARPREQ_ALREADY_SENT = 0x12121212, // TODO hardcode
+};
 
 enum {
     STCP_SIOCAARPENT,
@@ -74,6 +78,18 @@ public:
 };
 
 
+
+
+struct wait_ent {
+    uint8_t port;
+    mbuf* msg;
+    stcp_sockaddr dst;
+    wait_ent(uint8_t p, mbuf* m, stcp_sockaddr d) :
+        port(p), msg(m), dst(d) {}
+};
+
+
+
 class arp_module {
 private:
     bool use_dynamic_arp;
@@ -82,7 +98,10 @@ private:
     std::vector<stcp_arpreq> table;
     
 public:
-    arp_module() : use_dynamic_arp(false) { m.name = "ARP"; }
+    std::queue<wait_ent> wait;
+
+public:
+    arp_module() : use_dynamic_arp(true) { m.name = "ARP"; }
     void init() {m.init();}
     void rx_push(mbuf* msg){m.rx_push(msg);}
     void tx_push(mbuf* msg){m.tx_push(msg);}
@@ -94,7 +113,8 @@ public:
     void proc();
 
     void ioctl(uint64_t request, void* arg);
-    void arp_resolv(uint8_t port, const stcp_sockaddr *dst, uint8_t* dsten);
+    void arp_resolv(uint8_t port, const stcp_sockaddr *dst, uint8_t* dsten, bool checkcacheonly=false);
+    void arp_request(uint8_t port, const stcp_in_addr* tip);
 
 private:
     void ioctl_siocaarpent(stcp_arpreq* req);

@@ -12,12 +12,38 @@
 
 
 namespace slank {
-    
+
+
+
+// static void get_mymac(ether_addr* mymac, uint8_t port) // TODO change prototype
+static void get_mymac(stcp_sockaddr* mymac, uint8_t port)
+{
+    for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
+        if (ifa.family == STCP_AF_LINK) {
+            *mymac = ifa.raw;
+            return ;
+        }
+    }
+    throw slankdev::exception("not found my link address");
+}
+
+static void get_myip(stcp_in_addr* myip, uint8_t port)
+{
+    for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
+        if (ifa.family == STCP_AF_INET) {
+            stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
+            *myip = sin->sin_addr;
+            return ;
+        }
+    }
+    throw slankdev::exception("not found my inet address");
+}
 
 
 static mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
 {
 	stcp_sockaddr mymac;
+    // TODO use get_mymac() to init mymac.
     for (int i=0; i<6; i++) {
         mymac.sa_data[i] = 0xff;
     }
@@ -30,6 +56,7 @@ static mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
 	mbuf* msg = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
     msg->data_len = sizeof(stcp_arphdr);
     msg->pkt_len  = sizeof(stcp_arphdr);
+    msg->port = port;
 
 	stcp_arphdr* rep_ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
 	rep_ah->hwtype = rte::bswap16(0x0001);
@@ -45,6 +72,38 @@ static mbuf* alloc_reply_packet(struct stcp_arphdr* ah, uint8_t port)
 	rep_ah->pdst  = ah->psrc;
 
 	return msg;
+}
+
+
+static mbuf* alloc_request_packet(const stcp_in_addr* dstip, uint8_t port)
+{
+	stcp_sockaddr mymac;
+    get_mymac(&mymac, port);
+
+    stcp_in_addr myip;
+    get_myip(&myip, port);
+
+    mbuf* msg = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
+    msg->data_len = sizeof(stcp_arphdr);
+    msg->pkt_len  = sizeof(stcp_arphdr);
+    msg->port = port;
+
+    stcp_arphdr* req_ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
+    req_ah->hwtype = rte::bswap16(0x0001);
+	req_ah->ptype  = rte::bswap16(0x0800);
+	req_ah->hwlen  = 6;
+	req_ah->plen   = 4;
+    req_ah->operation = rte::bswap16(STCP_ARPOP_REQUEST);
+    for (int i=0; i<6; i++) {
+        req_ah->hwsrc.addr_bytes[i] = mymac.sa_data[i];
+    }
+    req_ah->psrc = myip;
+    for (int i=0; i<6; i++) {
+        req_ah->hwdst.addr_bytes[i] = 0x00;
+    }
+    req_ah->pdst = *dstip;
+
+    return msg;
 }
 
 static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
@@ -115,6 +174,16 @@ void arp_module::proc()
             }
         }
         rte::pktmbuf_free(msg);
+    }
+
+    while (m.tx_size() > 0) {
+        mbuf* msg = m.tx_pop();
+        uint8_t port = msg->port;
+
+        stcp_sockaddr sa;
+        sa.sa_fam = STCP_AF_ARP;
+        core& c = core::instance();
+        c.ether.tx_push(port, msg, &sa);
     }
 
 }
@@ -191,23 +260,37 @@ void arp_module::ioctl_siocgarpent(std::vector<stcp_arpreq>** tbl)
 }
 
 
-void arp_module::arp_resolv(uint8_t port, const stcp_sockaddr *dst, uint8_t* dsten)
+void arp_module::arp_resolv(uint8_t port, const stcp_sockaddr *dst, uint8_t* dsten, bool checkcacheonly)
 {
+    const stcp_sockaddr_in* dst_in = reinterpret_cast<const stcp_sockaddr_in*>(dst);
     for (stcp_arpreq& req : table) {
         stcp_sockaddr_in* req_in = reinterpret_cast<stcp_sockaddr_in*>(&req.arp_pa);
-        const stcp_sockaddr_in* dst_in = reinterpret_cast<const stcp_sockaddr_in*>(dst);
         if (req_in->sin_addr==dst_in->sin_addr && req.arp_ifindex==port) {
             for (int i=0; i<6; i++)
                 dsten[i] = req.arp_ha.sa_data[i];
             return;
         }
     }
+    if (checkcacheonly) {
+        for (int i=0; i<6; i++)
+            dsten[i] = 0x00;
+        return;
+    }
 
     if (use_dynamic_arp) {
-        throw slankdev::exception("use_dynamic_arp is not impled yet");
+        arp_request(port, &dst_in->sin_addr);
+        for (int i=0; i<6; i++)
+            dsten[i] = 0x00;
     } else {
-        throw slankdev::exception("no sush record in arp-table");
+        throw slankdev::exception("no such record in arp-table");
     }
+}
+
+
+void arp_module::arp_request(uint8_t port, const stcp_in_addr* tip)
+{
+    mbuf* msg = alloc_request_packet(tip, port);
+    tx_push(msg);
 }
 
 

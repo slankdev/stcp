@@ -4,64 +4,47 @@
 using namespace slank;
 
 
-static void set_addr()
+static void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
     dpdk_core& dpdk = core::instance().dpdk;
-    struct stcp_sockaddr_in* sin;
-
-    /* set ip addr */
     struct stcp_ifreq ifr;
-    memset(&ifr, 0, sizeof ifr);
-    sin = reinterpret_cast<stcp_sockaddr_in*>(&ifr.if_addr);
-    sin->sin_addr = stcp_inet_addr(192, 168, 222, 10);
-    dpdk.devices[0].ioctl(STCP_SIOCSIFADDR, &ifr);
 
-    /* set hw addr */
     memset(&ifr, 0, sizeof ifr);
-    ifr.if_hwaddr.sa_data[0] = 0x00;
-    ifr.if_hwaddr.sa_data[1] = 0x11;
-    ifr.if_hwaddr.sa_data[2] = 0x22;
-    ifr.if_hwaddr.sa_data[3] = 0x33;
-    ifr.if_hwaddr.sa_data[4] = 0x44;
-    ifr.if_hwaddr.sa_data[5] = 0x55;
+    struct stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifr.if_addr);
+    sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
+    dpdk.devices[0].ioctl(STCP_SIOCSIFADDR, &ifr);
+}
+
+
+static void set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6)
+{
+    dpdk_core& dpdk = core::instance().dpdk;
+    struct stcp_ifreq ifr;
+
+    memset(&ifr, 0, sizeof ifr);
+    ifr.if_hwaddr.sa_data[0] = o1;
+    ifr.if_hwaddr.sa_data[1] = o2;
+    ifr.if_hwaddr.sa_data[2] = o3;
+    ifr.if_hwaddr.sa_data[3] = o4;
+    ifr.if_hwaddr.sa_data[4] = o5;
+    ifr.if_hwaddr.sa_data[5] = o6;
     dpdk.devices[0].ioctl(STCP_SIOCSIFHWADDR, &ifr);
 }
 
 
 
-static void add_arp_record()
+
+static void add_arp_record(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
     struct stcp_arpreq req;
     stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&req.arp_pa);
 
     req.arp_ifindex = 0;
     req.arp_ha = stcp_inet_hwaddr(0x74, 0x03, 0xbd, 0x13, 0x2c, 0xa6);
-    sin->sin_addr = stcp_inet_addr(192, 168, 222, 1);
+    sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
     core::instance().arp.ioctl(STCP_SIOCAARPENT, &req);
-
-    req.arp_ifindex = 0;
-    req.arp_ha = stcp_inet_hwaddr(0x74, 0x03, 0xbd, 0x3d, 0x78, 0x96);
-    sin->sin_addr = stcp_inet_addr(192, 168, 222, 100);
-    core::instance().arp.ioctl(STCP_SIOCAARPENT, &req);
-
 }
 
-// static void send_packet_test_raw_dev()
-// {
-//     dpdk_core& dpdk = core::instance().dpdk;
-//
-//     uint8_t buf[] = {
-//         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xee, 0xee,
-//         0xee, 0xee, 0xee, 0xee, 0x08, 0x06, 0x00, 0x01,
-//         0x08, 0x00, 0x06, 0x04, 0x00, 0x01, 0xff, 0xff,
-//         0xff, 0xff, 0xff, 0xff, 0xc0, 0xa8, 0x00, 0x01,
-//         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0xa8,
-//         0x00, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-//     };
-//     dpdk.devices[0].write(buf, sizeof(buf));
-// }
 
 static void send_packet_test_eth_mod()
 {
@@ -99,13 +82,12 @@ int main(int argc, char** argv)
     core& s = core::instance();  
     s.init(argc, argv);
 
-    /* start up routines */
-    set_addr();
-    add_arp_record();
+    set_ip_addr(192, 168, 222, 10);
+    set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
+    add_arp_record(192, 168, 222, 100);
+    add_arp_record(192, 168, 222, 1  );
 
-    // send_packet_test_raw_dev();
     send_packet_test_eth_mod();
-
     s.run();
 }
 

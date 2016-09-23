@@ -24,11 +24,11 @@ enum {
     STCP_IFNAMSIZ=16,
 };
 
-enum stcp_sa_family {
-    STCP_AF_PACKET,
-    STCP_AF_LINK,
+enum stcp_sa_family : uint16_t {
+    STCP_AF_LINK = 0x1000,
     STCP_AF_INET,
     STCP_AF_ARP,
+    STCP_AF_PACKET,
 };
 
 struct stcp_sockaddr {

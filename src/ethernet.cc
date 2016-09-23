@@ -3,6 +3,7 @@
 #include <stcp/rte.h>
 #include <stcp/stcp.h>
 #include <stcp/ethernet.h>
+#include <string>
 
 namespace slank {
 
@@ -25,7 +26,20 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
         case STCP_AF_INET:
         {
             ether_type = htons(STCP_ETHERTYPE_IP);
-            arp.arp_resolv(port, dst, ether_dst);
+
+            if (msg->udata64 == ARPREQ_ALREADY_SENT) { // The arpreq was already sent
+                arp.arp_resolv(port, dst, ether_dst, true);
+            } else {
+                arp.arp_resolv(port, dst, ether_dst);
+            }
+
+            uint8_t zeroaddr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+            if (memcmp(ether_dst, zeroaddr, sizeof zeroaddr) == 0) {
+                msg->udata64 = ARPREQ_ALREADY_SENT;
+                arp.wait.push(wait_ent(port, msg, *dst));
+                return;
+            }
+
             break;
         }
         case STCP_AF_ARP:
@@ -41,7 +55,9 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
                     ether_type = htons(STCP_ETHERTYPE_REVARP);
                     break;
                 default:
-                    throw slankdev::exception("not support");
+                    std::string errstr = 
+                        "not support arp operation " + std::to_string(rte::bswap16(ah->operation));
+                    throw slankdev::exception(errstr.c_str());
                     break;
             }
 
@@ -58,7 +74,8 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
         }
         default:
         {
-            throw slankdev::exception("not support");
+            std::string errstr = "not support address family " + std::to_string(dst->sa_fam);
+            throw slankdev::exception(errstr.c_str());
             break;
         }
     }
@@ -73,6 +90,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
         if (ifa.family == STCP_AF_LINK) {
             for (int i=0; i<6; i++)
                 ether_src[i] = ifa.raw.sa_data[i];
+            break;
         }
     }
     for (int i=0; i<6; i++) {
@@ -99,7 +117,7 @@ void ether_module::sendto(const void* buf, size_t bufsize, const stcp_sockaddr* 
 void ether_module::proc() 
 {
     while (m.rx_size() > 0) {
-        mbuf* msg = m.rx_pop();
+        mbuf* msg = rx_pop();
         uint16_t etype = get_ether_type(msg);
         mbuf_pull(msg, sizeof(stcp_ether_header));
 
@@ -129,9 +147,13 @@ void ether_module::proc()
         for (ifnet& dev : c.dpdk.devices) {
             dev.tx_push(msg);
         }
+    }
 
 
-        
+    if (arp.wait.size() > 0) {
+        wait_ent e = arp.wait.front();
+        tx_push(e.port, e.msg, &e.dst);
+        arp.wait.pop();
     }
 
 }
