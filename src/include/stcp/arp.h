@@ -24,6 +24,8 @@ enum {
     STCP_SIOCAARPENT,
     STCP_SIOCDARPENT,
     STCP_SIOCGARPENT,
+    STCP_SIOCSDARP,
+    STCP_SIOCGDARP,
 };
 
 enum stcp_arpop : uint16_t {
@@ -120,6 +122,9 @@ private:
     void ioctl_siocaarpent(stcp_arpreq* req);
     void ioctl_siocdarpent(stcp_arpreq* req);
     void ioctl_siocgarpent(std::vector<stcp_arpreq>** tbl);
+
+    void ioctl_siocsdarp(const bool* b);
+    void ioctl_siocgdarp(bool* b);
 };
 
 

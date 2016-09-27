@@ -6,7 +6,8 @@ using namespace slank;
 static void set_netmask(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
 static void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
 static void set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6);
-static void add_arp_record(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
+static void add_arp_record(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4,
+        uint8_t ho1, uint8_t ho2, uint8_t ho3, uint8_t ho4, uint8_t ho5, uint8_t ho6);
 static void send_packet_test_eth_mod();
 static void add_rtentry();
 
@@ -20,7 +21,8 @@ int main(int argc, char** argv)
     set_ip_addr(192, 168, 222, 10);
     set_netmask(255, 255, 255, 0);
     set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
-    add_arp_record(192, 168, 222, 1  );
+    add_arp_record(192, 168, 222, 1 ,
+            0x74, 0x03, 0xbd, 0x13, 0x2c, 0xa6);
     add_rtentry();
 
     send_packet_test_eth_mod();
@@ -83,13 +85,14 @@ static void set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t 
     dpdk.devices[0].ioctl(STCP_SIOCSIFHWADDR, &ifr);
 }
 
-static void add_arp_record(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
+static void add_arp_record(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4,
+        uint8_t ho1, uint8_t ho2, uint8_t ho3, uint8_t ho4, uint8_t ho5, uint8_t ho6)
 {
     struct stcp_arpreq req;
     stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&req.arp_pa);
 
     req.arp_ifindex = 0;
-    req.arp_ha = stcp_inet_hwaddr(0x74, 0x03, 0xbd, 0x13, 0x2c, 0xa6);
+    req.arp_ha = stcp_inet_hwaddr(ho1, ho2, ho3, ho4, ho5, ho6);
     sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
     core::instance().arp.ioctl(STCP_SIOCAARPENT, &req);
 }
