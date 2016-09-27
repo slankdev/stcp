@@ -139,3 +139,24 @@ static void arp_resolv_test()
     // exit(0);
 }
 ```
+
+## 静的ARPレコードの追加方法
+
+以下のコード
+
+
+
+```
+static void add_arp_record(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4,
+        uint8_t ho1, uint8_t ho2, uint8_t ho3, uint8_t ho4, uint8_t ho5, uint8_t ho6)
+{
+    struct stcp_arpreq req;
+    stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&req.arp_pa);
+
+    req.arp_ifindex = 0;
+    req.arp_ha = stcp_inet_hwaddr(ho1, ho2, ho3, ho4, ho5, ho6);
+    sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
+    core::instance().arp.ioctl(STCP_SIOCAARPENT, &req);
+}
+```
+
