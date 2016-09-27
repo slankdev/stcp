@@ -9,6 +9,21 @@
 namespace slank {
 
 
+    
+void ip_module::proc() 
+{
+    // while (m.rx_size() > 0) {
+    //     ...
+    // }
+
+    while (m.tx_size() > 0) {
+        mbuf* msg = m.tx_pop();
+        // TODO TODO KOKOKARA-----------
+    }
+
+    // m.proc();
+}
+
 
 
 
@@ -159,8 +174,6 @@ void ip_module::route_resolv(const stcp_sockaddr* dst, stcp_sockaddr* next, uint
     throw slankdev::exception("not found route");
 }
 
-
-
 bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr* addr)
 {
     dpdk_core& dpdk = core::instance().dpdk;
@@ -204,8 +217,51 @@ bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr* addr)
     return true;
 }
 
+void ip_module::sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst)
+{
+    mbuf* msg = 
+        rte::pktmbuf_alloc(::slank::core::instance().dpdk.get_mempool());
+    copy_to_mbuf(msg, buf, bufsize);
+ 
+    tx_push(msg, dst);
+}
 
 
+// #<{(| ip hdr |)}>#
+// 0x45, 0x00, 0x00, 0x54, 0x7e, 0x4d, 0x40, 0x00, 
+// 0x40, 0x01, 0x7e, 0x9a, 0xc0, 0xa8, 0xde, 0x0b, 
+// 0xc0, 0xa8, 0xde, 0x64, 
+void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst)
+{
+    const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(dst);
+    
+    stcp_ip_header* ih 
+        = reinterpret_cast<stcp_ip_header*>(mbuf_push(msg, sizeof(stcp_ip_header)));
+    
+    ih->version_ihl        = 0x45;
+    ih->type_of_service   = 0x00;
+    ih->total_length      = rte::bswap16(0x0054);
+    ih->packet_id         = rte::bswap16(0x7e4d);
+    ih->fragment_offset   = rte::bswap16(0x4000);
+    ih->time_to_live      = 0x40;
+    ih->next_proto_id     = 0x01;
+    ih->hdr_checksum      = rte::bswap16(0x7e9a);
+    ih->src.addr_bytes[0] = 192;
+    ih->src.addr_bytes[1] = 168;
+    ih->src.addr_bytes[2] = 222;
+    ih->src.addr_bytes[3] = 11 ;
+    ih->dst.addr_bytes[0] = sin->sin_addr.addr_bytes[0];
+    ih->dst.addr_bytes[1] = sin->sin_addr.addr_bytes[1];
+    ih->dst.addr_bytes[2] = sin->sin_addr.addr_bytes[2];
+    ih->dst.addr_bytes[3] = sin->sin_addr.addr_bytes[3];
+
+    stcp_sockaddr next;
+    uint8_t port;
+    route_resolv(dst, &next, &port);
+
+    msg->port = port;
+    m.tx_push(msg);
+}
 
 
 };

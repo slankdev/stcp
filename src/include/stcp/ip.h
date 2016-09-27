@@ -83,13 +83,14 @@ public:
     ip_module() { m.name = "IP"; }
     void init() {m.init();}
     void rx_push(mbuf* msg){m.rx_push(msg);}
-    void tx_push(mbuf* msg){m.tx_push(msg);}
+    void tx_push(mbuf* msg, const stcp_sockaddr* dst);
     mbuf* rx_pop() {return m.rx_pop();}
     mbuf* tx_pop() {return m.tx_pop();}
     void drop(mbuf* msg) {m.drop(msg);}
-    void proc() {m.proc();}
+    void proc();
     void stat();
 
+    void sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst);
     void ioctl(uint64_t request, void* args);
     void route_resolv(const stcp_sockaddr* dst, stcp_sockaddr* next, uint8_t* port);
 
