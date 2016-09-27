@@ -34,15 +34,19 @@ void ip_module::stat()
         if (rt.rt_flags & STCP_RTF_LOCAL    )   flag_str += "L";
         if (rt.rt_flags & STCP_RTF_BROADCAST)   flag_str += "B";
 
-        printf("\t%-16s%-16s",
+        std::string gateway_str;
+        if (rt.rt_flags & STCP_RTF_LOCAL) {
+            gateway_str = "*";
+        } else {
+            gateway_str = p_sockaddr_to_str(&rt.rt_gateway);
+        }
+
+        printf("\t%-16s%-16s%-16s%-6s%-3u\n",
                 str_dest.c_str(),
-                p_sockaddr_to_str(&rt.rt_gateway));
-        printf("%-16s%-6s%-3u\n", 
+                gateway_str.c_str(),
                 p_sockaddr_to_str(&rt.rt_genmask),
                 flag_str.c_str(),
-                rt.rt_port
-        );
-
+                rt.rt_port);
     }
 }
 
