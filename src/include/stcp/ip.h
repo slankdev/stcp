@@ -90,14 +90,17 @@ public:
     void proc() {m.proc();}
     void stat();
 
-
-public:
     void ioctl(uint64_t request, void* args);
+    void route_resolv(const stcp_sockaddr* dst, stcp_sockaddr* next, uint8_t* port);
+
+private:
     void ioctl_siocaddrt(const stcp_rtentry* rt);
     void ioctl_siocaddgw(stcp_rtentry* rt);
-
     void ioctl_siocdelrt(const stcp_rtentry* rt);
     void ioctl_siocgetrts(std::vector<stcp_rtentry>** table);
+
+private:
+    bool is_linklocal(uint8_t port, const stcp_sockaddr* addr);
 };
 
 

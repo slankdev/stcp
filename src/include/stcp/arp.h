@@ -122,7 +122,6 @@ private:
     void ioctl_siocaarpent(stcp_arpreq* req);
     void ioctl_siocdarpent(stcp_arpreq* req);
     void ioctl_siocgarpent(std::vector<stcp_arpreq>** tbl);
-
     void ioctl_siocsdarp(const bool* b);
     void ioctl_siocgdarp(bool* b);
 };

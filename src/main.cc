@@ -7,7 +7,24 @@ static void set_netmask(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
 static void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
 static void set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6);
 static void send_packet_test_eth_mod();
-static void add_rtentry();
+static void set_default_gw(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t port);
+
+
+/* test code of route_resolv() */
+void test()
+{
+    ip_module& ip = core::instance().ip;
+
+    stcp_sockaddr addr;
+    stcp_sockaddr next;
+    uint8_t port = 111;
+
+    addr.inet_addr(192, 168, 222, 0);
+
+    ip.route_resolv(&addr, &next, &port);
+    printf("%s's next hop is ", p_sockaddr_to_str(&addr));
+    printf("%s, port=%u\n", p_sockaddr_to_str(&next), port);
+}
 
 
 
@@ -19,8 +36,10 @@ int main(int argc, char** argv)
     set_ip_addr(192, 168, 222, 10);
     set_netmask(255, 255, 255, 0);
     set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
-    add_rtentry();
+    set_default_gw(192, 168, 222, 1, 0);
     
+    test();
+    return 0;
     send_packet_test_eth_mod();
     s.run();
 }
@@ -60,20 +79,14 @@ static void send_packet_test_eth_mod()
 
 /*-------------------*/
 
-static void add_rtentry()
+static void set_default_gw(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t port)
 {
     ip_module& ip = core::instance().ip;
+
     stcp_rtentry rt;
-
-    rt.rt_gateway.inet_addr(192, 168, 222, 100);
-    rt.rt_port = 0;
+    rt.rt_gateway.inet_addr(o1, o2, o3, o4);
+    rt.rt_port = port;
     ip.ioctl(STCP_SIOCADDGW, &rt);
-
-    rt.rt_route.inet_addr(192, 168, 222, 0);
-    rt.rt_genmask.inet_addr(255, 255, 255, 0);
-    rt.rt_flags = STCP_RTF_MASK | STCP_RTF_LOCAL;
-    rt.rt_port = 0;
-    ip.ioctl(STCP_SIOCADDRT, &rt);
 }
 
 static void set_netmask(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
