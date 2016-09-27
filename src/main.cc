@@ -45,7 +45,6 @@ static void add_rtentry()
     rt.rt_flags = STCP_RTF_MASK | STCP_RTF_LOCAL;
     rt.rt_port = 0;
     ip.ioctl(STCP_SIOCADDRT, &rt);
-    
 }
 
 static void set_netmask(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)

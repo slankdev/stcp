@@ -66,6 +66,19 @@ void ip_module::ioctl(uint64_t request, void* args)
             ioctl_siocaddgw(rt);
             break;
         }
+        case STCP_SIOCDELRT:
+        {
+            stcp_rtentry* rt = reinterpret_cast<stcp_rtentry*>(args); 
+            ioctl_siocdelrt(rt);
+            break;
+        }
+        case STCP_SIOCGETRTS:
+        {
+            std::vector<stcp_rtentry>** table = 
+                reinterpret_cast<std::vector<stcp_rtentry>**>(args);
+            ioctl_siocgetrts(table);
+            break;
+        }
         default:
         {
             throw slankdev::exception("invalid arguments");
@@ -99,6 +112,23 @@ void ip_module::ioctl_siocaddgw(stcp_rtentry* rt)
     rt->rt_genmask.inet_addr(0, 0, 0, 0);
     rt->rt_flags = STCP_RTF_GATEWAY;
     rttable.push_back(*rt);
+}
+
+
+void ip_module::ioctl_siocdelrt(const stcp_rtentry* rt)
+{
+    for (size_t i=0; i<rttable.size(); i++) {
+        if (*rt == rttable[i]) {
+            rttable.erase(rttable.begin() + i);
+            return;
+        }
+    }
+    throw slankdev::exception("not found routing info");
+}
+
+void ip_module::ioctl_siocgetrts(std::vector<stcp_rtentry>** table)
+{
+    *table = &rttable;
 }
 
 

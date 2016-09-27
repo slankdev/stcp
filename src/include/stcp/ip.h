@@ -13,8 +13,8 @@ namespace slank {
 
 enum : uint64_t {
     STCP_SIOCADDRT,
-    // STCP_SIOCDELRT,
-    // STCP_SIOCGETRTS,
+    STCP_SIOCDELRT,
+    STCP_SIOCGETRTS,
     STCP_SIOCADDGW,
 };
 
@@ -53,7 +53,20 @@ struct stcp_rtentry {
 
     stcp_rtentry() :
         rt_port(0), rt_flags(0) {}
-    // const char* c_str();
+
+    bool operator==(const stcp_rtentry& rhs) const
+    {
+        if (rt_route   != rhs.rt_route  ) return false;
+        if (rt_genmask != rhs.rt_genmask) return false;
+        if (rt_gateway != rhs.rt_gateway) return false;
+        if (rt_port    != rhs.rt_port   ) return false;
+        if (rt_flags   != rhs.rt_flags  ) return false;
+        return true;
+    }
+    bool operator!=(const stcp_rtentry& rhs) const
+    {
+        return !(*this==rhs);
+    }
 };
 
 
@@ -82,6 +95,9 @@ public:
     void ioctl(uint64_t request, void* args);
     void ioctl_siocaddrt(const stcp_rtentry* rt);
     void ioctl_siocaddgw(stcp_rtentry* rt);
+
+    void ioctl_siocdelrt(const stcp_rtentry* rt);
+    void ioctl_siocgetrts(std::vector<stcp_rtentry>** table);
 };
 
 
