@@ -24,6 +24,7 @@ enum {
     STCP_SIOCGIFADDR,
     STCP_SIOCSIFHWADDR,
     STCP_SIOCGIFHWADDR,
+    STCP_SIOCSIFNETMASK,
 };
 
 enum {
@@ -67,6 +68,7 @@ private:
     void ioctl_siocgifaddr(stcp_ifreq* ifr);
     void ioctl_siocsifhwaddr(const stcp_ifreq* ifr);
     void ioctl_siocgifhwaddr(stcp_ifreq* ifr);
+    void ioctl_siocsifnetmask(const stcp_ifreq* ifr);
 };
 
 

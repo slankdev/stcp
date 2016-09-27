@@ -29,6 +29,7 @@ enum stcp_sa_family : uint16_t {
     STCP_AF_INET,
     STCP_AF_ARP,
     STCP_AF_PACKET,
+    STCP_AF_INMASK,
 };
 
 

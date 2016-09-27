@@ -102,6 +102,7 @@ static const char* af2str(stcp_sa_family af)
     switch (af) {
         case STCP_AF_LINK: return "AF_LINK";
         case STCP_AF_INET: return "AF_INET";
+        case STCP_AF_INMASK: return "AF_INMASK";
         default : return "unknown";
     }
 }
@@ -124,7 +125,7 @@ void ifnet::stat()
                 , ifa.raw.sa_data[0], ifa.raw.sa_data[1]
                 , ifa.raw.sa_data[2], ifa.raw.sa_data[3]
                 , ifa.raw.sa_data[4], ifa.raw.sa_data[5]);
-        } else if (ifa.family == STCP_AF_INET) {
+        } else if (ifa.family == STCP_AF_INET || ifa.family == STCP_AF_INMASK) {
             struct stcp_sockaddr_in* sin = 
                 reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
             printf("%d.%d.%d.%d " 
@@ -164,6 +165,12 @@ void ifnet::ioctl(uint64_t request, void* arg)
             ioctl_siocgifhwaddr(ifr);
             break;
         }
+        case STCP_SIOCSIFNETMASK:
+        {
+            stcp_ifreq* ifr = reinterpret_cast<stcp_ifreq*>(arg);
+            ioctl_siocsifnetmask(ifr);
+            break;
+        }
         default:
         {
             throw slankdev::exception("invalid arguments");
@@ -192,6 +199,27 @@ void ifnet::ioctl_siocsifaddr(const stcp_ifreq* ifr)
         addrs.push_back(ifa_new);
     }
 }
+
+void ifnet::ioctl_siocsifnetmask(const stcp_ifreq* ifr)
+{
+    bool in_addr_setted = false;
+
+    for (size_t i=0; i<addrs.size(); i++) {
+        if (addrs[i].family == STCP_AF_INMASK) {
+            const struct stcp_sockaddr_in* sin = 
+                reinterpret_cast<const stcp_sockaddr_in*>(&ifr->if_addr);
+            stcp_sockaddr_in* s = reinterpret_cast<stcp_sockaddr_in*>(&addrs[i].raw);
+            s->sin_addr = sin->sin_addr;
+            in_addr_setted = true;
+        }
+    }
+    
+    if (in_addr_setted == false) {
+        struct ifaddr ifa_new(STCP_AF_INMASK, &ifr->if_addr);
+        addrs.push_back(ifa_new);
+    }
+}
+
 
 void ifnet::ioctl_siocgifaddr(stcp_ifreq* ifr)
 {
@@ -248,8 +276,6 @@ void ifnet::ioctl_siocgifhwaddr(stcp_ifreq* ifr)
     }
     throw slankdev::exception("not fount inet address");
 }
-
-
 
 
 

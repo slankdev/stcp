@@ -3,7 +3,7 @@
 
 using namespace slank;
 
-
+static void set_netmask(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
 static void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
 static void set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6);
 static void add_arp_record(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
@@ -18,6 +18,7 @@ int main(int argc, char** argv)
     s.init(argc, argv);
 
     set_ip_addr(192, 168, 222, 10);
+    set_netmask(255, 255, 255, 0);
     set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
     add_arp_record(192, 168, 222, 1  );
     add_rtentry();
@@ -47,6 +48,16 @@ static void add_rtentry()
     
 }
 
+static void set_netmask(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
+{
+    dpdk_core& dpdk = core::instance().dpdk;
+    struct stcp_ifreq ifr;
+
+    memset(&ifr, 0, sizeof ifr);
+    struct stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifr.if_addr);
+    sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
+    dpdk.devices[0].ioctl(STCP_SIOCSIFNETMASK, &ifr);
+}
 static void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
     dpdk_core& dpdk = core::instance().dpdk;

@@ -40,9 +40,18 @@ public:
                 sin->sin_addr = sin_addr->sin_addr;
                 break;
             }
+            case STCP_AF_INMASK:
+            {
+                stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&raw);
+                const stcp_sockaddr_in* sin_addr = reinterpret_cast<const stcp_sockaddr_in*>(addr);
+                sin->sin_addr = sin_addr->sin_addr;
+                break;
+            }
             default:
             {
-                throw slankdev::exception("address family is not support");
+                std::string errstr = "address family is not support ";
+                errstr += std::to_string(family);
+                throw slankdev::exception(errstr.c_str());
                 break;
             }
         }
