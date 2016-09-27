@@ -171,6 +171,12 @@ void ifnet::ioctl(uint64_t request, void* arg)
             ioctl_siocsifnetmask(ifr);
             break;
         }
+        case STCP_SIOCGIFNETMASK:
+        {
+            stcp_ifreq* ifr = reinterpret_cast<stcp_ifreq*>(arg);
+            ioctl_siocgifnetmask(ifr);
+            break;
+        }
         default:
         {
             throw slankdev::exception("invalid arguments");
@@ -234,9 +240,24 @@ void ifnet::ioctl_siocgifaddr(stcp_ifreq* ifr)
             return;
         }
     }
-    throw slankdev::exception("not fount inet address");
+    throw slankdev::exception("not found inet address");
 }
 
+void ifnet::ioctl_siocgifnetmask(stcp_ifreq* ifr)
+{
+    for (ifaddr ifa : addrs) {
+        if (ifa.family == STCP_AF_INMASK) {
+            struct stcp_sockaddr_in* sin = 
+                reinterpret_cast<stcp_sockaddr_in*>(&ifr->if_addr);
+            struct stcp_sockaddr_in* s =
+                reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
+            sin->sin_fam  = STCP_AF_INMASK;
+            sin->sin_addr = s->sin_addr;
+            return;
+        }
+    }
+    throw slankdev::exception("not found inet address");
+}
 
 void ifnet::ioctl_siocsifhwaddr(const stcp_ifreq* ifr)
 {
