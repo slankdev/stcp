@@ -13,8 +13,8 @@ namespace slank {
 
 enum : uint64_t {
     STCP_SIOCADDRT,
-    // STCP_SIOCDELRT,
-    // STCP_SIOCGETRTS,
+    STCP_SIOCDELRT,
+    STCP_SIOCGETRTS,
     STCP_SIOCADDGW,
 };
 
@@ -53,7 +53,20 @@ struct stcp_rtentry {
 
     stcp_rtentry() :
         rt_port(0), rt_flags(0) {}
-    // const char* c_str();
+
+    bool operator==(const stcp_rtentry& rhs) const
+    {
+        if (rt_route   != rhs.rt_route  ) return false;
+        if (rt_genmask != rhs.rt_genmask) return false;
+        if (rt_gateway != rhs.rt_gateway) return false;
+        if (rt_port    != rhs.rt_port   ) return false;
+        if (rt_flags   != rhs.rt_flags  ) return false;
+        return true;
+    }
+    bool operator!=(const stcp_rtentry& rhs) const
+    {
+        return !(*this==rhs);
+    }
 };
 
 
@@ -70,18 +83,25 @@ public:
     ip_module() { m.name = "IP"; }
     void init() {m.init();}
     void rx_push(mbuf* msg){m.rx_push(msg);}
-    void tx_push(mbuf* msg){m.tx_push(msg);}
+    void tx_push(mbuf* msg, const stcp_sockaddr* dst);
     mbuf* rx_pop() {return m.rx_pop();}
     mbuf* tx_pop() {return m.tx_pop();}
     void drop(mbuf* msg) {m.drop(msg);}
-    void proc() {m.proc();}
+    void proc();
     void stat();
 
-
-public:
+    void sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst);
     void ioctl(uint64_t request, void* args);
+    void route_resolv(const stcp_sockaddr* dst, stcp_sockaddr* next, uint8_t* port);
+
+private:
     void ioctl_siocaddrt(const stcp_rtentry* rt);
     void ioctl_siocaddgw(stcp_rtentry* rt);
+    void ioctl_siocdelrt(const stcp_rtentry* rt);
+    void ioctl_siocgetrts(std::vector<stcp_rtentry>** table);
+
+private:
+    bool is_linklocal(uint8_t port, const stcp_sockaddr* addr);
 };
 
 

@@ -63,6 +63,9 @@ void arp_module::stat()
 {
     m.stat();
     printf("\n");
+    printf("\tFlags\n");
+    printf("\tUse dynamic arp: %s\n", use_dynamic_arp ? "YES" : "NO");
+    printf("\n");
     printf("\tARP-chace\n");
     printf("\t%-16s %-20s %s\n", "Address", "HWaddress", "Iface");
     for (stcp_arpreq& a : table) {
@@ -171,6 +174,18 @@ void arp_module::ioctl(uint64_t request, void* arg)
             ioctl_siocgarpent(tbl);
             break;
         }
+        case STCP_SIOCSDARP:
+        {
+            const bool* b = reinterpret_cast<const bool*>(arg);
+            ioctl_siocsdarp(b);
+            break;
+        }
+        case STCP_SIOCGDARP:
+        {
+            bool* b = reinterpret_cast<bool*>(arg);
+            ioctl_siocgdarp(b);
+            break;
+        }
         default:
         {
             std::string errstr = "invalid arguments " + std::to_string(request);
@@ -240,6 +255,15 @@ void arp_module::ioctl_siocgarpent(std::vector<stcp_arpreq>** tbl)
     *tbl = &table;
 }
 
+
+void arp_module::ioctl_siocsdarp(const bool* b)
+{
+    use_dynamic_arp = *b;
+}
+void arp_module::ioctl_siocgdarp(bool* b)
+{
+    *b = use_dynamic_arp;
+}
 
 
 

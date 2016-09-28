@@ -24,7 +24,11 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
             if (msg->udata64 == ARPREQ_ALREADY_SENT) { // The arpreq was already sent
                 arp.arp_resolv(port, dst, ether_dst, true);
             } else {
-                arp.arp_resolv(port, dst, ether_dst);
+                /* get next hop */
+                stcp_sockaddr nexthop;
+                ip.route_resolv(dst, &nexthop, &port); // XXX port was already decided..
+
+                arp.arp_resolv(port, &nexthop, ether_dst);
             }
 
             uint8_t zeroaddr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
