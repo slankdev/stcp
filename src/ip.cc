@@ -18,7 +18,7 @@ void ip_module::proc()
 
     while (m.tx_size() > 0) {
         mbuf* msg = m.tx_pop();
-        // TODO TODO KOKOKARA-----------
+        
     }
 
     // m.proc();

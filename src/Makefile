@@ -5,15 +5,16 @@ prefix = ..
 TARGET = a.out
 LOGNAME = log.log
 SRCS   = \
-		main.cc \
+		rte.cc \
 		dpdk.cc \
 		ifnet.cc \
-		rte.cc \
 		mbuf.cc \
 		socket.cc \
 		ethernet.cc \
+		arp.cc \
 		ip.cc \
-		arp.cc
+		stcp.cc \
+		main.cc 
 
 
 OBJS   = $(SRCS:.cc=.o)
