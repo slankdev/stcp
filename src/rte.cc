@@ -17,6 +17,7 @@
 #include <rte_lcore.h>
 #include <rte_mbuf.h>
 #include <rte_hexdump.h>
+#include <rte_ip.h>
 
 #include <stcp/rte.h>
 
@@ -222,6 +223,16 @@ void pktmbuf_trim(rte_mbuf* m, uint16_t len)
     if (ret == -1) {
         throw rte::exception("rte_pktmbuf_trim");
     }
+}
+
+size_t pktmbuf_data_len(const rte_mbuf* m)
+{
+    return m->data_len;
+}
+
+size_t raw_cksum(const void* buf, size_t len)
+{
+    return rte_raw_cksum(buf, len);
 }
 
 uint16_t bswap16(uint16_t x)

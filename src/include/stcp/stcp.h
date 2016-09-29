@@ -12,6 +12,7 @@
 #include <stcp/ethernet.h>
 #include <stcp/arp.h>
 #include <stcp/ip.h>
+#include <stcp/icmp.h>
 
 
 namespace slank {
@@ -21,9 +22,11 @@ namespace slank {
 
 class core {
 public:
+    icmp_module icmp;
     ip_module  ip;
     arp_module arp;
     ether_module ether;
+
     bool modules_updated;
     dpdk_core dpdk;
 
@@ -37,7 +40,7 @@ public:
     static core& instance();
     void init(int argc, char** argv);
     void ifs_proc();
-    void run();
+    void run(bool endless=true);
     void stat_all();
 };
 

@@ -13,6 +13,7 @@ SRCS   = \
 		ethernet.cc \
 		arp.cc \
 		ip.cc \
+		icmp.cc \
 		stcp.cc \
 		api.cc \
 		main.cc 

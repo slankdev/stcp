@@ -71,22 +71,25 @@ struct stcp_rtentry {
 
 
 
+enum ip_l4_protos : uint8_t {
+    STCP_IPPROTO_ICMP = 0x01,
+    STCP_IPPROTO_TCP  = 0x06,
+    STCP_IPPROTO_UDP  = 0x11,
+};
 
 
 class ip_module {
 private:
     proto_module m;
+    const static uint8_t ttl_default = 0x40;
 
 public:
     std::vector<stcp_rtentry> rttable;
 
-    ip_module()
-    { 
-        m.name = "IP"; 
-    }
+    ip_module() {m.name = "IP";}
     void init() {m.init();}
     void rx_push(mbuf* msg){m.rx_push(msg);}
-    void tx_push(mbuf* msg, const stcp_sockaddr* dst);
+    void tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto);
     mbuf* rx_pop() {return m.rx_pop();}
     mbuf* tx_pop() {return m.tx_pop();}
     void drop(mbuf* msg) {m.drop(msg);}
@@ -94,7 +97,7 @@ public:
     void stat();
     size_t tx_size() {return m.tx_size();}
 
-    void sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst);
+    void sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst, ip_l4_protos p);
     void ioctl(uint64_t request, void* args);
     void route_resolv(const stcp_sockaddr* dst, stcp_sockaddr* next, uint8_t* port);
 

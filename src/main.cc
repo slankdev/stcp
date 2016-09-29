@@ -33,7 +33,7 @@ static void send_packet_test_ip_mod(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t 
     stcp_sockaddr dst;
     dst.sa_fam = STCP_AF_INET;
     dst.inet_addr(o1, o2, o3, o4);
-    ip.sendto(buf, sizeof(buf), &dst);
+    ip.sendto(buf, sizeof(buf), &dst, STCP_IPPROTO_ICMP);
 }
 
 
@@ -49,7 +49,6 @@ int main(int argc, char** argv)
             0xff, 0xff , 0xff , 0xff , 0xff , 0xff);
     set_default_gw(192, 168, 222, 1, 0);
 
-    
     send_packet_test_ip_mod(192, 168, 222, 100);
-    s.run();
+    while (true) s.run(false);
 }

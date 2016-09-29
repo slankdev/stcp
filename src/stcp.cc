@@ -39,21 +39,20 @@ void core::ifs_proc()
     }
 }
 
-void core::run()
+void core::run(bool endless)
 {
-    stat_all();
-    while (true) {
+    do {
         modules_updated = false;
 
         ifs_proc();
         ether.proc();
         arp.proc();
         ip.proc();
-
+        icmp.proc();
 
         if (modules_updated)
             stat_all();
-    }
+    } while (endless);
 }
 
 void core::stat_all()
@@ -67,6 +66,7 @@ void core::stat_all()
     ether.stat();
     arp.stat();
     ip.stat();
+    icmp.stat();
 }
 
 

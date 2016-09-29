@@ -21,6 +21,7 @@
 #include <rte_lcore.h>
 #include <rte_mbuf.h>
 #include <rte_hexdump.h>
+#include <rte_ip.h>
 
 
 namespace slank {
@@ -95,6 +96,8 @@ void pktmbuf_prepend(struct rte_mbuf* m, uint16_t len);
 void pktmbuf_append(struct rte_mbuf* m, uint16_t len);
 void pktmbuf_adj(struct rte_mbuf* m, uint16_t len);
 void pktmbuf_trim(struct rte_mbuf* m, uint16_t len);
+size_t pktmbuf_data_len(const struct rte_mbuf* m);
+size_t raw_cksum(const void* buf, size_t len);
 
 uint16_t bswap16(uint16_t x);
 uint32_t bswap32(uint32_t x);

@@ -2,6 +2,7 @@
 
 
 
+#include <stcp/rte.h>
 #include <stcp/ip.h>
 #include <stcp/socket.h>
 #include <stcp/stcp.h>
@@ -12,9 +13,36 @@ namespace slank {
     
 void ip_module::proc() 
 {
-    // while (m.rx_size() > 0) {
-    //     ...
-    // }
+    while (m.rx_size() > 0) {
+        mbuf* msg = rx_pop();
+        stcp_ip_header* ih 
+            = reinterpret_cast<stcp_ip_header*>(mbuf_push(msg, sizeof(stcp_ip_header)));
+
+        // TODO KOKOKARA------------------
+        stcp_sockaddr myip;
+        myip.inet_addr(192, 168, 222, 10); // TODO hardcode
+    
+        if (myip != ih->dst) {
+            drop(msg);
+            return;
+        }
+
+        stcp_sockaddr src;
+        stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&src);
+        sin->sin_addr = ih->src;
+        uint8_t protocol = ih->next_proto_id;
+        switch (protocol) {
+            default:
+            {
+                std::string errstr = "unknown l4 proto " + std::to_string(protocol);
+                throw slankdev::exception(errstr.c_str());
+                break;
+            }
+
+        }
+
+
+    }
 
     // m.proc();
 }
@@ -212,39 +240,42 @@ bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr* addr)
     return true;
 }
 
-void ip_module::sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst)
+void ip_module::sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst, ip_l4_protos p)
 {
     mbuf* msg = 
         rte::pktmbuf_alloc(::slank::core::instance().dpdk.get_mempool());
     copy_to_mbuf(msg, buf, bufsize);
  
-    tx_push(msg, dst);
+    tx_push(msg, dst, p);
 }
 
 
-void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst)
+void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
 {
     const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(dst);
     
     stcp_ip_header* ih 
         = reinterpret_cast<stcp_ip_header*>(mbuf_push(msg, sizeof(stcp_ip_header)));
     
-    ih->version_ihl        = 0x45;
+    ih->version_ihl       = 0x45;
     ih->type_of_service   = 0x00;
-    ih->total_length      = rte::bswap16(0x0054);
+    ih->total_length      = rte::bswap16(rte::pktmbuf_data_len(msg));
     ih->packet_id         = rte::bswap16(0x7e4d);
     ih->fragment_offset   = rte::bswap16(0x4000);
-    ih->time_to_live      = 0x40;
-    ih->next_proto_id     = 0x01;
-    ih->hdr_checksum      = rte::bswap16(0x7e9a);
-    ih->src.addr_bytes[0] = 192;
-    ih->src.addr_bytes[1] = 168;
-    ih->src.addr_bytes[2] = 222;
-    ih->src.addr_bytes[3] = 11 ;
+    ih->time_to_live      = ip_module::ttl_default;
+    ih->next_proto_id     = proto;
+    ih->hdr_checksum      = 0x00; 
+    ih->src.addr_bytes[0] = 192; // TODO hardcode
+    ih->src.addr_bytes[1] = 168; // TODO hardcode
+    ih->src.addr_bytes[2] = 222; // TODO hardcode
+    ih->src.addr_bytes[3] = 11 ; // TODO hardcode
     ih->dst.addr_bytes[0] = sin->sin_addr.addr_bytes[0];
     ih->dst.addr_bytes[1] = sin->sin_addr.addr_bytes[1];
     ih->dst.addr_bytes[2] = sin->sin_addr.addr_bytes[2];
     ih->dst.addr_bytes[3] = sin->sin_addr.addr_bytes[3];
+
+    ih->hdr_checksum = rte_ipv4_cksum((const struct ipv4_hdr*)ih);
+
 
     stcp_sockaddr next;
     uint8_t port;
