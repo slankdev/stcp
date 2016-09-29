@@ -16,11 +16,6 @@ void ip_module::proc()
     //     ...
     // }
 
-    while (m.tx_size() > 0) {
-        mbuf* msg = m.tx_pop();
-        
-    }
-
     // m.proc();
 }
 
@@ -227,10 +222,6 @@ void ip_module::sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst
 }
 
 
-// #<{(| ip hdr |)}>#
-// 0x45, 0x00, 0x00, 0x54, 0x7e, 0x4d, 0x40, 0x00, 
-// 0x40, 0x01, 0x7e, 0x9a, 0xc0, 0xa8, 0xde, 0x0b, 
-// 0xc0, 0xa8, 0xde, 0x64, 
 void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst)
 {
     const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(dst);
@@ -260,7 +251,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst)
     route_resolv(dst, &next, &port);
 
     msg->port = port;
-    m.tx_push(msg);
+    core::instance().ether.tx_push(msg->port, msg, &next);
 }
 
 

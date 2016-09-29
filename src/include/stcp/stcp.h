@@ -28,7 +28,7 @@ public:
     dpdk_core dpdk;
 
 private:
-    core() :  ether(arp, ip), modules_updated(false) {}
+    core() :  modules_updated(false) {}
     ~core() {}
     core(const core&) = delete;
     core& operator=(const core&) = delete;

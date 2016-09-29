@@ -76,14 +76,12 @@ struct stcp_rtentry {
 class ip_module {
 private:
     proto_module m;
-    // ether_module* ether;
 
 public:
     std::vector<stcp_rtentry> rttable;
 
     ip_module()
     { 
-        // ether = &core::instance().ether;
         m.name = "IP"; 
     }
     void init() {m.init();}
@@ -94,6 +92,7 @@ public:
     void drop(mbuf* msg) {m.drop(msg);}
     void proc();
     void stat();
+    size_t tx_size() {return m.tx_size();}
 
     void sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst);
     void ioctl(uint64_t request, void* args);

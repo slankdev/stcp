@@ -8,8 +8,6 @@
 #include <stddef.h>
 
 #include <stcp/rte.h>
-#include <stcp/arp.h>
-#include <stcp/ip.h>
 #include <stcp/protocol.h>
 #include <stcp/config.h>
 #include <stcp/socket.h>
@@ -34,13 +32,10 @@ enum stcp_ether_type : uint16_t {
 
 class ether_module {
 private:
-    arp_module& arp;
-    ip_module&  ip;
-
     proto_module m;
 
 public:
-    ether_module(arp_module& a, ip_module& i) : arp(a), ip(i) 
+    ether_module()
     { m.name = "Ether";}
 
     void init() {m.init();}
@@ -62,7 +57,6 @@ public:
      * Now implementation, this func works as ip_module.
      */
     void sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst);
-
 
 };
 

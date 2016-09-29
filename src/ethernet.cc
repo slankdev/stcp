@@ -22,19 +22,15 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
             ether_type = rte::bswap16(STCP_ETHERTYPE_IP);
 
             if (msg->udata64 == ARPREQ_ALREADY_SENT) { // The arpreq was already sent
-                arp.arp_resolv(port, dst, ether_dst, true);
+                core::instance().arp.arp_resolv(port, dst, ether_dst, true);
             } else {
-                /* get next hop */
-                stcp_sockaddr nexthop;
-                ip.route_resolv(dst, &nexthop, &port); // XXX port was already decided..
-
-                arp.arp_resolv(port, &nexthop, ether_dst);
+                core::instance().arp.arp_resolv(port, dst, ether_dst);
             }
 
             uint8_t zeroaddr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
             if (memcmp(ether_dst, zeroaddr, sizeof zeroaddr) == 0) {
                 msg->udata64 = ARPREQ_ALREADY_SENT;
-                arp.wait.push(wait_ent(port, msg, *dst));
+                core::instance().arp.wait.push(wait_ent(port, msg, *dst));
                 return;
             }
 
@@ -124,12 +120,12 @@ void ether_module::proc()
         switch (etype) {
             case 0x0800:
             {
-                ip.rx_push(msg);
+                core::instance().ip.rx_push(msg);
                 break;
             }
             case 0x0806:
             {
-                arp.rx_push(msg);
+                core::instance().arp.rx_push(msg);
                 break;
             }
             default:
@@ -148,10 +144,10 @@ void ether_module::proc()
     }
 
 
-    if (arp.wait.size() > 0) {
-        wait_ent e = arp.wait.front();
+    if (core::instance().arp.wait.size() > 0) {
+        wait_ent e = core::instance().arp.wait.front();
         tx_push(e.port, e.msg, &e.dst);
-        arp.wait.pop();
+        core::instance().arp.wait.pop();
     }
 
 }
