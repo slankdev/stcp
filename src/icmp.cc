@@ -52,7 +52,7 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr* src)
         {
             rte::pktmbuf_free(msg);
             std::string errstr = "not support icmp type " + std::to_string(ih->icmp_type);
-            throw slankdev::exception(errstr.c_str());
+            throw exception(errstr.c_str());
             break;
         }
     }

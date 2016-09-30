@@ -30,7 +30,7 @@ void copy_to_mbuf(mbuf* mbuf, const void* buf, size_t bufsize)
          * TODO 
          * Support realloc mbuf
          */
-        // throw slankdev::exception("mbuf do not have such space");
+        // throw exception("mbuf do not have such space");
     // }
     mbuf->pkt_len  = bufsize;
     mbuf->data_len = bufsize;

@@ -71,7 +71,7 @@ public:
             }
             default:
             {
-                throw slankdev::exception("sorry not impl yet");
+                throw exception("sorry not impl yet");
                 break;
             }
         }

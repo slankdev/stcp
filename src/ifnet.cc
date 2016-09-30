@@ -179,7 +179,7 @@ void ifnet::ioctl(uint64_t request, void* arg)
         }
         default:
         {
-            throw slankdev::exception("invalid arguments");
+            throw exception("invalid arguments");
             break;
         }
     }
@@ -240,7 +240,7 @@ void ifnet::ioctl_siocgifaddr(stcp_ifreq* ifr)
             return;
         }
     }
-    throw slankdev::exception("not found inet address");
+    throw exception("not found inet address");
 }
 
 void ifnet::ioctl_siocgifnetmask(stcp_ifreq* ifr)
@@ -256,7 +256,7 @@ void ifnet::ioctl_siocgifnetmask(stcp_ifreq* ifr)
             return;
         }
     }
-    throw slankdev::exception("not found inet address");
+    throw exception("not found inet address");
 }
 
 void ifnet::ioctl_siocsifhwaddr(const stcp_ifreq* ifr)
@@ -295,7 +295,7 @@ void ifnet::ioctl_siocgifhwaddr(stcp_ifreq* ifr)
             return;
         }
     }
-    throw slankdev::exception("not fount inet address");
+    throw exception("not fount inet address");
 }
 
 
@@ -314,7 +314,7 @@ void ifnet::write(const void* buf, size_t bufsize)
 // size_t ifnet::read(void* buf, size_t bufsize)
 // {
 //     printf("%p, %zd \n", buf, bufsize);
-//     throw slankdev::exception("not impl yet");
+//     throw exception("not impl yet");
 //     return 0;
 // }
 

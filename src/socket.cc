@@ -58,11 +58,11 @@ struct stcp_in_addr stcp_inet_addr(const char* fmt)
     int32_t o[4];
     int ret = sscanf(fmt, "%d.%d.%d.%d", &o[0], &o[1], &o[2], &o[3]);
     if (ret != 4)
-        throw slankdev::exception("invalid format");
+        throw exception("invalid format");
 
     for (int i=0; i<4; i++) {
         if (o[i] < 0 || 255 < o[i])
-            throw slankdev::exception("invalid format");
+            throw exception("invalid format");
     }
 
     return stcp_inet_addr(

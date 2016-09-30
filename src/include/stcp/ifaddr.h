@@ -51,7 +51,7 @@ public:
             {
                 std::string errstr = "address family is not support ";
                 errstr += std::to_string(family);
-                throw slankdev::exception(errstr.c_str());
+                throw exception(errstr.c_str());
                 break;
             }
         }

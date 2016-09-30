@@ -28,7 +28,7 @@ void core::ifs_proc()
         uint16_t num_reqest_to_send = dev.tx_size();
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
         if (num_tx != num_reqest_to_send)
-            throw slankdev::exception("some packet droped");
+            throw exception("some packet droped");
 
         uint16_t num_rx = dev.io_rx();
         if (unlikely(num_rx == 0)) continue;

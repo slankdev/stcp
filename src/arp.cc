@@ -23,7 +23,7 @@ static void get_mymac(ether_addr* mymac, uint8_t port)
             return ;
         }
     }
-    throw slankdev::exception("not found my link address");
+    throw exception("not found my link address");
 }
 
 
@@ -36,7 +36,7 @@ static void get_myip(stcp_in_addr* myip, uint8_t port)
             return ;
         }
     }
-    throw slankdev::exception("not found my inet address");
+    throw exception("not found my inet address");
 }
 
 
@@ -189,7 +189,7 @@ void arp_module::ioctl(uint64_t request, void* arg)
         default:
         {
             std::string errstr = "invalid arguments " + std::to_string(request);
-            throw slankdev::exception(errstr.c_str());
+            throw exception(errstr.c_str());
             break;
         }
     }
@@ -238,7 +238,7 @@ void arp_module::ioctl_siocdarpent(stcp_arpreq* req)
             return ;
         }
     }
-    throw slankdev::exception("arp record not found");
+    throw exception("arp record not found");
 }
 
 
@@ -293,7 +293,7 @@ void arp_module::arp_resolv(
         for (int i=0; i<6; i++)
             dsten[i] = 0x00;
     } else {
-        throw slankdev::exception("no such record in arp-table");
+        throw exception("no such record in arp-table");
     }
 }
 

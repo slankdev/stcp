@@ -51,7 +51,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
                 default:
                     std::string errstr = 
                         "not support arp operation " + std::to_string(rte::bswap16(ah->operation));
-                    throw slankdev::exception(errstr.c_str());
+                    throw exception(errstr.c_str());
                     break;
             }
 
@@ -69,7 +69,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
         default:
         {
             std::string errstr = "not support address family " + std::to_string(dst->sa_fam);
-            throw slankdev::exception(errstr.c_str());
+            throw exception(errstr.c_str());
             break;
         }
     }

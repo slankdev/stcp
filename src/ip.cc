@@ -62,7 +62,7 @@ void ip_module::proc()
             {
                 rte::pktmbuf_free(msg);
                 std::string errstr = "unknown l4 proto " + std::to_string(protocol);
-                throw slankdev::exception(errstr.c_str());
+                throw exception(errstr.c_str());
                 break;
             }
 
@@ -147,7 +147,7 @@ void ip_module::ioctl(uint64_t request, void* args)
         }
         default:
         {
-            throw slankdev::exception("invalid arguments");
+            throw exception("invalid arguments");
             break;
         }
     }
@@ -189,7 +189,7 @@ void ip_module::ioctl_siocdelrt(const stcp_rtentry* rt)
             return;
         }
     }
-    throw slankdev::exception("not found routing info");
+    throw exception("not found routing info");
 }
 
 void ip_module::ioctl_siocgetrts(std::vector<stcp_rtentry>** table)
@@ -221,7 +221,7 @@ void ip_module::route_resolv(const stcp_sockaddr* dst, stcp_sockaddr* next, uint
         }
     }
 
-    throw slankdev::exception("not found route");
+    throw exception("not found route");
 }
 
 bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr* addr)
@@ -246,7 +246,7 @@ bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr* addr)
     }
 
     if (!inaddr_exist || !inmask_exist) {
-        throw slankdev::exception("inaddr or inmask is not exist");
+        throw exception("inaddr or inmask is not exist");
     }
     
     stcp_sockaddr_in* inaddr_sin = reinterpret_cast<stcp_sockaddr_in*>(&inaddr);
