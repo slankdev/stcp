@@ -70,47 +70,6 @@ void ip_module::rx_push(mbuf* msg)
     }
 }
 
-void ip_module::stat()
-{
-    printf("IP module\n");
-    printf("\tRX Packets %zd\n", rx_cnt);
-    printf("\tTX Packets %zd\n", tx_cnt);
-    printf("\n");
-    printf("\tRouting-Table\n");
-    printf("\t%-16s%-16s%-16s%-6s%-3s\n", "Destination", "Gateway", "Genmask", "Flags", "if");
-    for (stcp_rtentry& rt : rttable) {
-
-        std::string str_dest;
-        if (rt.rt_flags & STCP_RTF_GATEWAY) {
-            str_dest = "defalt";
-        } else if (rt.rt_flags & STCP_RTF_LOCAL) {
-            str_dest = "link-local";
-        } else {
-            str_dest = p_sockaddr_to_str(&rt.rt_route);
-        }
-
-        std::string flag_str = "";
-        if (rt.rt_flags & STCP_RTF_GATEWAY  )   flag_str += "G";
-        if (rt.rt_flags & STCP_RTF_MASK     )   flag_str += "M";
-        if (rt.rt_flags & STCP_RTF_LOCAL    )   flag_str += "L";
-        if (rt.rt_flags & STCP_RTF_BROADCAST)   flag_str += "B";
-
-        std::string gateway_str;
-        if (rt.rt_flags & STCP_RTF_LOCAL) {
-            gateway_str = "*";
-        } else {
-            gateway_str = p_sockaddr_to_str(&rt.rt_gateway);
-        }
-
-        printf("\t%-16s%-16s%-16s%-6s%-3u\n",
-                str_dest.c_str(),
-                gateway_str.c_str(),
-                p_sockaddr_to_str(&rt.rt_genmask),
-                flag_str.c_str(),
-                rt.rt_port);
-    }
-}
-
 
 void ip_module::ioctl(uint64_t request, void* args)
 {

@@ -42,11 +42,12 @@ void ifnet::init()
 
     if (rte::eth_dev_socket_id(port_id) > 0 && 
             rte::eth_dev_socket_id(port_id) != (int)rte::socket_id()) {
-        char str[128];
-        sprintf(str, "WARNING: port %4u is on remote NUMA node to "
-                "polling thread. \n\tPerformance will "
-                "not be optimal. \n ", port_id);
-        throw rte::exception(str);
+        std::string str;
+        str = "WARNING: port" + std::to_string(port_id);
+        str += "is on remote NUMA node to ";
+        str += "polling thread. \n\tPerformance will ";
+        str += "not be optimal. \n ";
+        throw rte::exception(str.c_str());
     }
 
 
@@ -110,31 +111,30 @@ static const char* af2str(stcp_sa_family af)
 
 void ifnet::stat()
 {
-    printf("%s: ", name.c_str());
-    if (promiscuous_mode) printf("PROMISC ");
-    printf("\n");
-    printf("\tRX Packets %u Queue %zu\n", rx_packets, rx.size());
-    printf("\tTX Packets %u Queue %zu\n", tx_packets, tx.size());
-    printf("\tDrop Packets %u \n", drop_packets);
+    stat::instance().write("%s: %s", name.c_str(), promiscuous_mode?"PROMISC":"");
+    stat::instance().write("");
+    stat::instance().write("\tRX Packets %u Queue %zu", rx_packets, rx.size());
+    stat::instance().write("\tTX Packets %u Queue %zu", tx_packets, tx.size());
+    stat::instance().write("\tDrop Packets %u", drop_packets);
 
-    printf("\n");
+    stat::instance().write("");
     for (ifaddr& ifa : addrs) {
-        printf("\t%-10s ", af2str(ifa.family));
         if (ifa.family == STCP_AF_LINK) {
-            printf("%02x:%02x:%02x:%02x:%02x:%02x " 
+            stat::instance().write("\t%-10s %02x:%02x:%02x:%02x:%02x:%02x " 
+                , af2str(ifa.family)
                 , ifa.raw.sa_data[0], ifa.raw.sa_data[1]
                 , ifa.raw.sa_data[2], ifa.raw.sa_data[3]
                 , ifa.raw.sa_data[4], ifa.raw.sa_data[5]);
         } else if (ifa.family == STCP_AF_INET || ifa.family == STCP_AF_INMASK) {
             struct stcp_sockaddr_in* sin = 
                 reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
-            printf("%d.%d.%d.%d " 
+            stat::instance().write("\t%-10s %d.%d.%d.%d " 
+                , af2str(ifa.family)
                 , sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1]
                 , sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
         }
-        printf("\n");
     }
-    printf("\n");
+    stat::instance().write("");
 }
 
 
@@ -310,13 +310,6 @@ void ifnet::write(const void* buf, size_t bufsize)
     tx_push(mbuf);
 }
 
-
-// size_t ifnet::read(void* buf, size_t bufsize)
-// {
-//     printf("%p, %zd \n", buf, bufsize);
-//     throw exception("not impl yet");
-//     return 0;
-// }
 
 
 } /* slank */

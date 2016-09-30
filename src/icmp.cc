@@ -7,13 +7,6 @@
 
 namespace slank {
 
-void icmp_module::stat()
-{
-    printf("\n");
-    printf("ICMP module\n");
-    printf("\tRX Packets %zd\n", rx_cnt);
-    printf("\tTX Packets %zd\n", tx_cnt);
-}
 
 
 

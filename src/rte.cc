@@ -51,7 +51,6 @@ void eth_dev_init(int argc, char** argv)
 {
     int ret = rte_eal_init(argc, argv);
     if (ret < 0) {
-        printf("throw \n");
         throw rte::exception("rte_eal_init");
     }
 }

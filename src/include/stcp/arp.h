@@ -93,6 +93,7 @@ struct wait_ent {
 
 
 class arp_module {
+    friend class core;
 private:
     bool use_dynamic_arp;
 private:
@@ -108,7 +109,6 @@ public:
     void rx_push(mbuf* msg);
     void tx_push(mbuf* msg);
 
-    void stat();
     void arp_resolv(uint8_t port, const stcp_sockaddr *dst, 
             uint8_t* dsten, bool checkcacheonly=false);
     void arp_request(uint8_t port, const stcp_in_addr* tip);

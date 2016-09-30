@@ -147,13 +147,4 @@ void ether_module::rx_push(mbuf* msg)
 }
 
 
-void ether_module::stat()
-{
-    printf("Ether module\n");
-    printf("\tRX Packets %zd\n", rx_cnt);
-    printf("\tTX Packets %zd\n", tx_cnt);
-}
-
-
-
 } /* namespace slank */

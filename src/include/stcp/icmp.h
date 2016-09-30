@@ -24,15 +24,14 @@ struct stcp_icmp_header {
 
 
 class icmp_module {
+    friend class core;
 private:
     size_t rx_cnt;
     size_t tx_cnt;
 
 public:
     icmp_module() : rx_cnt(0), tx_cnt(0) {}
-    void proc() {}
 
-    void stat();
     void rx_push(mbuf* msg, const stcp_sockaddr* src);
 };
 

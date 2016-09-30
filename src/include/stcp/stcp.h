@@ -18,7 +18,7 @@
 namespace slank {
     
 
-
+using stat = log<class status_infos>;
 
 class core {
 public:
@@ -26,12 +26,13 @@ public:
     ip_module  ip;
     arp_module arp;
     ether_module ether;
-
-    bool modules_updated;
     dpdk_core dpdk;
 
 private:
-    core() :  modules_updated(false) {}
+    core()
+    {
+        stat::instance().open_new("stcp.stat.log");
+    }
     ~core() {}
     core(const core&) = delete;
     core& operator=(const core&) = delete;

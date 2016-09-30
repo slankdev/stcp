@@ -52,5 +52,8 @@ int main(int argc, char** argv)
     // send_packet_test_ip_mod(192, 168, 222, 100);
 
     s.stat_all();
-    while (true) s.run(false);
+    while (true) {
+        s.run(false);
+        s.stat_all();
+    }
 }

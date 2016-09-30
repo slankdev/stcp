@@ -79,6 +79,7 @@ enum ip_l4_protos : uint8_t {
 
 
 class ip_module {
+    friend class core;
 private:
     const static uint8_t ttl_default = 0x40;
     size_t rx_cnt;
@@ -90,7 +91,6 @@ public:
     ip_module() : rx_cnt(0), tx_cnt(0) {}
     void rx_push(mbuf* msg);
     void tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto);
-    void stat();
 
     void sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst, ip_l4_protos p);
     void ioctl(uint64_t request, void* args);

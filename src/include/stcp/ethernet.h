@@ -32,6 +32,7 @@ enum stcp_ether_type : uint16_t {
 
 class ether_module {
 private:
+    friend class core;
     proto_module m;
     size_t rx_cnt;
     size_t tx_cnt;
@@ -41,8 +42,6 @@ public:
 
     void rx_push(mbuf* msg);
     void tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst);
-
-    void stat();
     void proc();
 
 public:

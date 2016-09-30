@@ -8,6 +8,7 @@
 #include <slankdev/util.h>
 #include <slankdev/exception.h>
 #include <slankdev/system.h>
+#include <stcp/log.h>
 
 
 namespace slank {
@@ -17,7 +18,5 @@ using mbuf = struct rte_mbuf;
 using slankdev::clear_screen;
 using pkt_queue = slankdev::queue<struct rte_mbuf, rte_mbuf_allocator>;
 
-// struct tag;
-// using log = slankdev::log<tag>;
 
 } /* namespace */

@@ -59,25 +59,6 @@ static bool p_sockaddr_is_same(const stcp_sockaddr* a, const stcp_sockaddr* b)
 }
 
 
-void arp_module::stat() 
-{
-    printf("ARP module\n");
-    printf("\tRX Packets %zd\n", rx_cnt);
-    printf("\tTX Packets %zd\n", tx_cnt);
-    printf("\n");
-    printf("\tWaiting packs  : %zd\n", wait.size());
-    printf("\tUse dynamic arp: %s\n", use_dynamic_arp ? "YES" : "NO");
-    printf("\n");
-    printf("\tARP-chace\n");
-    printf("\t%-16s %-20s %s\n", "Address", "HWaddress", "Iface");
-    for (stcp_arpreq& a : table) {
-        printf("\t%-16s %-20s %d\n",
-                /* TODO #15 this function will be included in sockaddr-class */
-                p_sockaddr_to_str(&a.arp_pa),  
-                hw_sockaddr_to_str(&a.arp_ha), a.arp_ifindex);
-    }
-}
-
 
 static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
 {
