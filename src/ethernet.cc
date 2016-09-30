@@ -9,8 +9,19 @@ namespace slank {
 
 
 
+void ether_module::proc() 
+{
+    if (core::instance().arp.wait.size() > 0) {
+        wait_ent e = core::instance().arp.wait.front();
+        tx_push(e.port, e.msg, &e.dst);
+        core::instance().arp.wait.pop();
+    }
+}
+
+
 void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
 {
+    tx_cnt++;
     
     uint8_t ether_src[6];
     uint8_t ether_dst[6];
@@ -93,7 +104,9 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
     }
     eh->type = ether_type;
 
-    m.tx_push(msg);
+    for (ifnet& dev : core::instance().dpdk.devices) {
+        dev.tx_push(msg);
+    }
 }
 
 
@@ -107,49 +120,38 @@ void ether_module::sendto(const void* buf, size_t bufsize, const stcp_sockaddr* 
 }
 
 
-
-void ether_module::proc() 
+void ether_module::rx_push(mbuf* msg)
 {
-    while (m.rx_size() > 0) {
-        mbuf* msg = rx_pop();
+    rx_cnt++;
+    stcp_ether_header* eh = rte::pktmbuf_mtod<stcp_ether_header*>(msg);
+    uint16_t etype = rte::bswap16(eh->type);
+    mbuf_pull(msg, sizeof(stcp_ether_header));
 
-        stcp_ether_header* eh = rte::pktmbuf_mtod<stcp_ether_header*>(msg);
-        uint16_t etype = rte::bswap16(eh->type);
-        mbuf_pull(msg, sizeof(stcp_ether_header));
-
-        switch (etype) {
-            case 0x0800:
-            {
-                core::instance().ip.rx_push(msg);
-                break;
-            }
-            case 0x0806:
-            {
-                core::instance().arp.rx_push(msg);
-                break;
-            }
-            default:
-            {
-                drop(msg); // TODO #18
-                break;
-            }
+    switch (etype) {
+        case STCP_ETHERTYPE_IP:
+        {
+            core::instance().ip.rx_push(msg);
+            break;
+        }
+        case STCP_ETHERTYPE_ARP:
+        {
+            core::instance().arp.rx_push(msg);
+            break;
+        }
+        default:
+        {
+            rte::pktmbuf_free(msg);
+            break;
         }
     }
-
-    while (m.tx_size() > 0) {
-        mbuf* msg = m.tx_pop();
-        for (ifnet& dev : core::instance().dpdk.devices) {
-            dev.tx_push(msg);
-        }
-    }
+}
 
 
-    if (core::instance().arp.wait.size() > 0) {
-        wait_ent e = core::instance().arp.wait.front();
-        tx_push(e.port, e.msg, &e.dst);
-        core::instance().arp.wait.pop();
-    }
-
+void ether_module::stat()
+{
+    printf("Ether module\n");
+    printf("\tRX Packets %zd\n", rx_cnt);
+    printf("\tTX Packets %zd\n", tx_cnt);
 }
 
 

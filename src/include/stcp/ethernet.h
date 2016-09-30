@@ -33,18 +33,16 @@ enum stcp_ether_type : uint16_t {
 class ether_module {
 private:
     proto_module m;
+    size_t rx_cnt;
+    size_t tx_cnt;
 
 public:
-    ether_module()
-    { m.name = "Ether";}
+    ether_module() : rx_cnt(0), tx_cnt(0) {}
 
-    void init() {m.init();}
-    void rx_push(mbuf* msg){m.rx_push(msg);}
+    void rx_push(mbuf* msg);
     void tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst);
-    mbuf* rx_pop() {return m.rx_pop();}
-    mbuf* tx_pop() {return m.tx_pop();}
-    void drop(mbuf* msg) {m.drop(msg);}
-    void stat() {m.stat();}
+
+    void stat();
     void proc();
 
 public:

@@ -47,7 +47,6 @@ void core::run(bool endless)
 
         ifs_proc();
         ether.proc();
-        arp.proc();
         ip.proc();
         icmp.proc();
 

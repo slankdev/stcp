@@ -5,7 +5,6 @@
 using namespace slank;
 
 
-#if 0
 static void send_packet_test_ip_mod(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
     ip_module& ip = core::instance().ip;
@@ -35,7 +34,6 @@ static void send_packet_test_ip_mod(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t 
     dst.inet_addr(o1, o2, o3, o4);
     ip.sendto(buf, sizeof(buf), &dst, STCP_IPPROTO_ICMP);
 }
-#endif
 
 
 int main(int argc, char** argv)
@@ -46,10 +44,13 @@ int main(int argc, char** argv)
     set_ip_addr(192, 168, 222, 10);
     set_netmask(255, 255, 255, 0);
     set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
-    add_arp_record(192, 168, 222, 100, 
-            0xff, 0xff , 0xff , 0xff , 0xff , 0xff);
+    // add_arp_record(192, 168, 222, 100, 
+    //         0x74, 0x03 , 0xbd , 0x3d , 0x78 , 0x96);
+            // 0xff, 0xff , 0xff , 0xff , 0xff , 0xff);
     set_default_gw(192, 168, 222, 1, 0);
 
-    // send_packet_test_ip_mod(192, 168, 222, 100);
+    send_packet_test_ip_mod(192, 168, 222, 100);
+
+    s.stat_all();
     while (true) s.run(false);
 }

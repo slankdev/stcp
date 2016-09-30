@@ -65,7 +65,7 @@ void arp_module::stat()
     printf("\tRX Packets %zd\n", rx_cnt);
     printf("\tTX Packets %zd\n", tx_cnt);
     printf("\n");
-    printf("\tFlags\n");
+    printf("\tWaiting packs  : %zd\n", wait.size());
     printf("\tUse dynamic arp: %s\n", use_dynamic_arp ? "YES" : "NO");
     printf("\n");
     printf("\tARP-chace\n");
