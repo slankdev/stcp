@@ -21,7 +21,6 @@ void ether_module::proc()
 
 void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
 {
-    tx_cnt++;
     
     uint8_t ether_src[6];
     uint8_t ether_dst[6];
@@ -104,6 +103,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
     }
     eh->type = ether_type;
 
+    tx_cnt++;
     for (ifnet& dev : core::instance().dpdk.devices) {
         dev.tx_push(msg);
     }

@@ -11,54 +11,55 @@ namespace slank {
 
 
     
-void ip_module::proc() 
+
+void ip_module::rx_push(mbuf* msg)
 {
-    while (m.rx_size() > 0) {
-        mbuf* msg = rx_pop();
-        stcp_ip_header* ih 
-            = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
-        mbuf_pull(msg, sizeof(stcp_ip_header));
+    rx_cnt++;
+
+    stcp_ip_header* ih 
+        = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
+    mbuf_pull(msg, sizeof(stcp_ip_header));
 
 
-        // TODO hardcode
-        stcp_in_addr myip;
-        myip.addr_bytes[0] = 192;
-        myip.addr_bytes[1] = 168;
-        myip.addr_bytes[2] = 222;
-        myip.addr_bytes[3] = 10;
-        
-        stcp_in_addr bcast;
-        bcast.addr_bytes[0] = 0xff;
-        bcast.addr_bytes[1] = 0xff;
-        bcast.addr_bytes[2] = 0xff;
-        bcast.addr_bytes[3] = 0xff;
+    // TODO hardcode
+    stcp_in_addr myip;
+    myip.addr_bytes[0] = 192;
+    myip.addr_bytes[1] = 168;
+    myip.addr_bytes[2] = 222;
+    myip.addr_bytes[3] = 10;
 
-        if (myip != ih->dst && bcast != ih->dst) {
-            drop(msg);
-            return;
-        }
+    stcp_in_addr bcast;
+    bcast.addr_bytes[0] = 0xff;
+    bcast.addr_bytes[1] = 0xff;
+    bcast.addr_bytes[2] = 0xff;
+    bcast.addr_bytes[3] = 0xff;
 
-        stcp_sockaddr src;
-        stcp_sockaddr_in* src_sin = reinterpret_cast<stcp_sockaddr_in*>(&src);
-        src_sin->sin_addr = ih->src;
-        uint8_t protocol = ih->next_proto_id;
-        switch (protocol) {
-            case STCP_IPPROTO_ICMP:
+    if (myip != ih->dst && bcast != ih->dst) {
+        rte::pktmbuf_free(msg);
+        return;
+    }
+
+    stcp_sockaddr src;
+    stcp_sockaddr_in* src_sin = reinterpret_cast<stcp_sockaddr_in*>(&src);
+    src_sin->sin_addr = ih->src;
+    uint8_t protocol = ih->next_proto_id;
+    switch (protocol) {
+        case STCP_IPPROTO_ICMP:
             {
                 core::instance().icmp.rx_push(msg, &src);
                 break;
             }
-            case STCP_IPPROTO_TCP:
+        case STCP_IPPROTO_TCP:
             {
                 rte::pktmbuf_free(msg);
                 break;
             }
-            case STCP_IPPROTO_UDP:
+        case STCP_IPPROTO_UDP:
             {
                 rte::pktmbuf_free(msg);
                 break;
             }
-            default:
+        default:
             {
                 rte::pktmbuf_free(msg);
                 std::string errstr = "unknown l4 proto " + std::to_string(protocol);
@@ -66,20 +67,14 @@ void ip_module::proc()
                 break;
             }
 
-        }
-
-
     }
-
-    // m.proc();
 }
-
-
-
 
 void ip_module::stat()
 {
-    m.stat();
+    printf("IP module\n");
+    printf("\tRX Packets %zd\n", rx_cnt);
+    printf("\tTX Packets %zd\n", tx_cnt);
     printf("\n");
     printf("\tRouting-Table\n");
     printf("\t%-16s%-16s%-16s%-6s%-3s\n", "Destination", "Gateway", "Genmask", "Flags", "if");
@@ -279,6 +274,8 @@ void ip_module::sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst
 
 void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
 {
+    tx_cnt++;
+
     const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(dst);
     
     stcp_ip_header* ih 

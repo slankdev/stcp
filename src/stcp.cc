@@ -16,7 +16,6 @@ core& core::instance()
 void core::init(int argc, char** argv)
 {
     dpdk.init(argc, argv);
-    ip.init();
 
     stat_all();
 }
@@ -47,7 +46,6 @@ void core::run(bool endless)
 
         ifs_proc();
         ether.proc();
-        ip.proc();
         icmp.proc();
 
         if (modules_updated)
