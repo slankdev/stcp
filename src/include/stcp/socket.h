@@ -47,7 +47,35 @@ public:
 
     bool operator==(const stcp_sockaddr& rhs) const
     {
-        return memcmp(this, &rhs, sizeof(stcp_sockaddr)) == 0;
+        if (sa_fam != rhs.sa_fam)
+            return false;
+    
+        switch (sa_fam) {
+            case STCP_AF_LINK:
+            {
+                for (int i=0; i<6; i++) {
+                    if (sa_data[i] != rhs.sa_data[i])
+                        return false;
+                }
+                return true;
+                break;
+            }
+            case STCP_AF_INET:
+            {
+                for (int i=0; i<6; i++) {
+                    if (sa_data[i] != rhs.sa_data[i])
+                        return false;
+                }
+                return true;
+                break;
+            }
+            default:
+            {
+                throw slankdev::exception("sorry not impl yet");
+                break;
+            }
+        }
+
     }
     bool operator!=(const stcp_sockaddr& rhs) const
     {

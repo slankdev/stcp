@@ -16,24 +16,51 @@ void ip_module::proc()
     while (m.rx_size() > 0) {
         mbuf* msg = rx_pop();
         stcp_ip_header* ih 
-            = reinterpret_cast<stcp_ip_header*>(mbuf_push(msg, sizeof(stcp_ip_header)));
+            = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
+        mbuf_pull(msg, sizeof(stcp_ip_header));
 
-        // TODO KOKOKARA------------------
-        stcp_sockaddr myip;
-        myip.inet_addr(192, 168, 222, 10); // TODO hardcode
-    
-        if (myip != ih->dst) {
+
+        // TODO hardcode
+        stcp_in_addr myip;
+        myip.addr_bytes[0] = 192;
+        myip.addr_bytes[1] = 168;
+        myip.addr_bytes[2] = 222;
+        myip.addr_bytes[3] = 10;
+        
+        stcp_in_addr bcast;
+        bcast.addr_bytes[0] = 0xff;
+        bcast.addr_bytes[1] = 0xff;
+        bcast.addr_bytes[2] = 0xff;
+        bcast.addr_bytes[3] = 0xff;
+
+        if (myip != ih->dst && bcast != ih->dst) {
             drop(msg);
             return;
         }
 
         stcp_sockaddr src;
-        stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&src);
-        sin->sin_addr = ih->src;
+        stcp_sockaddr_in* src_sin = reinterpret_cast<stcp_sockaddr_in*>(&src);
+        src_sin->sin_addr = ih->src;
         uint8_t protocol = ih->next_proto_id;
         switch (protocol) {
+            case STCP_IPPROTO_ICMP:
+            {
+                core::instance().icmp.rx_push(msg, &src);
+                break;
+            }
+            case STCP_IPPROTO_TCP:
+            {
+                rte::pktmbuf_free(msg);
+                break;
+            }
+            case STCP_IPPROTO_UDP:
+            {
+                rte::pktmbuf_free(msg);
+                break;
+            }
             default:
             {
+                rte::pktmbuf_free(msg);
                 std::string errstr = "unknown l4 proto " + std::to_string(protocol);
                 throw slankdev::exception(errstr.c_str());
                 break;
@@ -268,7 +295,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
     ih->src.addr_bytes[0] = 192; // TODO hardcode
     ih->src.addr_bytes[1] = 168; // TODO hardcode
     ih->src.addr_bytes[2] = 222; // TODO hardcode
-    ih->src.addr_bytes[3] = 11 ; // TODO hardcode
+    ih->src.addr_bytes[3] = 10 ; // TODO hardcode
     ih->dst.addr_bytes[0] = sin->sin_addr.addr_bytes[0];
     ih->dst.addr_bytes[1] = sin->sin_addr.addr_bytes[1];
     ih->dst.addr_bytes[2] = sin->sin_addr.addr_bytes[2];
@@ -280,6 +307,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
     stcp_sockaddr next;
     uint8_t port;
     route_resolv(dst, &next, &port);
+    next.sa_fam = STCP_AF_INET;
 
     msg->port = port;
     core::instance().ether.tx_push(msg->port, msg, &next);

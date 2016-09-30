@@ -9,53 +9,53 @@ namespace slank {
 
 void icmp_module::stat()
 {
-    m.stat();
     printf("\n");
+    printf("ICMP module\n");
+    printf("\tRX Packets %zd\n", rx_cnt);
+    printf("\tTX Packets %zd\n", tx_cnt);
 }
 
-void icmp_module::proc()
+
+
+void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr* src)
 {
-    mbuf* msg = rx_pop();
+    rx_cnt++;
+
     stcp_icmp_header* ih 
-        = reinterpret_cast<stcp_icmp_header*>(mbuf_push(msg, sizeof(stcp_icmp_header)));
+        = rte::pktmbuf_mtod<stcp_icmp_header*>(msg);
 
     switch (ih->icmp_type) {
         case STCP_ICMP_ECHO:
         {
-            /* reply icmp packet */
             ih->icmp_type  = STCP_ICMP_ECHOREPLY;
-            ih->icmp_cksum = 0x00;
-            ih->icmp_cksum = rte::raw_cksum(ih, rte::pktmbuf_data_len(msg)); 
+            ih->icmp_code  = 0x00;
+            ih->icmp_cksum = 0x0000;
 
-            // TODO KOKOKARA-------------
-            
-            // tx_push(msg, );
+#if 1 /* XXX DPDK's function that calc checksum can not work correctry. */
+            ih->icmp_cksum = slankdev::checksum(ih, rte::pktmbuf_data_len(msg));
+            ih->icmp_cksum = slankdev::checksum(ih, rte::pktmbuf_data_len(msg));
+#else
+            ih->icmp_cksum = rte::raw_cksum(ih, rte::pktmbuf_data_len(msg));
+            ih->icmp_cksum = rte::raw_cksum(ih, rte::pktmbuf_data_len(msg));
+#endif
+
+            core::instance().ip.tx_push(msg, src, STCP_IPPROTO_ICMP);
+            tx_cnt++;
             break;
         }
         case STCP_ICMP_ECHOREPLY:
         {
-            /* nop */
-            drop(msg);
+            rte::pktmbuf_free(msg);
             break;
         }
         default:
         {
-            drop(msg);
-            std::string errstr = "not support icmp type" + std::to_string(ih->icmp_type);
+            rte::pktmbuf_free(msg);
+            std::string errstr = "not support icmp type " + std::to_string(ih->icmp_type);
             throw slankdev::exception(errstr.c_str());
             break;
         }
     }
-}
-
-void icmp_module::tx_push(mbuf* msg, const stcp_sockaddr* dst)
-{
-    core::instance().ip.tx_push(msg, dst, STCP_IPPROTO_ICMP);
-}
-
-void icmp_module::rx_push(mbuf* msg)
-{
-    m.rx_push(msg);
 }
 
 

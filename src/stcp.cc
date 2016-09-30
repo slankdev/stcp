@@ -18,6 +18,8 @@ void core::init(int argc, char** argv)
     dpdk.init(argc, argv);
     arp.init();
     ip.init();
+
+    stat_all();
 }
 
 void core::ifs_proc()

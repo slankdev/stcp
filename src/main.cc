@@ -49,6 +49,6 @@ int main(int argc, char** argv)
             0xff, 0xff , 0xff , 0xff , 0xff , 0xff);
     set_default_gw(192, 168, 222, 1, 0);
 
-    send_packet_test_ip_mod(192, 168, 222, 100);
+    // send_packet_test_ip_mod(192, 168, 222, 100);
     while (true) s.run(false);
 }

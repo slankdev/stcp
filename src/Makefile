@@ -46,6 +46,13 @@ runall:
 		--vdev=eth_pcap1,iface=eth1 \
 		--vdev=eth_pcap2,iface=lo 
 
+gdb:
+	sudo gdb -q --args \
+		./$(TARGET) --vdev=eth_pcap0,iface=eth0
+
+gdblo:
+	sudo gdb -q --args \
+		./$(TARGET) --vdev=eth_pcap0,iface=lo
 
 include $(prefix)/mk/vars.mk
 LDFLAGS += -lslankdev -lpgen2

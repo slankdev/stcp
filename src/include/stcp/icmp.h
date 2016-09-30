@@ -25,20 +25,15 @@ struct stcp_icmp_header {
 
 class icmp_module {
 private:
-    proto_module m;
+    size_t rx_cnt;
+    size_t tx_cnt;
 
 public:
-    icmp_module() {m.name = "ICMP";}
-    void init() {m.init();}
+    icmp_module() : rx_cnt(0), tx_cnt(0) {}
+    void proc() {}
 
     void stat();
-    void proc();
-
-    void rx_push(mbuf* msg);
-    void tx_push(mbuf* msg, const stcp_sockaddr* dst);
-    mbuf* rx_pop() {return m.rx_pop();}
-    mbuf* tx_pop() {return m.tx_pop();}
-    void drop(mbuf* msg) {m.drop(msg);}
+    void rx_push(mbuf* msg, const stcp_sockaddr* src);
 };
 
 

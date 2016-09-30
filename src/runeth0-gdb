@@ -1,2 +1,0 @@
-
-run --vdev=eth_pcap0,iface=eth0

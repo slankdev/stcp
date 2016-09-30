@@ -11,6 +11,7 @@
 
 namespace slank {
  
+using exception = slankdev::exception;
 using eth_conf = struct rte_eth_conf;
 using mbuf = struct rte_mbuf;
 using slankdev::clear_screen;
