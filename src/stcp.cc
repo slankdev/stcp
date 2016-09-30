@@ -16,7 +16,6 @@ core& core::instance()
 void core::init(int argc, char** argv)
 {
     dpdk.init(argc, argv);
-    arp.init();
     ip.init();
 
     stat_all();

@@ -5,7 +5,7 @@
 using namespace slank;
 
 
-
+#if 0
 static void send_packet_test_ip_mod(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
     ip_module& ip = core::instance().ip;
@@ -35,6 +35,7 @@ static void send_packet_test_ip_mod(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t 
     dst.inet_addr(o1, o2, o3, o4);
     ip.sendto(buf, sizeof(buf), &dst, STCP_IPPROTO_ICMP);
 }
+#endif
 
 
 int main(int argc, char** argv)

@@ -61,7 +61,9 @@ static bool p_sockaddr_is_same(const stcp_sockaddr* a, const stcp_sockaddr* b)
 
 void arp_module::stat() 
 {
-    m.stat();
+    printf("ARP module\n");
+    printf("\tRX Packets %zd\n", rx_cnt);
+    printf("\tTX Packets %zd\n", tx_cnt);
     printf("\n");
     printf("\tFlags\n");
     printf("\tUse dynamic arp: %s\n", use_dynamic_arp ? "YES" : "NO");
@@ -70,8 +72,9 @@ void arp_module::stat()
     printf("\t%-16s %-20s %s\n", "Address", "HWaddress", "Iface");
     for (stcp_arpreq& a : table) {
         printf("\t%-16s %-20s %d\n",
-                p_sockaddr_to_str(&a.arp_pa),  // TODO #15 this function will be included in sockaddr-class
-                hw_sockaddr_to_str(&a.arp_ha), a.arp_ifindex); // TODO #15 this function will be included in sockaddr-class
+                /* TODO #15 this function will be included in sockaddr-class */
+                p_sockaddr_to_str(&a.arp_pa),  
+                hw_sockaddr_to_str(&a.arp_ha), a.arp_ifindex);
     }
 }
 
@@ -86,69 +89,72 @@ static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
 	return false;
 }
 
-void arp_module::proc() 
+
+void arp_module::rx_push(mbuf* msg)
 {
-    while (m.rx_size() > 0) {
-        mbuf* msg = m.rx_pop();
-        struct stcp_arphdr* ah  = rte::pktmbuf_mtod<struct stcp_arphdr*>(msg);
-        uint8_t port = msg->port;
+    rx_cnt++;
 
-        if (ah->operation == rte::bswap16(STCP_ARPOP_REPLY)) {
+    struct stcp_arphdr* ah  = rte::pktmbuf_mtod<struct stcp_arphdr*>(msg);
+    uint8_t port = msg->port;
 
-            /*
-             * Proc ARP-Reply Packet 
-             * to ARP-Table.
+    if (ah->operation == rte::bswap16(STCP_ARPOP_REPLY)) {
+
+        /*
+         * Proc ARP-Reply Packet 
+         * to ARP-Table.
+         */
+            
+        stcp_sockaddr     sa_pa;
+        stcp_sockaddr     sa_ha;
+        stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
+
+        sin_pa->sin_addr = ah->psrc;
+        for (int i=0; i<6; i++)
+            sa_ha.sa_data[i] = ah->hwsrc.addr_bytes[i];
+
+        stcp_arpreq req(&sa_pa, &sa_ha, port);
+        ioctl_siocaarpent(&req);
+        rte::pktmbuf_free(msg);
+
+    } else if (ah->operation == rte::bswap16(STCP_ARPOP_REQUEST)) {
+        if (is_request_to_me(ah, port)) {
+
+            /* 
+             * Reply ARP-Reply Packet
              */
-                
-            stcp_sockaddr     sa_pa;
-            stcp_sockaddr     sa_ha;
-            stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
 
-            sin_pa->sin_addr = ah->psrc;
-            for (int i=0; i<6; i++)
-                sa_ha.sa_data[i] = ah->hwsrc.addr_bytes[i];
+            mbuf* msg = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
+            msg->data_len = sizeof(stcp_arphdr);
+            msg->pkt_len  = sizeof(stcp_arphdr);
+            msg->port = port;
 
-            stcp_arpreq req(&sa_pa, &sa_ha, port);
-            ioctl_siocaarpent(&req);
+            stcp_arphdr* rep_ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
+            rep_ah->hwtype = rte::bswap16(0x0001);
+            rep_ah->ptype  = rte::bswap16(0x0800);
+            rep_ah->hwlen  = 6;
+            rep_ah->plen   = 4;
+            rep_ah->operation = rte::bswap16(STCP_ARPOP_REPLY);
+            get_mymac(&rep_ah->hwsrc, port);
+            rep_ah->psrc  = ah->pdst;
+            rep_ah->hwdst = ah->hwsrc;
+            rep_ah->pdst  = ah->psrc;
+
+            msg->port = port;
+            tx_push(msg);
+        } else {
             rte::pktmbuf_free(msg);
-
-        } else if (ah->operation == rte::bswap16(STCP_ARPOP_REQUEST)) {
-            if (is_request_to_me(ah, port)) {
-
-                /* 
-                 * Reply ARP-Reply Packet
-                 */
-
-                mbuf* msg = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
-                msg->data_len = sizeof(stcp_arphdr);
-                msg->pkt_len  = sizeof(stcp_arphdr);
-                msg->port = port;
-
-                stcp_arphdr* rep_ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
-                rep_ah->hwtype = rte::bswap16(0x0001);
-                rep_ah->ptype  = rte::bswap16(0x0800);
-                rep_ah->hwlen  = 6;
-                rep_ah->plen   = 4;
-                rep_ah->operation = rte::bswap16(STCP_ARPOP_REPLY);
-                get_mymac(&rep_ah->hwsrc, port);
-                rep_ah->psrc  = ah->pdst;
-                rep_ah->hwdst = ah->hwsrc;
-                rep_ah->pdst  = ah->psrc;
-
-                stcp_sockaddr sa; // TODO #15 fix this init
-                sa.sa_fam = STCP_AF_ARP;
-                core::instance().ether.tx_push(port, msg, &sa);
-            }
         }
     }
+}
 
-    while (m.tx_size() > 0) {
-        mbuf* msg = m.tx_pop();
 
-        stcp_sockaddr sa; // TODO #15 fix this init
-        sa.sa_fam = STCP_AF_ARP;
-        core::instance().ether.tx_push(msg->port, msg, &sa);
-    }
+
+void arp_module::tx_push(mbuf* msg)
+{
+    tx_cnt++;
+    stcp_sockaddr sa; // TODO #15 fix this init
+    sa.sa_fam = STCP_AF_ARP;
+    core::instance().ether.tx_push(msg->port, msg, &sa);
 }
 
 

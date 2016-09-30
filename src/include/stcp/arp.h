@@ -96,27 +96,23 @@ class arp_module {
 private:
     bool use_dynamic_arp;
 private:
-    proto_module m;
+    size_t rx_cnt;
+    size_t tx_cnt;
     std::vector<stcp_arpreq> table;
     
 public:
     std::queue<wait_ent> wait; // TODO rename this variable as easy-to-understand.
 
 public:
-    arp_module() : use_dynamic_arp(true) { m.name = "ARP"; }
-    void init() {m.init();}
-    void rx_push(mbuf* msg){m.rx_push(msg);}
-    void tx_push(mbuf* msg){m.tx_push(msg);}
-    mbuf* rx_pop() {return m.rx_pop();}
-    mbuf* tx_pop() {return m.tx_pop();}
-    void drop(mbuf* msg) {m.drop(msg);}
+    arp_module() : use_dynamic_arp(true), rx_cnt(0), tx_cnt(0) {}
+    void rx_push(mbuf* msg);
+    void tx_push(mbuf* msg);
 
     void stat();
-    void proc();
-
-    void ioctl(uint64_t request, void* arg);
-    void arp_resolv(uint8_t port, const stcp_sockaddr *dst, uint8_t* dsten, bool checkcacheonly=false);
+    void arp_resolv(uint8_t port, const stcp_sockaddr *dst, 
+            uint8_t* dsten, bool checkcacheonly=false);
     void arp_request(uint8_t port, const stcp_in_addr* tip);
+    void ioctl(uint64_t request, void* arg);
 
 private:
     void ioctl_siocaarpent(stcp_arpreq* req);
