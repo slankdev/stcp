@@ -9,6 +9,32 @@ namespace slank {
 
 
 
+/* 
+ * TODO 
+ * XXX review this function
+ * I copyed from Geek NA Page.
+ * http://www.geekpage.jp
+ */
+static uint16_t checksum(uint16_t* buf, size_t bufsz)
+{
+    uint32_t sum = 0;
+
+    while (bufsz > 1) {
+        sum += *buf;
+        buf++;
+        bufsz -= 2;
+    }
+
+    if (bufsz == 1) {
+        sum += *(uint16_t *)buf;
+    }
+
+    sum = (sum & 0xffff) + (sum >> 16);
+    sum = (sum & 0xffff) + (sum >> 16);
+
+    return ~sum;
+}
+
 
 void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr* src)
 {
@@ -23,14 +49,7 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr* src)
             ih->icmp_type  = STCP_ICMP_ECHOREPLY;
             ih->icmp_code  = 0x00;
             ih->icmp_cksum = 0x0000;
-
-#if 1 /* XXX DPDK's function that calc checksum can not work correctry. */
-            ih->icmp_cksum = slankdev::checksum(ih, rte::pktmbuf_data_len(msg));
-            ih->icmp_cksum = slankdev::checksum(ih, rte::pktmbuf_data_len(msg));
-#else
-            ih->icmp_cksum = rte::raw_cksum(ih, rte::pktmbuf_data_len(msg));
-            ih->icmp_cksum = rte::raw_cksum(ih, rte::pktmbuf_data_len(msg));
-#endif
+            ih->icmp_cksum = checksum((uint16_t*)ih, rte::pktmbuf_data_len(msg));
 
             core::instance().ip.tx_push(msg, src, STCP_IPPROTO_ICMP);
             tx_cnt++;

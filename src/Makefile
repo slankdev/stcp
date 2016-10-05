@@ -36,6 +36,10 @@ run:
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=eth0
 
+runenp:
+	sudo ./$(TARGET) \
+		--vdev=eth_pcap0,iface=enp0s20u2
+
 runlo:
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=lo
