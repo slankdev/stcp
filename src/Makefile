@@ -40,6 +40,10 @@ runenp:
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=enp0s20u2
 
+runwl:
+	sudo ./$(TARGET) \
+		--vdev=eth_pcap0,iface=wlp3s0
+
 runlo:
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=lo
@@ -57,6 +61,9 @@ gdb:
 gdblo:
 	sudo gdb -q --args \
 		./$(TARGET) --vdev=eth_pcap0,iface=lo
+
+stat:
+	zsh stat.sh
 
 include $(prefix)/mk/vars.mk
 LDFLAGS += -lslankdev -lpgen2
