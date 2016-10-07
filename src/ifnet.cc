@@ -84,7 +84,6 @@ uint16_t ifnet::io_tx(size_t num_request_to_send)
     for (size_t num_sent=0; num_sent<num_request_to_send; num_sent+=i) {
         for (i=0; i+num_sent<num_request_to_send; i++) {
             bufs[i] = tx.pop();
-            rte::pktmbuf_dump(stdout, bufs[i], rte::pktmbuf_pkt_len(bufs[i]));
         }
         uint16_t num_tx = rte::eth_tx_burst(port_id, 0, bufs, i);
         if (num_tx < i) {
@@ -313,7 +312,6 @@ void ifnet::write(const void* buf, size_t bufsize)
     
     mbuf* mbuf = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
     copy_to_mbuf(mbuf, buf, bufsize);
-    rte::pktmbuf_dump(stdout, mbuf, bufsize);
     tx_push(mbuf);
 }
 

@@ -59,7 +59,9 @@ gdb:
 		./$(TARGET) --vdev=eth_pcap0,iface=$(INTERFACE)
 
 stat:
-	$(TMUXVSPLIT) zsh stat.sh
+	$(TMUXVSPLIT) ./stat.zsh
+	$(TMUXVSPLIT)  tail -f stcp.rx.log
+	$(TMUXSPLIT)  tail -f stcp.tx.log
 
 
 include $(prefix)/mk/vars.mk

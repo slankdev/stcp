@@ -20,6 +20,7 @@
 #include <rte_ip.h>
 
 #include <stcp/rte.h>
+#include <stcp/stcp.h>
 
 
 
@@ -138,13 +139,33 @@ void eth_macaddr_get(uint8_t port_id, struct ether_addr* mac_addr)
 uint16_t eth_rx_burst(uint8_t port_id, uint16_t queue_id, 
         rte_mbuf** rx_pkts, const uint16_t nb_pkts)
 {
+    static uint64_t cnt = 1;
     uint16_t num_rx = rte_eth_rx_burst(port_id, queue_id, rx_pkts, nb_pkts);
+    for (uint16_t i=0; i<num_rx; i++) {
+        slank::rxcap::instance().write("%lu: recv", cnt);
+        cnt++;
+        rte::pktmbuf_dump(slank::rxcap::instance().stream()
+                , rx_pkts[i], rte::pktmbuf_pkt_len(rx_pkts[i]));
+        slank::rxcap::instance().write("");
+        slank::rxcap::instance().write("");
+    }
+    slank::rxcap::instance().flush();
     return num_rx;
 }
 
 uint16_t eth_tx_burst(uint8_t port_id, uint16_t queue_id, 
         rte_mbuf** tx_pkts, uint16_t nb_pkts)
 {
+    static uint64_t cnt = 1;
+    for (uint16_t i=0; i<nb_pkts; i++) {
+        slank::txcap::instance().write("%lu: send", cnt);
+        cnt++;
+        rte::pktmbuf_dump(slank::txcap::instance().stream()
+                , tx_pkts[i], rte::pktmbuf_pkt_len(tx_pkts[i]));
+        slank::txcap::instance().write("");
+        slank::txcap::instance().write("");
+    }
+    slank::txcap::instance().flush();
     uint16_t num_tx = rte_eth_tx_burst(port_id, queue_id, tx_pkts, nb_pkts);
     return num_tx;
 }

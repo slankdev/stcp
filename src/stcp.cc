@@ -26,10 +26,10 @@ void core::ifs_proc()
 
 
 /* TODO XXX FIX JUST NOW!!!!!!! */
-#if 0
-        if (num_tx != num_reqest_to_send) 
-            throw exception("some packets to tx were droped");
-#endif
+        if (num_tx != num_reqest_to_send) {
+            ;
+            // throw exception("some packets to tx were droped");
+        }
 
         uint16_t num_rx = dev.io_rx();
         if (unlikely(num_rx == 0)) continue;
