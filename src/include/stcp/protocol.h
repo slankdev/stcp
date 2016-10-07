@@ -42,8 +42,18 @@ public:
 
     void rx_push(mbuf* msg) { rx.push(msg); rx_packets++; }
     void tx_push(mbuf* msg) { tx.push(msg); tx_packets++; }
-    mbuf* rx_pop() { return rx.pop(); }
-    mbuf* tx_pop() { return tx.pop(); }
+    mbuf* rx_pop() 
+    { 
+        mbuf* m = rx.front();
+        rx.pop(); 
+        return m;
+    }
+    mbuf* tx_pop() 
+    { 
+        mbuf* m = tx.front();
+        tx.pop(); 
+        return m;
+    }
     void drop(mbuf* msg) { rte::pktmbuf_free(msg); drop_packets++; }
     size_t rx_size() { return rx.size(); }
     size_t tx_size() { return tx.size(); }

@@ -83,7 +83,7 @@ uint16_t ifnet::io_tx(size_t num_request_to_send)
     size_t i=0;
     for (size_t num_sent=0; num_sent<num_request_to_send; num_sent+=i) {
         for (i=0; i+num_sent<num_request_to_send; i++) {
-            bufs[i] = tx.pop();
+            bufs[i] = tx_pop();
         }
         // printf("%s:%d: called %s(%u, 0, %p, %zd) \n", __FILE__, __LINE__, __func__, port_id, bufs, i);
         uint16_t num_tx = rte::eth_tx_burst(port_id, 0, bufs, i);
