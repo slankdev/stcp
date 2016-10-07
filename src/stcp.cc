@@ -26,9 +26,9 @@ void core::ifs_proc()
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
 
         if (num_tx != num_reqest_to_send) {
-            printf("%s:%d: num_reqest_to_send: %u \n", __FILE__, __LINE__, num_reqest_to_send);
-            printf("%s:%d: num_tx            : %u \n", __FILE__, __LINE__, num_tx);
-            printf("\n");
+            // printf("%s:%d: num_reqest_to_send: %u \n", __FILE__, __LINE__, num_reqest_to_send);
+            // printf("%s:%d: num_tx            : %u \n", __FILE__, __LINE__, num_tx);
+            // printf("\n");
             ; // TODO log to dmsg
         }
 

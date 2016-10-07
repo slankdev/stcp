@@ -9,8 +9,8 @@ static void send_packet_test_ip_mod(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t 
 {
     ip_module& ip = core::instance().ip;
 
-#if 1
-    uint8_t buf[2000];
+#if 0
+    uint8_t buf[1000];
     memset(buf, 0xee, sizeof buf);
 #else
     uint8_t buf[] = {
@@ -42,7 +42,7 @@ static void send_packet_test_ip_mod(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t 
 
 
 
-#define Cybozu 1
+#define Cybozu 0
 int main(int argc, char** argv)
 {
     core& s = core::instance();  
@@ -52,15 +52,17 @@ int main(int argc, char** argv)
 #if Cybozu
     set_ip_addr(192, 168, 222, 10, 24);
     set_default_gw(192, 168, 222, 1, 0);
-#else
-    set_ip_addr(192, 168, 0, 222, 24);
-    set_default_gw(192, 168, 0, 1, 0);
-#endif
-
-
     add_arp_record(192, 168, 222, 100,
             0x74, 0x03, 0xbd, 0x3d, 0x78, 0x96);
     send_packet_test_ip_mod(192, 168, 222, 100);
+#else
+    set_ip_addr(192, 168, 0, 222, 24);
+    set_default_gw(192, 168, 0, 1, 0);
+    add_arp_record(192,168,0,1, 
+            0xa2,0x12,0x42,0x17,0xd8,0x8f);
+    send_packet_test_ip_mod(192, 168, 0, 1);
+#endif
+
 
     s.stat_all();
     while (true) {
