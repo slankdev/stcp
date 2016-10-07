@@ -9,6 +9,10 @@ static void send_packet_test_ip_mod(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t 
 {
     ip_module& ip = core::instance().ip;
 
+#if 1
+    uint8_t buf[2000];
+    memset(buf, 0xee, sizeof buf);
+#else
     uint8_t buf[] = {
         // /* ip hdr */
         // 0x45, 0x00, 0x00, 0x54, 0x7e, 0x4d, 0x40, 0x00, 
@@ -28,12 +32,14 @@ static void send_packet_test_ip_mod(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t 
         0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35,
         0x36, 0x37,
     };
+#endif
 
     stcp_sockaddr dst;
     dst.sa_fam = STCP_AF_INET;
     dst.inet_addr(o1, o2, o3, o4);
-    ip.sendto(buf, sizeof(buf), &dst, STCP_IPPROTO_ICMP);
+    ip.sendto(buf, sizeof(buf), &dst, STCP_IPPROTO_RAW);
 }
+
 
 
 #define Cybozu 1
@@ -53,7 +59,10 @@ int main(int argc, char** argv)
     set_default_gw(192, 168, 0, 1, 0);
 #endif
 
-    // send_packet_test_ip_mod(192, 168, 0, 1);
+
+    add_arp_record(192, 168, 222, 100,
+            0x74, 0x03, 0xbd, 0x3d, 0x78, 0x96);
+    send_packet_test_ip_mod(192, 168, 222, 100);
 
     s.stat_all();
     while (true) {

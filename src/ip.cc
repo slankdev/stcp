@@ -9,6 +9,7 @@
 
 namespace slank {
 
+#define PRETECH_OFFSET 3
 
 void ip_module::set_ipaddr(const stcp_in_addr* addr)
 {
@@ -241,11 +242,19 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
     stcp_ip_header* ih 
         = reinterpret_cast<stcp_ip_header*>(mbuf_push(msg, sizeof(stcp_ip_header)));
     
+    srand(time(NULL));
+
     ih->version_ihl       = 0x45;
     ih->type_of_service   = 0x00;
-    ih->total_length      = rte::bswap16(rte::pktmbuf_data_len(msg));
-    ih->packet_id         = rte::bswap16(0x7e4d);
-    ih->fragment_offset   = rte::bswap16(0x4000);
+    ih->total_length      = rte::bswap16(rte::pktmbuf_pkt_len(msg));
+    ih->packet_id         = rte::bswap16(rand() % 0xffff); // TODO hardcode
+    
+    if (rte::pktmbuf_pkt_len(msg) > core::instance().dpdk.ipv4_mtu_default) {
+        ih->fragment_offset = rte::bswap16(0x0000); // TODO hardcode
+    } else {
+        ih->fragment_offset   = rte::bswap16(0x4000); // TODO hardcode
+    }
+
     ih->time_to_live      = ip_module::ttl_default;
     ih->next_proto_id     = proto;
     ih->hdr_checksum      = 0x00; 
@@ -261,13 +270,55 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
     ih->hdr_checksum = rte_ipv4_cksum((const struct ipv4_hdr*)ih);
 
 
-    stcp_sockaddr next;
-    uint8_t port;
-    route_resolv(dst, &next, &port);
-    next.sa_fam = STCP_AF_INET;
+    printf("\n\n\n");
+    printf("BEFORE\n");
+    // rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
 
-    msg->port = port;
-    core::instance().ether.tx_push(msg->port, msg, &next);
+    mbuf* msgs[100];
+    memset(msgs, 0, sizeof msgs);
+    uint32_t nb = rte::ipv4_fragment_packet(msg, &msgs[0], 10, core::instance().dpdk.ipv4_mtu_default, 
+            core::instance().dpdk.get_mempool(), 
+            core::instance().dpdk.get_mempool());
+
+    printf("\n\n\n");
+    printf("AFTER %d\n", nb);
+    if (nb > 1) {
+        rte::prefetch0(rte::pktmbuf_mtod<void*>(msg));
+
+        stcp_sockaddr next;
+        uint8_t port;
+        route_resolv(dst, &next, &port);
+        next.sa_fam = STCP_AF_INET;
+
+        for (size_t i=0; i<nb; i++) {
+            printf("\n\n\n");
+            // rte::pktmbuf_dump(stdout, msgs[i], rte::pktmbuf_pkt_len(msgs[i]));
+
+            rte::prefetch0(rte::pktmbuf_mtod<void*>(msgs[i]));
+            stcp_ip_header* iph = rte::pktmbuf_mtod<stcp_ip_header*>(msgs[i]);
+            iph->hdr_checksum = rte_ipv4_cksum(reinterpret_cast<const struct ipv4_hdr*>(iph));
+
+            msgs[i]->port = port;
+            core::instance().ether.tx_push(msgs[i]->port, msgs[i], &next);
+        }
+        rte::pktmbuf_free(msg);
+    } else {
+        // rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
+
+        stcp_sockaddr next;
+        uint8_t port;
+        route_resolv(dst, &next, &port);
+        next.sa_fam = STCP_AF_INET;
+
+        msg->port = port;
+        core::instance().ether.tx_push(msg->port, msg, &next);
+    }
+
+
+    // exit(0);
+
+
+
 }
 
 

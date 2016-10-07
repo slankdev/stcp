@@ -22,12 +22,19 @@ namespace slank {
 
 class dpdk_core {
 private:
-    static uint32_t num_mbufs;        /* num of mbuf that allocated in a mempool */
-    static uint32_t mbuf_cache_size;  /* packet cache size in each mbufs         */
     static std::string mp_name;       /* memory pool name                        */
     struct rte_mempool* mempool;
 
 public:
+
+    /* 
+     * XXX TODO unsafe. everyone can accress this variables
+     * to Implement getter() 
+     */
+    static uint32_t num_mbufs;        /* num of mbuf that allocated in a mempool */
+    static uint32_t mbuf_cache_size;  /* packet cache size in each mbufs         */
+    static uint32_t ipv4_mtu_default; 
+
     dpdk_core() : mempool(nullptr) {}
     ~dpdk_core() {}                  
 

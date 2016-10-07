@@ -74,6 +74,7 @@ enum ip_l4_protos : uint8_t {
     STCP_IPPROTO_ICMP = 0x01,
     STCP_IPPROTO_TCP  = 0x06,
     STCP_IPPROTO_UDP  = 0x11,
+    STCP_IPPROTO_RAW  = 0xff,
 };
 
 

@@ -22,6 +22,7 @@
 #include <rte_mbuf.h>
 #include <rte_hexdump.h>
 #include <rte_ip.h>
+#include <rte_ip_frag.h>
 
 
 namespace slank {
@@ -41,10 +42,8 @@ class exception : public std::exception {
         std::string str;
     public:
         explicit exception(const char* s="") noexcept {
-            int e = errno;
+            // int e = errno;
             str = s; 
-            if (e != 0)
-                str += strerror(e);
         } 
         template<class T>
         exception& operator<<(const T& t) noexcept {
@@ -97,11 +96,22 @@ void pktmbuf_append(struct rte_mbuf* m, uint16_t len);
 void pktmbuf_adj(struct rte_mbuf* m, uint16_t len);
 void pktmbuf_trim(struct rte_mbuf* m, uint16_t len);
 size_t pktmbuf_data_len(const struct rte_mbuf* m);
+size_t pktmbuf_pkt_len(const struct rte_mbuf* m);
 size_t raw_cksum(const void* buf, size_t len);
+
+uint32_t ipv4_fragment_packet(
+        rte_mbuf* pkt_in, rte_mbuf** pkts_out, 
+        uint16_t nb_pkts_out, uint16_t mtu_size, 
+        struct rte_mempool* pool_direct, 
+        struct rte_mempool* pool_indirect) noexcept;
 
 uint16_t bswap16(uint16_t x);
 uint32_t bswap32(uint32_t x);
 uint64_t bswap64(uint64_t x);
+
+void prefetch0(const volatile void* p);
+void prefetch1(const volatile void* p);
+void prefetch2(const volatile void* p);
 
 
 

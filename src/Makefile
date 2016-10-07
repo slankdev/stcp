@@ -2,6 +2,12 @@
 
 prefix = ..
 
+INTERFACE  = eth0
+# INTERFACE  = wlp3s0
+# INTERFACE  = enp0s20u2
+# INTERFACE  = eth1
+# INTERFACE  = lo
+
 TMUXSPLIT  = tmux split-window -v
 TMUXVSPLIT = tmux split-window -h
 TARGET = a.out
@@ -32,26 +38,14 @@ clean:
 re: clean all
 
 
+runc:
+	sudo ./$(TARGET) \
+		--vdev=eth_pcap0,iface=$(INTERFACE)
 
 run:
 	$(TMUXSPLIT) \
 	sudo ./$(TARGET) \
-		--vdev=eth_pcap0,iface=eth0
-
-runenp:
-	$(TMUXSPLIT) \
-	sudo ./$(TARGET) \
-		--vdev=eth_pcap0,iface=enp0s20u2
-
-runwl:
-	$(TMUXSPLIT) \
-	sudo ./$(TARGET) \
-		--vdev=eth_pcap0,iface=wlp3s0
-
-runlo:
-	$(TMUXSPLIT) \
-	sudo ./$(TARGET) \
-		--vdev=eth_pcap0,iface=lo
+		--vdev=eth_pcap0,iface=$(INTERFACE)
 
 runall:
 	$(TMUXSPLIT) \
@@ -61,14 +55,8 @@ runall:
 		--vdev=eth_pcap2,iface=lo 
 
 gdb:
-	$(TMUXSPLIT) \
 	sudo gdb -q --args \
-		./$(TARGET) --vdev=eth_pcap0,iface=eth0
-
-gdblo:
-	$(TMUXSPLIT) \
-	sudo gdb -q --args \
-		./$(TARGET) --vdev=eth_pcap0,iface=lo
+		./$(TARGET) --vdev=eth_pcap0,iface=$(INTERFACE)
 
 stat:
 	$(TMUXVSPLIT) zsh stat.sh

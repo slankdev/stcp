@@ -162,6 +162,7 @@ uint32_t socket_id()
 void pktmbuf_dump(FILE* f,const rte_mbuf* m, unsigned dump_len)
 {
     rte_pktmbuf_dump(f, m, dump_len);
+    printf("\n\n\n\n");
 }
 
 int eth_dev_socket_id(uint8_t port_id)
@@ -229,6 +230,11 @@ size_t pktmbuf_data_len(const rte_mbuf* m)
     return m->data_len;
 }
 
+size_t pktmbuf_pkt_len(const rte_mbuf* m)
+{
+    return m->pkt_len;
+}
+
 size_t raw_cksum(const void* buf, size_t len)
 {
     return rte_raw_cksum(buf, len);
@@ -245,6 +251,30 @@ uint32_t bswap32(uint32_t x)
 uint64_t bswap64(uint64_t x)
 {
     return rte_bswap64(x);
+}
+
+uint32_t ipv4_fragment_packet(rte_mbuf* pkt_in, rte_mbuf** pkts_out, uint16_t nb_pkts_out, 
+        uint16_t mtu_size, struct rte_mempool* pool_direct, struct rte_mempool* pool_indirect) noexcept
+{
+    int32_t res = rte_ipv4_fragment_packet(pkt_in, pkts_out, 
+            nb_pkts_out, mtu_size, pool_direct, pool_indirect);
+    if (res < 0) {
+        return 1;
+    }
+    return res;
+}
+
+void prefetch0(const volatile void* p)
+{
+    rte_prefetch0(p);
+}
+void prefetch1(const volatile void* p)
+{
+    rte_prefetch1(p);
+}
+void prefetch2(const volatile void* p)
+{
+    rte_prefetch2(p);
 }
 
 
