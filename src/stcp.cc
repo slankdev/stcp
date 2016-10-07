@@ -25,19 +25,11 @@ void core::ifs_proc()
         uint16_t num_reqest_to_send = dev.tx_size();
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
 
-<<<<<<< HEAD
         if (num_tx != num_reqest_to_send) {
             printf("%s:%d: num_reqest_to_send: %u \n", __FILE__, __LINE__, num_reqest_to_send);
             printf("%s:%d: num_tx            : %u \n", __FILE__, __LINE__, num_tx);
             printf("\n");
             ; // TODO log to dmsg
-=======
-
-/* TODO XXX FIX JUST NOW!!!!!!! */
-        if (num_tx != num_reqest_to_send) {
-            ;
-            // throw exception("some packets to tx were droped");
->>>>>>> a8486f8dd569f6e4bbf0b84b3498574bb21aeeed
         }
 
         uint16_t num_rx = dev.io_rx();

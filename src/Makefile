@@ -2,8 +2,8 @@
 
 prefix = ..
 
-INTERFACE  = eth0
-# INTERFACE  = wlp3s0
+# INTERFACE  = eth0
+INTERFACE  = wlp3s0
 # INTERFACE  = enp0s20u2
 # INTERFACE  = eth1
 # INTERFACE  = lo

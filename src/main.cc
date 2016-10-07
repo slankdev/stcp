@@ -60,8 +60,8 @@ int main(int argc, char** argv)
 #endif
 
 
-    // add_arp_record(192, 168, 222, 100,
-    //         0x74, 0x03, 0xbd, 0x3d, 0x78, 0x96);
+    add_arp_record(192, 168, 222, 100,
+            0x74, 0x03, 0xbd, 0x3d, 0x78, 0x96);
     send_packet_test_ip_mod(192, 168, 222, 100);
 
     s.stat_all();
