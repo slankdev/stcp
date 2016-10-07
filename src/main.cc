@@ -50,12 +50,10 @@ int main(int argc, char** argv)
 
     set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
 #if Cybozu
-    set_ip_addr(192, 168, 222, 10);
-    set_netmask(255, 255, 255, 0);
+    set_ip_addr(192, 168, 222, 10, 24);
     set_default_gw(192, 168, 222, 1, 0);
 #else
-    set_ip_addr(192, 168, 0, 222);
-    set_netmask(255, 255, 255, 0);
+    set_ip_addr(192, 168, 0, 222, 24);
     set_default_gw(192, 168, 0, 1, 0);
 #endif
 

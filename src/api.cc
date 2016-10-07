@@ -30,6 +30,21 @@ void set_default_gw(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t port
     ip.ioctl(STCP_SIOCADDGW, &rt);
 }
 
+void set_netmask(uint8_t cidr)
+{
+    if (32 < cidr) {
+        throw slankdev::exception("out of range");
+    }
+    union {
+        uint8_t u8[4];
+        uint32_t u32;
+    } U;
+
+    U.u32 = 0xffffffff;
+    U.u32 >>= (32 - cidr);
+    set_netmask(U.u8[0], U.u8[1], U.u8[2], U.u8[3]);
+
+}
 void set_netmask(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
     dpdk_core& dpdk = core::instance().dpdk;
@@ -40,6 +55,15 @@ void set_netmask(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
     sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
     dpdk.devices[0].ioctl(STCP_SIOCSIFNETMASK, &ifr);
 }
+
+
+void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t cidr)
+{
+    set_ip_addr(o1, o2, o3, o4);
+    set_netmask(cidr);
+}
+
+
 void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
     dpdk_core& dpdk = core::instance().dpdk;
