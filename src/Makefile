@@ -2,6 +2,8 @@
 
 prefix = ..
 
+TMUXSPLIT  = tmux split-window -v
+TMUXVSPLIT = tmux split-window -h
 TARGET = a.out
 LOGNAME = log.log
 SRCS   = \
@@ -31,39 +33,46 @@ re: clean all
 
 
 
-
 run:
+	$(TMUXSPLIT) \
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=eth0
 
 runenp:
+	$(TMUXSPLIT) \
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=enp0s20u2
 
 runwl:
+	$(TMUXSPLIT) \
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=wlp3s0
 
 runlo:
+	$(TMUXSPLIT) \
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=lo
 
 runall:
+	$(TMUXSPLIT) \
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=eth0 \
 		--vdev=eth_pcap1,iface=eth1 \
 		--vdev=eth_pcap2,iface=lo 
 
 gdb:
+	$(TMUXSPLIT) \
 	sudo gdb -q --args \
 		./$(TARGET) --vdev=eth_pcap0,iface=eth0
 
 gdblo:
+	$(TMUXSPLIT) \
 	sudo gdb -q --args \
 		./$(TARGET) --vdev=eth_pcap0,iface=lo
 
 stat:
-	zsh stat.sh
+	$(TMUXVSPLIT) zsh stat.sh
+
 
 include $(prefix)/mk/vars.mk
 LDFLAGS += -lslankdev -lpgen2
