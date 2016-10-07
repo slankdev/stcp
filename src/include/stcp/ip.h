@@ -47,7 +47,6 @@ struct stcp_rtentry {
     stcp_sockaddr  rt_route;   /* route destination        */
     stcp_sockaddr  rt_genmask;    /* netmask                  */
     stcp_sockaddr  rt_gateway; /* next hop address         */
-    // stcp_sockaddr  rt_ifa;     #<{(| interface address to use |)}>#
     uint8_t        rt_port;       /* interface index to use   */
     uint32_t       rt_flags;   /* up/down?, host/net       */
 
@@ -84,11 +83,14 @@ private:
     const static uint8_t ttl_default = 0x40;
     size_t rx_cnt;
     size_t tx_cnt;
+    size_t not_to_me;
+    stcp_in_addr myip;
 
 public:
     std::vector<stcp_rtentry> rttable;
 
-    ip_module() : rx_cnt(0), tx_cnt(0) {}
+    ip_module() : rx_cnt(0), tx_cnt(0), not_to_me(0) {}
+    void set_ipaddr(const stcp_in_addr* addr);
     void rx_push(mbuf* msg);
     void tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto);
 

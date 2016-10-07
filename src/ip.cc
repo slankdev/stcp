@@ -10,6 +10,13 @@
 namespace slank {
 
 
+void ip_module::set_ipaddr(const stcp_in_addr* addr)
+{
+    myip.addr_bytes[0] = addr->addr_bytes[0];
+    myip.addr_bytes[1] = addr->addr_bytes[1];
+    myip.addr_bytes[2] = addr->addr_bytes[2];
+    myip.addr_bytes[3] = addr->addr_bytes[3];
+}
     
 
 void ip_module::rx_push(mbuf* msg)
@@ -20,14 +27,7 @@ void ip_module::rx_push(mbuf* msg)
         = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
     mbuf_pull(msg, sizeof(stcp_ip_header));
 
-
     // TODO hardcode
-    stcp_in_addr myip;
-    myip.addr_bytes[0] = 192;
-    myip.addr_bytes[1] = 168;
-    myip.addr_bytes[2] = 222;
-    myip.addr_bytes[3] = 10;
-
     stcp_in_addr bcast;
     bcast.addr_bytes[0] = 0xff;
     bcast.addr_bytes[1] = 0xff;
@@ -35,6 +35,7 @@ void ip_module::rx_push(mbuf* msg)
     bcast.addr_bytes[3] = 0xff;
 
     if (myip != ih->dst && bcast != ih->dst) {
+        not_to_me++;
         rte::pktmbuf_free(msg);
         return;
     }
@@ -248,10 +249,10 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
     ih->time_to_live      = ip_module::ttl_default;
     ih->next_proto_id     = proto;
     ih->hdr_checksum      = 0x00; 
-    ih->src.addr_bytes[0] = 192; // TODO hardcode
-    ih->src.addr_bytes[1] = 168; // TODO hardcode
-    ih->src.addr_bytes[2] = 222; // TODO hardcode
-    ih->src.addr_bytes[3] = 10 ; // TODO hardcode
+    ih->src.addr_bytes[0] = myip.addr_bytes[0];
+    ih->src.addr_bytes[1] = myip.addr_bytes[1];
+    ih->src.addr_bytes[2] = myip.addr_bytes[2];
+    ih->src.addr_bytes[3] = myip.addr_bytes[3];
     ih->dst.addr_bytes[0] = sin->sin_addr.addr_bytes[0];
     ih->dst.addr_bytes[1] = sin->sin_addr.addr_bytes[1];
     ih->dst.addr_bytes[2] = sin->sin_addr.addr_bytes[2];

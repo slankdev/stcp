@@ -77,6 +77,7 @@ void core::stat_all()
     s.write("IP module");
     s.write("\tRX Packets %zd", ip.rx_cnt);
     s.write("\tTX Packets %zd", ip.tx_cnt);
+    s.write("\tDrops      %zd", ip.not_to_me);
     s.write("");
     s.write("\tRouting-Table");
     s.write("\t%-16s%-16s%-16s%-6s%-3s", "Destination", "Gateway", "Genmask", "Flags", "if");

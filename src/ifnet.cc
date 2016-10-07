@@ -204,6 +204,12 @@ void ifnet::ioctl_siocsifaddr(const stcp_ifreq* ifr)
         struct ifaddr ifa_new(STCP_AF_INET, &ifr->if_addr);
         addrs.push_back(ifa_new);
     }
+
+    stcp_in_addr ad;
+    const stcp_sockaddr_in* s = reinterpret_cast<const stcp_sockaddr_in*>(&ifr->if_addr);
+    for (int i=0; i<4; i++)
+        ad.addr_bytes[i] = s->sin_addr.addr_bytes[i];
+    core::instance().ip.set_ipaddr(&ad);
 }
 
 void ifnet::ioctl_siocsifnetmask(const stcp_ifreq* ifr)
