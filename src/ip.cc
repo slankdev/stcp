@@ -288,8 +288,13 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
 
     if (nb > 1) { /* packet was fragmented */
 
+<<<<<<< HEAD
         /* rte_prefetch0(rte::pktmbuf_mtod<void*>(msg)); */
         rte::pktmbuf_free(msg);
+=======
+    if (nb > 1) {
+        // rte::prefetch0(rte::pktmbuf_mtod<void*>(msg));
+>>>>>>> a8486f8dd569f6e4bbf0b84b3498574bb21aeeed
 
         stcp_sockaddr next;
         uint8_t port;
@@ -297,6 +302,10 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
         next.sa_fam = STCP_AF_INET;
 
         for (size_t i=0; i<nb; i++) {
+<<<<<<< HEAD
+=======
+            // rte::prefetch0(rte::pktmbuf_mtod<void*>(msgs[i]));
+>>>>>>> a8486f8dd569f6e4bbf0b84b3498574bb21aeeed
             stcp_ip_header* iph = rte::pktmbuf_mtod<stcp_ip_header*>(msgs[i]);
             iph->hdr_checksum = rte_ipv4_cksum(reinterpret_cast<const struct ipv4_hdr*>(iph));
 
@@ -304,10 +313,15 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
             msgs[i]->port = port;
             core::instance().ether.tx_push(msgs[i]->port, msgs[i], &next);
         }
+<<<<<<< HEAD
         // rte::eth_tx_burst(port, 0, msgs, nb); // XXX これうまくいく
 
     } else { /* packet was not fragmented */
 
+=======
+        rte::pktmbuf_free(msg);
+    } else {
+>>>>>>> a8486f8dd569f6e4bbf0b84b3498574bb21aeeed
         stcp_sockaddr next;
         uint8_t port;
         route_resolv(dst, &next, &port);
@@ -315,8 +329,13 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
 
         msg->port = port;
         core::instance().ether.tx_push(msg->port, msg, &next);
+<<<<<<< HEAD
 
     }
+=======
+    }
+
+>>>>>>> a8486f8dd569f6e4bbf0b84b3498574bb21aeeed
 }
 
 
