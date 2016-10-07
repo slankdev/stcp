@@ -21,6 +21,7 @@ void ether_module::proc()
 
 void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
 {
+    printf("%s:%d: called %s \n", __FILE__, __LINE__, __func__);
     
     uint8_t ether_src[6];
     uint8_t ether_dst[6];
@@ -104,6 +105,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
     eh->type = ether_type;
 
     tx_cnt++;
+    printf("%s:%d: dev.tx_push(msg)  msg:%p next:%p \n", __FILE__, __LINE__, msg, msg->next);
     for (ifnet& dev : core::instance().dpdk.devices) {
         dev.tx_push(msg);
     }

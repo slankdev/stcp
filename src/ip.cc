@@ -11,6 +11,15 @@ namespace slank {
 
 #define PRETECH_OFFSET 3
 
+
+void ip_module::init()
+{
+    indirect_pool = rte::pktmbuf_pool_create(
+            "INDIRECT", 8192, 32, 0, 0,
+            rte::socket_id());
+}
+
+
 void ip_module::set_ipaddr(const stcp_in_addr* addr)
 {
     myip.addr_bytes[0] = addr->addr_bytes[0];
@@ -270,20 +279,17 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
     ih->hdr_checksum = rte_ipv4_cksum((const struct ipv4_hdr*)ih);
 
 
-    printf("\n\n\n");
-    printf("BEFORE\n");
-    // rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
-
     mbuf* msgs[100];
     memset(msgs, 0, sizeof msgs);
-    uint32_t nb = rte::ipv4_fragment_packet(msg, &msgs[0], 10, core::instance().dpdk.ipv4_mtu_default, 
+    uint32_t nb = rte::ipv4_fragment_packet(msg, &msgs[0], 10, 
+            core::instance().dpdk.ipv4_mtu_default, 
             core::instance().dpdk.get_mempool(), 
-            core::instance().dpdk.get_mempool());
+            core::instance().ip.indirect_pool);
 
-    printf("\n\n\n");
-    printf("AFTER %d\n", nb);
-    if (nb > 1) {
-        rte::prefetch0(rte::pktmbuf_mtod<void*>(msg));
+    if (nb > 1) { /* packet was fragmented */
+
+        /* rte_prefetch0(rte::pktmbuf_mtod<void*>(msg)); */
+        rte::pktmbuf_free(msg);
 
         stcp_sockaddr next;
         uint8_t port;
@@ -291,19 +297,16 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
         next.sa_fam = STCP_AF_INET;
 
         for (size_t i=0; i<nb; i++) {
-            printf("\n\n\n");
-            // rte::pktmbuf_dump(stdout, msgs[i], rte::pktmbuf_pkt_len(msgs[i]));
-
-            rte::prefetch0(rte::pktmbuf_mtod<void*>(msgs[i]));
             stcp_ip_header* iph = rte::pktmbuf_mtod<stcp_ip_header*>(msgs[i]);
             iph->hdr_checksum = rte_ipv4_cksum(reinterpret_cast<const struct ipv4_hdr*>(iph));
 
+            // XXX これうまくいかない
             msgs[i]->port = port;
             core::instance().ether.tx_push(msgs[i]->port, msgs[i], &next);
         }
-        rte::pktmbuf_free(msg);
-    } else {
-        // rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
+        // rte::eth_tx_burst(port, 0, msgs, nb); // XXX これうまくいく
+
+    } else { /* packet was not fragmented */
 
         stcp_sockaddr next;
         uint8_t port;
@@ -312,13 +315,8 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
 
         msg->port = port;
         core::instance().ether.tx_push(msg->port, msg, &next);
+
     }
-
-
-    // exit(0);
-
-
-
 }
 
 

@@ -84,10 +84,16 @@ uint16_t ifnet::io_tx(size_t num_request_to_send)
     for (size_t num_sent=0; num_sent<num_request_to_send; num_sent+=i) {
         for (i=0; i+num_sent<num_request_to_send; i++) {
             bufs[i] = tx.pop();
-            rte::pktmbuf_dump(stdout, bufs[i], rte::pktmbuf_pkt_len(bufs[i]));
         }
+        printf("%s:%d: called %s(%u, 0, %p, %zd) \n", __FILE__, __LINE__, __func__, port_id, bufs, i);
         uint16_t num_tx = rte::eth_tx_burst(port_id, 0, bufs, i);
+        
+        for (size_t j=0; j<i; j++) {
+            rte::pktmbuf_dump(stdout, bufs[j], rte::pktmbuf_pkt_len(bufs[j]));
+        }
+
         if (num_tx < i) {
+            printf("%s:%d: sendmiss \n", __FILE__, __LINE__);
             for (uint16_t j=0; j<i-num_tx; j++) {
                 rte::pktmbuf_free(bufs[num_tx+j]);
             }
@@ -313,7 +319,6 @@ void ifnet::write(const void* buf, size_t bufsize)
     
     mbuf* mbuf = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
     copy_to_mbuf(mbuf, buf, bufsize);
-    rte::pktmbuf_dump(stdout, mbuf, bufsize);
     tx_push(mbuf);
 }
 

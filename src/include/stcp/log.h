@@ -18,8 +18,13 @@
 #include <stcp/exception.h>
 
 
+template <class Tag>
+class log;
+
 
 class filefd {
+    template <class Tag>
+    friend class log;
     private:
         FILE* fp;
         std::string name;
@@ -161,6 +166,10 @@ class log {
         void flush()
         {
             fd.flush();
+        }
+        FILE* stream()
+        {
+            return fd.fp;
         }
 };
 template <class Tag>

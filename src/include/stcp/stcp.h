@@ -19,6 +19,8 @@ namespace slank {
     
 
 using stat = log<class status_infos>;
+using rxcap = log<class rx_packet_log>;
+using txcap = log<class tx_packet_log>;
 
 class core {
 public:
@@ -32,6 +34,8 @@ private:
     core()
     {
         stat::instance().open_new("stcp.stat.log");
+        rxcap::instance().open_new("stcp.rx.log");
+        txcap::instance().open_new("stcp.tx.log");
     }
     ~core() {}
     core(const core&) = delete;

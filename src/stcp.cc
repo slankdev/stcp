@@ -16,6 +16,7 @@ core& core::instance()
 void core::init(int argc, char** argv)
 {
     dpdk.init(argc, argv);
+    ip.init();
 }
 
 void core::ifs_proc()
@@ -24,12 +25,12 @@ void core::ifs_proc()
         uint16_t num_reqest_to_send = dev.tx_size();
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
 
-
-/* TODO XXX FIX JUST NOW!!!!!!! */
-#if 0
-        if (num_tx != num_reqest_to_send) 
-            throw exception("some packets to tx were droped");
-#endif
+        if (num_tx != num_reqest_to_send) {
+            printf("%s:%d: num_reqest_to_send: %u \n", __FILE__, __LINE__, num_reqest_to_send);
+            printf("%s:%d: num_tx            : %u \n", __FILE__, __LINE__, num_tx);
+            printf("\n");
+            ; // TODO log to dmsg
+        }
 
         uint16_t num_rx = dev.io_rx();
         if (unlikely(num_rx == 0)) continue;
