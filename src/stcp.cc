@@ -16,7 +16,6 @@ core& core::instance()
 void core::init(int argc, char** argv)
 {
     dpdk.init(argc, argv);
-    ip.init();
 }
 
 void core::ifs_proc()
@@ -26,9 +25,6 @@ void core::ifs_proc()
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
 
         if (num_tx != num_reqest_to_send) {
-            // printf("%s:%d: num_reqest_to_send: %u \n", __FILE__, __LINE__, num_reqest_to_send);
-            // printf("%s:%d: num_tx            : %u \n", __FILE__, __LINE__, num_tx);
-            // printf("\n");
             ; // TODO log to dmsg
         }
 

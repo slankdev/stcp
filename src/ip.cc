@@ -12,12 +12,6 @@ namespace slank {
 #define PRETECH_OFFSET 3
 
 
-void ip_module::init()
-{
-    indirect_pool = rte::pktmbuf_pool_create(
-            "INDIRECT", 8192, 32, 0, 0,
-            rte::socket_id());
-}
 
 
 void ip_module::set_ipaddr(const stcp_in_addr* addr)
@@ -37,7 +31,6 @@ void ip_module::rx_push(mbuf* msg)
         = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
     mbuf_pull(msg, sizeof(stcp_ip_header));
 
-    // TODO hardcode
     stcp_in_addr bcast;
     bcast.addr_bytes[0] = 0xff;
     bcast.addr_bytes[1] = 0xff;
@@ -251,12 +244,11 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
     stcp_ip_header* ih 
         = reinterpret_cast<stcp_ip_header*>(mbuf_push(msg, sizeof(stcp_ip_header)));
     
-    srand(time(NULL));
-
+    srand(time(NULL)); // XXX delay code?
     ih->version_ihl       = 0x45;
     ih->type_of_service   = 0x00;
     ih->total_length      = rte::bswap16(rte::pktmbuf_pkt_len(msg));
-    ih->packet_id         = rte::bswap16(rand() % 0xffff); // TODO hardcode
+    ih->packet_id         = rte::bswap16(rand() % 0xffff); // XXX delay code?
     
     if (rte::pktmbuf_pkt_len(msg) > core::instance().dpdk.ipv4_mtu_default) {
         ih->fragment_offset = rte::bswap16(0x0000); // TODO hardcode
@@ -278,17 +270,14 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
 
     ih->hdr_checksum = rte_ipv4_cksum((const struct ipv4_hdr*)ih);
 
-
     mbuf* msgs[100];
     memset(msgs, 0, sizeof msgs);
     uint32_t nb = rte::ipv4_fragment_packet(msg, &msgs[0], 10, 
             core::instance().dpdk.ipv4_mtu_default, 
             core::instance().dpdk.get_mempool(), 
-            core::instance().ip.indirect_pool);
+            core::instance().dpdk.get_mempool());
 
     if (nb > 1) { /* packet was fragmented */
-
-        /* rte_prefetch0(rte::pktmbuf_mtod<void*>(msg)); */
         rte::pktmbuf_free(msg);
 
         stcp_sockaddr next;
@@ -300,14 +289,10 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
             stcp_ip_header* iph = rte::pktmbuf_mtod<stcp_ip_header*>(msgs[i]);
             iph->hdr_checksum = rte_ipv4_cksum(reinterpret_cast<const struct ipv4_hdr*>(iph));
 
-            // XXX これうまくいかない
             msgs[i]->port = port;
             core::instance().ether.tx_push(msgs[i]->port, msgs[i], &next);
         }
-        // rte::eth_tx_burst(port, 0, msgs, nb); // XXX これうまくいく
-
     } else { /* packet was not fragmented */
-
         rte::pktmbuf_free(msg);
         stcp_sockaddr next;
         uint8_t port;
@@ -317,7 +302,6 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
         msg->port = port;
         core::instance().ether.tx_push(msg->port, msg, &next);
     }
-
 }
 
 

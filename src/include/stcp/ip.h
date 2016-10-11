@@ -92,7 +92,6 @@ public:
     std::vector<stcp_rtentry> rttable;
 
     ip_module() : rx_cnt(0), tx_cnt(0), not_to_me(0) {}
-    void init();
     void set_ipaddr(const stcp_in_addr* addr);
     void rx_push(mbuf* msg);
     void tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto);
