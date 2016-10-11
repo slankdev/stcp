@@ -34,6 +34,30 @@ enum stcp_sa_family : uint16_t {
 };
 
 
+enum ioctl_family : uint64_t {
+    /* ifnet */
+    STCP_SIOCSIFADDR,
+    STCP_SIOCGIFADDR,
+    STCP_SIOCSIFHWADDR,
+    STCP_SIOCGIFHWADDR,
+    STCP_SIOCSIFNETMASK,
+    STCP_SIOCGIFNETMASK,
+
+    /* arp  */
+    STCP_SIOCAARPENT,
+    STCP_SIOCDARPENT,
+    STCP_SIOCGARPENT,
+    STCP_SIOCSDARP,
+    STCP_SIOCGDARP,
+
+    /* ip */
+    STCP_SIOCADDRT,
+    STCP_SIOCDELRT,
+    STCP_SIOCGETRTS,
+    STCP_SIOCADDGW,
+};
+
+
 
 
 

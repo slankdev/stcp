@@ -20,13 +20,6 @@ enum pack_stat : uint64_t {
     ARPREQ_ALREADY_SENT = 0x12121212, // TODO hardcode
 };
 
-enum {
-    STCP_SIOCAARPENT,
-    STCP_SIOCDARPENT,
-    STCP_SIOCGARPENT,
-    STCP_SIOCSDARP,
-    STCP_SIOCGDARP,
-};
 
 enum stcp_arpop : uint16_t {
     STCP_ARPOP_REQUEST    = 1,

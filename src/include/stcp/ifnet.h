@@ -17,17 +17,6 @@ namespace slank {
 
 
 
-
-
-enum {
-    STCP_SIOCSIFADDR,
-    STCP_SIOCGIFADDR,
-    STCP_SIOCSIFHWADDR,
-    STCP_SIOCGIFHWADDR,
-    STCP_SIOCSIFNETMASK,
-    STCP_SIOCGIFNETMASK,
-};
-
 enum {
     BURST_SIZE = 64,
 };
@@ -72,8 +61,6 @@ private:
     void ioctl_siocsifnetmask(const stcp_ifreq* ifr);
     void ioctl_siocgifnetmask(stcp_ifreq* ifr);
 };
-
-
 
 
 

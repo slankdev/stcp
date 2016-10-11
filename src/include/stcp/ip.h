@@ -11,12 +11,6 @@ namespace slank {
  
 
 
-enum : uint64_t {
-    STCP_SIOCADDRT,
-    STCP_SIOCDELRT,
-    STCP_SIOCGETRTS,
-    STCP_SIOCADDGW,
-};
 
 
 enum : uint32_t {
