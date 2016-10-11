@@ -43,6 +43,7 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr* src)
     stcp_icmp_header* ih 
         = rte::pktmbuf_mtod<stcp_icmp_header*>(msg);
 
+    DEBUG("RECV ICMP MOD TYPE=%u\n", ih->icmp_type);
     switch (ih->icmp_type) {
         case STCP_ICMP_ECHO:
         {
@@ -63,6 +64,7 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr* src)
         default:
         {
             rte::pktmbuf_free(msg);
+            DEBUG("unknown ICMP type %d\n", ih->icmp_type);
             // std::string errstr = "not support icmp type " + std::to_string(ih->icmp_type);
             // throw exception(errstr.c_str());
             break;

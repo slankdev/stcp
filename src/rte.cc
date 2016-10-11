@@ -292,4 +292,15 @@ bool ipv4_frag_pkt_is_fragmented(const void* iph)
 }
 
 
+
+struct rte_mbuf* ipv4_frag_reassemble_packet(
+        struct rte_ip_frag_tbl*        tbl,
+        struct rte_ip_frag_death_row*  dr,
+        struct rte_mbuf*               mb,
+        uint64_t                       tms,
+        struct ipv4_hdr*               iph    )
+{
+    return rte_ipv4_frag_reassemble_packet(tbl, dr, mb, tms, iph);
+}
+
 } /* namespace rte */

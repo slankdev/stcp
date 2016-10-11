@@ -97,11 +97,6 @@ size_t pktmbuf_data_len(const struct rte_mbuf* m);
 size_t pktmbuf_pkt_len(const struct rte_mbuf* m);
 size_t raw_cksum(const void* buf, size_t len);
 
-uint32_t ipv4_fragment_packet(
-        rte_mbuf* pkt_in, rte_mbuf** pkts_out, 
-        uint16_t nb_pkts_out, uint16_t mtu_size, 
-        struct rte_mempool* pool_direct, 
-        struct rte_mempool* pool_indirect) noexcept;
 
 uint16_t bswap16(uint16_t x);
 uint32_t bswap32(uint32_t x);
@@ -111,7 +106,19 @@ void prefetch0(const volatile void* p);
 void prefetch1(const volatile void* p);
 void prefetch2(const volatile void* p);
 
+uint32_t ipv4_fragment_packet(
+        rte_mbuf* pkt_in, rte_mbuf** pkts_out, 
+        uint16_t nb_pkts_out, uint16_t mtu_size, 
+        struct rte_mempool* pool_direct, 
+        struct rte_mempool* pool_indirect) noexcept;
 bool ipv4_frag_pkt_is_fragmented(const void* iph);
+struct rte_mbuf* ipv4_frag_reassemble_packet(
+        struct rte_ip_frag_tbl*        tbl,
+        struct rte_ip_frag_death_row*  dr,
+        struct rte_mbuf*               mb,
+        uint64_t                       tms,
+        struct ipv4_hdr*               iph
+        );
 
 
 

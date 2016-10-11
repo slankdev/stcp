@@ -4,6 +4,7 @@
 
 #include <stcp/rte.h>
 #include <stcp/ip.h>
+#include <stcp/ethernet.h>
 #include <stcp/socket.h>
 #include <stcp/stcp.h>
 
@@ -23,23 +24,13 @@ void ip_module::set_ipaddr(const stcp_in_addr* addr)
 }
     
 
+struct rte_ip_frag_death_row dr; 
+struct rte_ip_frag_tbl *tbl;
 void ip_module::rx_push(mbuf* msg)
 {
     rx_cnt++;
-
     stcp_ip_header* ih 
         = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
-
-    if (rte::ipv4_frag_pkt_is_fragmented(ih)) {
-        DEBUG("frag\n");
-    } else {
-        DEBUG("non frag\n");
-    }
-
-
-
-
-    mbuf_pull(msg, sizeof(stcp_ip_header));
 
     stcp_in_addr bcast;
     bcast.addr_bytes[0] = 0xff;
@@ -52,6 +43,53 @@ void ip_module::rx_push(mbuf* msg)
         rte::pktmbuf_free(msg);
         return;
     }
+
+
+    // ERASE this block will be synthesized to ip-module
+    static bool inited=false;
+    uint32_t max_flow_num   = 0x1000;
+    uint32_t bucket_num     = max_flow_num;
+    uint32_t bucket_entries = 16;
+    uint32_t max_entries    = max_flow_num;
+    uint64_t max_cycles     = (rte_get_tsc_hz() + MS_PER_S - 1) / MS_PER_S * MS_PER_S;
+
+    if (!inited) {
+        tbl = rte_ip_frag_table_create(
+                bucket_num,
+                bucket_entries,
+                max_entries,
+                max_cycles,
+                rte_socket_id()
+                );
+        if (!tbl) {
+            throw slankdev::exception("rte_ip_frag_table_create");
+        }
+        inited = true;
+    }
+
+    if (rte::ipv4_frag_pkt_is_fragmented(ih)) {
+    
+        msg->l2_len = sizeof(stcp_ether_header);
+        msg->l3_len = sizeof(stcp_ip_header);
+        mbuf_push(msg, sizeof(stcp_ether_header));
+
+        mbuf* reasmd_msg = rte::ipv4_frag_reassemble_packet(
+                tbl, &dr, msg, rte_rdtsc(), 
+                reinterpret_cast<struct ipv4_hdr*>(ih)  );
+
+        if (reasmd_msg == NULL) {
+            return;
+        }
+
+        msg = reasmd_msg;
+
+        mbuf_pull(msg, sizeof(stcp_ether_header));
+        ih = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
+    } else {
+        // DEBUG("non frag\n");
+    }
+
+    mbuf_pull(msg, sizeof(stcp_ip_header));
 
     stcp_sockaddr src;
     stcp_sockaddr_in* src_sin = reinterpret_cast<stcp_sockaddr_in*>(&src);
@@ -76,6 +114,7 @@ void ip_module::rx_push(mbuf* msg)
         default:
             {
                 rte::pktmbuf_free(msg);
+                DEBUG("unknown L4 type pushed");
                 // std::string errstr = "unknown l4 proto " + std::to_string(protocol);
                 // throw exception(errstr.c_str());
                 break;
@@ -288,6 +327,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
             core::instance().dpdk.get_mempool());
 
     if (nb > 1) { /* packet was fragmented */
+        DEBUG("send fragmented packets\n");
         rte::pktmbuf_free(msg);
 
         stcp_sockaddr next;
@@ -303,6 +343,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
             core::instance().ether.tx_push(msgs[i]->port, msgs[i], &next);
         }
     } else { /* packet was not fragmented */
+        DEBUG("send normal packet\n");
         rte::pktmbuf_free(msg);
         stcp_sockaddr next;
         uint8_t port;
