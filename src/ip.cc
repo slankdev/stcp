@@ -66,8 +66,8 @@ void ip_module::rx_push(mbuf* msg)
         default:
             {
                 rte::pktmbuf_free(msg);
-                std::string errstr = "unknown l4 proto " + std::to_string(protocol);
-                throw exception(errstr.c_str());
+                // std::string errstr = "unknown l4 proto " + std::to_string(protocol);
+                // throw exception(errstr.c_str());
                 break;
             }
 
