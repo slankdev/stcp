@@ -29,6 +29,16 @@ void ip_module::rx_push(mbuf* msg)
 
     stcp_ip_header* ih 
         = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
+
+    if (rte::ipv4_frag_pkt_is_fragmented(ih)) {
+        DEBUG("frag\n");
+    } else {
+        DEBUG("non frag\n");
+    }
+
+
+
+
     mbuf_pull(msg, sizeof(stcp_ip_header));
 
     stcp_in_addr bcast;

@@ -30,8 +30,6 @@ namespace slank {
 
 
 
-struct rte_mbuf* array2llist_mbuf(struct rte_mbuf** bufs, size_t num_bufs);
-
 } /* namespace */
 
 
@@ -112,6 +110,8 @@ uint64_t bswap64(uint64_t x);
 void prefetch0(const volatile void* p);
 void prefetch1(const volatile void* p);
 void prefetch2(const volatile void* p);
+
+bool ipv4_frag_pkt_is_fragmented(const void* iph);
 
 
 

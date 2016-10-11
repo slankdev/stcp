@@ -27,20 +27,6 @@
 namespace slank {
     
 
-rte_mbuf* array2llist_mbuf(rte_mbuf** bufs, size_t num_bufs)
-{
-    if (num_bufs <= 0) return nullptr;
-
-    rte_mbuf* link_head = bufs[0];
-    rte_mbuf* link = link_head;
-    for (size_t i=0; i<num_bufs-1; i++) {
-        link->next = bufs[i+1];
-        link = link->next;
-    }
-    return link_head;
-}
-
-
 } /* namespace */
 
 
@@ -296,6 +282,13 @@ void prefetch1(const volatile void* p)
 void prefetch2(const volatile void* p)
 {
     rte_prefetch2(p);
+}
+
+bool ipv4_frag_pkt_is_fragmented(const void* iph)
+{
+    int ret = rte_ipv4_frag_pkt_is_fragmented(
+            reinterpret_cast<const ipv4_hdr*>(iph));
+    return ret==1 ? true : false;
 }
 
 

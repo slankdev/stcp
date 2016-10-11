@@ -67,7 +67,10 @@ uint16_t ifnet::io_rx()
     uint16_t num_rx = rte::eth_rx_burst(port_id, 0, bufs, BURST_SIZE);
     if (unlikely(num_rx == 0)) return 0;
 
-    rx.push(array2llist_mbuf(bufs, num_rx));
+    for (uint16_t i=0; i<num_rx; i++) {
+        rx.push(bufs[i]);
+    }
+
     rx_packets += num_rx;
     return num_rx;
 }
