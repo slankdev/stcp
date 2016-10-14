@@ -40,26 +40,6 @@ static void get_myip(stcp_in_addr* myip, uint8_t port)
 }
 
 
-// TODO #15 this function will be included in sockaddr-class
-static bool hw_sockaddr_is_same(const stcp_sockaddr* a, const stcp_sockaddr* b)
-{
-    for (int i=0; i<6; i++) {
-        if (a->sa_data[i] != b->sa_data[i])
-            return false;
-    }
-    return true;
-}
-
-// TODO #15 this function will be included in sockaddr-class
-static bool p_sockaddr_is_same(const stcp_sockaddr* a, const stcp_sockaddr* b)
-{
-    const stcp_sockaddr_in* sina = reinterpret_cast<const stcp_sockaddr_in*>(a);
-    const stcp_sockaddr_in* sinb = reinterpret_cast<const stcp_sockaddr_in*>(b);
-    return ( sina->sin_addr == sinb->sin_addr );
-}
-
-
-
 static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
 {
 	for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
@@ -85,8 +65,8 @@ void arp_module::rx_push(mbuf* msg)
          * to ARP-Table.
          */
             
-        stcp_sockaddr     sa_pa;
-        stcp_sockaddr     sa_ha;
+        stcp_sockaddr     sa_pa(STCP_AF_INET);
+        stcp_sockaddr     sa_ha(STCP_AF_LINK);
         stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
 
         sin_pa->sin_addr = ah->psrc;
@@ -133,8 +113,7 @@ void arp_module::rx_push(mbuf* msg)
 void arp_module::tx_push(mbuf* msg)
 {
     tx_cnt++;
-    stcp_sockaddr sa; // TODO #15 fix this init
-    sa.sa_fam = STCP_AF_ARP;
+    stcp_sockaddr sa(STCP_AF_ARP); // TODO #15 fix this init
     core::instance().ether.tx_push(msg->port, msg, &sa);
 }
 
@@ -193,8 +172,8 @@ void arp_module::ioctl(uint64_t request, void* arg)
 void arp_module::ioctl_siocaarpent(stcp_arpreq* req)
 {
     for (stcp_arpreq& ent : table) {
-        if (p_sockaddr_is_same(&ent.arp_pa, &req->arp_pa)) {
-            if (hw_sockaddr_is_same(&ent.arp_ha, &req->arp_ha)) { // TODO #15
+        if (ent.arp_pa == req->arp_pa) {
+            if (ent.arp_ha == req->arp_ha) {
                 return;
             } else {
                 for (int i=0; i<6; i++)
@@ -219,7 +198,7 @@ void arp_module::ioctl_siocaarpent(stcp_arpreq* req)
 void arp_module::ioctl_siocdarpent(stcp_arpreq* req)
 {
     for (size_t i=0; i<table.size(); i++) {
-        if (hw_sockaddr_is_same(&req->arp_pa, &table[i].arp_pa) &&
+        if (req->arp_pa == table[i].arp_pa &&
                 table[i].arp_ifindex == req->arp_ifindex) {
             table.erase(table.begin() + i);
             return ;

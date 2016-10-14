@@ -30,6 +30,8 @@ void ip_module::init()
     if (!frag_tbl) {
         throw slankdev::exception("rte_ip_frag_table_create");
     }
+
+    rte::srand(time(NULL));
 }
 
 
@@ -83,7 +85,7 @@ void ip_module::rx_push(mbuf* msg)
 
     mbuf_pull(msg, sizeof(stcp_ip_header));
 
-    stcp_sockaddr src;
+    stcp_sockaddr src(STCP_AF_INET);
     stcp_sockaddr_in* src_sin = reinterpret_cast<stcp_sockaddr_in*>(&src);
     src_sin->sin_addr = ih->src;
     uint8_t protocol = ih->next_proto_id;
@@ -225,9 +227,9 @@ void ip_module::route_resolv(const stcp_sockaddr* dst, stcp_sockaddr* next, uint
 bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr* addr)
 {
     dpdk_core& dpdk = core::instance().dpdk;
-    stcp_sockaddr inaddr;
-    stcp_sockaddr inmask;
-    stcp_sockaddr innet;
+    stcp_sockaddr inaddr(STCP_AF_INET);
+    stcp_sockaddr inmask(STCP_AF_INET);
+    stcp_sockaddr innet(STCP_AF_INET);
     bool inaddr_exist = false;
     bool inmask_exist = false;
 
@@ -284,16 +286,15 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
     stcp_ip_header* ih 
         = reinterpret_cast<stcp_ip_header*>(mbuf_push(msg, sizeof(stcp_ip_header)));
     
-    srand(time(NULL)); // XXX delay code?
     ih->version_ihl       = 0x45;
     ih->type_of_service   = 0x00;
     ih->total_length      = rte::bswap16(rte::pktmbuf_pkt_len(msg));
-    ih->packet_id         = rte::bswap16(rand() % 0xffff); // XXX delay code?
-    
+    ih->packet_id         = rte::bswap16(rte::rand() % 0xffff);
+
     if (rte::pktmbuf_pkt_len(msg) > core::instance().dpdk.ipv4_mtu_default) {
-        ih->fragment_offset = rte::bswap16(0x0000); // TODO hardcode
+        ih->fragment_offset = rte::bswap16(0x0000);
     } else {
-        ih->fragment_offset   = rte::bswap16(0x4000); // TODO hardcode
+        ih->fragment_offset   = rte::bswap16(0x4000);
     }
 
     ih->time_to_live      = ip_module::ttl_default;
@@ -321,7 +322,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
         // DEBUG("send fragmented packets\n");
         rte::pktmbuf_free(msg);
 
-        stcp_sockaddr next;
+        stcp_sockaddr next(STCP_AF_INET);
         uint8_t port;
         route_resolv(dst, &next, &port);
         next.sa_fam = STCP_AF_INET;
@@ -335,7 +336,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
         }
     } else { /* packet was not fragmented */
         // DEBUG("send normal packet\n");
-        stcp_sockaddr next;
+        stcp_sockaddr next(STCP_AF_INET);
         uint8_t port;
         route_resolv(dst, &next, &port);
         next.sa_fam = STCP_AF_INET;

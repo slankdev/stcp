@@ -9,6 +9,39 @@
 
 namespace slank {
 
+
+
+const char* stcp_sockaddr::c_str() const
+{
+    static char str[32];
+    switch (sa_fam) {
+        case STCP_AF_LINK:
+            {
+                sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x", 
+                        sa_data[0], sa_data[1],
+                        sa_data[2], sa_data[3],
+                        sa_data[4], sa_data[5]);
+                break;
+            }
+        case STCP_AF_INET:
+            {
+                const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(this);
+                sprintf(str, "%d.%d.%d.%d", 
+                        sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1],
+                        sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
+                break;
+            }
+        default:
+            {
+                throw exception("Address Family is not supported");
+                break;
+            }
+    }
+    return str;
+}
+
+
+
 bool operator==(const stcp_sockaddr& sa, const ether_addr& addr)
 {
     if (sa.sa_fam != STCP_AF_LINK)
@@ -74,7 +107,7 @@ struct stcp_in_addr stcp_inet_addr(const char* fmt)
 
 struct stcp_sockaddr stcp_inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6)
 {
-    stcp_sockaddr sa;
+    stcp_sockaddr sa(STCP_AF_LINK);
     memset(&sa, 0, sizeof sa);
 
     sa.sa_fam = STCP_AF_LINK;
@@ -88,24 +121,6 @@ struct stcp_sockaddr stcp_inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_
     return sa;
 }
 
-char* p_sockaddr_to_str(const struct stcp_sockaddr* sa)
-{
-    static char str[16];
-    const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(sa);
-    sprintf(str, "%d.%d.%d.%d", 
-            sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1],
-            sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
-    return str;
-}
-char* hw_sockaddr_to_str(const struct stcp_sockaddr* sa)
-{
-    static char str[32];
-    sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x", 
-            sa->sa_data[0], sa->sa_data[1],
-            sa->sa_data[2], sa->sa_data[3],
-            sa->sa_data[4], sa->sa_data[5]);
-    return str;
-}
 
 
 

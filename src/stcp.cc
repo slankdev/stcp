@@ -71,10 +71,12 @@ void core::stat_all()
     s.write("\tARP-chace");
     s.write("\t%-16s %-20s %s", "Address", "HWaddress", "Iface");
     for (stcp_arpreq& a : arp.table) {
+        std::string pa = a.arp_pa.c_str();
+        std::string ha = a.arp_ha.c_str();
         s.write("\t%-16s %-20s %d",
-                /* TODO #15 this function will be included in sockaddr-class */
-                p_sockaddr_to_str(&a.arp_pa),  
-                hw_sockaddr_to_str(&a.arp_ha), a.arp_ifindex);
+                pa.c_str(),
+                ha.c_str(),
+                a.arp_ifindex);
     }
 
     s.write("IP module");
@@ -91,7 +93,7 @@ void core::stat_all()
         } else if (rt.rt_flags & STCP_RTF_LOCAL) {
             str_dest = "link-local";
         } else {
-            str_dest = p_sockaddr_to_str(&rt.rt_route);
+            str_dest = rt.rt_route.c_str();
         }
 
         std::string flag_str = "";
@@ -104,12 +106,12 @@ void core::stat_all()
         if (rt.rt_flags & STCP_RTF_LOCAL) {
             gateway_str = "*";
         } else {
-            gateway_str = p_sockaddr_to_str(&rt.rt_gateway);
+            gateway_str = rt.rt_gateway.c_str();
         }
         s.write("\t%-16s%-16s%-16s%-6s%-3u",
                 str_dest.c_str(),
                 gateway_str.c_str(),
-                p_sockaddr_to_str(&rt.rt_genmask),
+                rt.rt_genmask.c_str(),
                 flag_str.c_str(),
                 rt.rt_port);
     }

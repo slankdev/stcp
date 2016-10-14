@@ -54,7 +54,7 @@ void ifnet::init()
 
     struct ether_addr addr;
     rte::eth_macaddr_get(port_id, &addr);
-    stcp_sockaddr s;
+    stcp_sockaddr s(STCP_AF_LINK);
     for (int i=0; i<6; i++)
         s.sa_data[i] = addr.addr_bytes[i];
     ifaddr ifa(STCP_AF_LINK, &s);

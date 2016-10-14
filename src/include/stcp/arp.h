@@ -49,7 +49,7 @@ struct stcp_arpreq {
     uint8_t              arp_ifindex;
 
 public:
-    stcp_arpreq() {}
+    stcp_arpreq() : arp_pa(STCP_AF_INET), arp_ha(STCP_AF_LINK) {}
     stcp_arpreq(const stcp_sockaddr* pa, const stcp_sockaddr* ha, uint8_t index) :
         arp_pa(*pa), arp_ha(*ha), arp_ifindex(index) {}
     bool operator==(const stcp_arpreq& rhs) const

@@ -67,7 +67,8 @@ struct stcp_sockaddr {
 	uint8_t         sa_data[14];  /* actually longer; address value */
 
 public:
-    // stcp_sockaddr(stcp_sa_family fam) : sa_fam(fam) {} // TODO imple this func
+    stcp_sockaddr() = delete;
+    stcp_sockaddr(stcp_sa_family fam) : sa_fam(fam) {}
 
     bool operator==(const stcp_sockaddr& rhs) const
     {
@@ -120,6 +121,8 @@ public:
     friend bool operator!=(const stcp_sockaddr& sa, const ether_addr& addr);
     friend bool operator==(const stcp_sockaddr& sa, const stcp_in_addr& addr);
     friend bool operator!=(const stcp_sockaddr& sa, const stcp_in_addr& addr);
+
+    const char* c_str() const;
 };
 
 struct stcp_in_addr {
@@ -248,6 +251,15 @@ struct stcp_ifreq {
         char            if_newname[STCP_IFNAMSIZ];
         char            *if_data;
     };
+
+    stcp_ifreq() :
+        if_addr     (STCP_AF_INET) {}
+        // if_dstaddr  (STCP_AF_INET),
+        // if_broadaddr(STCP_AF_INET),
+        // if_netmask  (STCP_AF_INET),
+        // if_hwaddr   (STCP_AF_LINK) {}
+
+
 };
 #endif
 

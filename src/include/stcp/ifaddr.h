@@ -23,7 +23,7 @@ class ifaddr {
 public:
     stcp_sa_family family;
     struct stcp_sockaddr raw;
-    ifaddr(stcp_sa_family af, const stcp_sockaddr* addr) : family(af)
+    ifaddr(stcp_sa_family af, const stcp_sockaddr* addr) : family(af), raw(af)
     {
         switch (family) {
             case STCP_AF_LINK:

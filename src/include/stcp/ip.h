@@ -45,6 +45,9 @@ struct stcp_rtentry {
     uint32_t       rt_flags;   /* up/down?, host/net       */
 
     stcp_rtentry() :
+        rt_route(STCP_AF_INET),
+        rt_genmask(STCP_AF_INET),
+        rt_gateway(STCP_AF_INET),
         rt_port(0), rt_flags(0) {}
 
     bool operator==(const stcp_rtentry& rhs) const
