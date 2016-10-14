@@ -17,8 +17,8 @@ namespace slank {
 struct stcp_in_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
 struct stcp_in_addr stcp_inet_addr(const char* fmt);
 struct stcp_sockaddr stcp_inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6);
-char* p_sockaddr_to_str(const struct stcp_sockaddr* sa);
-char* hw_sockaddr_to_str(const struct stcp_sockaddr* sa);
+// char* p_sockaddr_to_str(const struct stcp_sockaddr* sa);
+// char* hw_sockaddr_to_str(const struct stcp_sockaddr* sa);
 
 
 enum {
@@ -70,6 +70,13 @@ struct stcp_sockaddr {
 public:
     stcp_sockaddr() = delete;
     stcp_sockaddr(stcp_sa_family fam) : sa_fam(fam) {}
+    stcp_sockaddr(const stcp_sockaddr& rhs)
+    {
+        sa_len = rhs.sa_len;
+        sa_fam = rhs.sa_fam;
+        memcpy(sa_data, rhs.sa_data, sizeof(sa_data));
+    }
+
 
     bool operator==(const stcp_sockaddr& rhs) const
     {

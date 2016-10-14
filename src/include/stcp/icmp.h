@@ -23,19 +23,6 @@ struct stcp_icmp_header {
 
 
 
-class icmp_module {
-    friend class core;
-private:
-    size_t rx_cnt;
-    size_t tx_cnt;
-
-public:
-    icmp_module() : rx_cnt(0), tx_cnt(0) {}
-
-    void rx_push(mbuf* msg, const stcp_sockaddr* src);
-};
-
-
 
 enum icmp_type : uint8_t {
     STCP_ICMP_ECHOREPLY                   = 0,   /* echo reply                */
@@ -94,6 +81,30 @@ enum icmp_type : uint8_t {
     STCP_ICMP_PHOTURIS_AUTH_FAILED        = 2,   /* auth failed               */
     STCP_ICMP_PHOTURIS_DECRYPT_FAILED     = 3,   /* decrypt failed            */
 };
+
+
+class icmp_module {
+    friend class core;
+private:
+    size_t rx_cnt;
+    size_t tx_cnt;
+
+public:
+    icmp_module() : rx_cnt(0), tx_cnt(0) {}
+
+    void rx_push(mbuf* msg, const stcp_sockaddr* src);
+    void send_err(icmp_type type, icmp_type code, const stcp_sockaddr* dst, mbuf* msg) 
+    {
+        stcp_icmp_header ih;
+        ih.icmp_type = uint8_t(type);
+        ih.icmp_code = uint8_t(code);
+        printf("%p\n", dst);
+        rte::pktmbuf_dump(stdout, msg, 0);
+        printf("%p\n", &ih);
+    }
+};
+
+
 
 
 } /* namespace slank */
