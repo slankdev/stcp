@@ -311,6 +311,15 @@ bool ipv4_frag_pkt_is_fragmented(const void* iph)
     return ret==1 ? true : false;
 }
 
+void srand(uint64_t seedval)
+{
+    rte_srand(seedval);
+}
+
+uint64_t rand(void)
+{
+    return rte_rand();
+}
 
 
 struct rte_mbuf* ipv4_frag_reassemble_packet(

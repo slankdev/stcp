@@ -125,6 +125,8 @@ struct rte_mbuf* ipv4_frag_reassemble_packet(
         struct ipv4_hdr*               iph
         );
 
+void srand(uint64_t seedval);
+uint64_t rand(void);
 
 
 template <class T>
