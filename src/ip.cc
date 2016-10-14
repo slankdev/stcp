@@ -10,9 +10,27 @@
 
 namespace slank {
 
-#define PRETECH_OFFSET 3
 
 
+void ip_module::init()
+{
+    uint32_t max_flow_num   = 0x1000;
+    uint32_t bucket_num     = max_flow_num;
+    uint32_t bucket_entries = 16;
+    uint32_t max_entries    = max_flow_num;
+    uint64_t max_cycles     = (rte_get_tsc_hz() + MS_PER_S - 1) / MS_PER_S * MS_PER_S;
+
+    frag_tbl = rte_ip_frag_table_create(
+            bucket_num,
+            bucket_entries,
+            max_entries,
+            max_cycles,
+            rte_socket_id()
+            );
+    if (!frag_tbl) {
+        throw slankdev::exception("rte_ip_frag_table_create");
+    }
+}
 
 
 void ip_module::set_ipaddr(const stcp_in_addr* addr)
@@ -24,8 +42,6 @@ void ip_module::set_ipaddr(const stcp_in_addr* addr)
 }
     
 
-struct rte_ip_frag_death_row dr; 
-struct rte_ip_frag_tbl *tbl;
 void ip_module::rx_push(mbuf* msg)
 {
     rx_cnt++;
@@ -47,37 +63,13 @@ void ip_module::rx_push(mbuf* msg)
         return;
     }
 
-
-    // ERASE this block will be synthesized to ip-module
-    static bool inited=false;
-    uint32_t max_flow_num   = 0x1000;
-    uint32_t bucket_num     = max_flow_num;
-    uint32_t bucket_entries = 16;
-    uint32_t max_entries    = max_flow_num;
-    uint64_t max_cycles     = (rte_get_tsc_hz() + MS_PER_S - 1) / MS_PER_S * MS_PER_S;
-
-    if (!inited) {
-        tbl = rte_ip_frag_table_create(
-                bucket_num,
-                bucket_entries,
-                max_entries,
-                max_cycles,
-                rte_socket_id()
-                );
-        if (!tbl) {
-            throw slankdev::exception("rte_ip_frag_table_create");
-        }
-        inited = true;
-    }
-
     if (rte::ipv4_frag_pkt_is_fragmented(ih)) {
-    
         mbuf_push(msg, sizeof(stcp_ether_header));
 
         msg->l2_len = sizeof(stcp_ether_header);
         msg->l3_len = sizeof(stcp_ip_header);
         mbuf* reasmd_msg = rte::ipv4_frag_reassemble_packet(
-                tbl, &dr, msg, rte_rdtsc(),
+                frag_tbl, &dr, msg, rte_rdtsc(),
                 reinterpret_cast<struct ipv4_hdr*>(ih));
 
         if (reasmd_msg == NULL) {
@@ -119,7 +111,6 @@ void ip_module::rx_push(mbuf* msg)
                 // throw exception(errstr.c_str());
                 break;
             }
-
     }
 }
 

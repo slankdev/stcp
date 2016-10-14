@@ -80,12 +80,16 @@ private:
     size_t tx_cnt;
     size_t not_to_me;
     stcp_in_addr myip;
+    struct rte_ip_frag_death_row dr;
+    struct rte_ip_frag_tbl* frag_tbl;
 
 public:
     struct rte_mempool* indirect_pool;
     std::vector<stcp_rtentry> rttable;
 
     ip_module() : rx_cnt(0), tx_cnt(0), not_to_me(0) {}
+    void init();
+
     void set_ipaddr(const stcp_in_addr* addr);
     void rx_push(mbuf* msg);
     void tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto);
