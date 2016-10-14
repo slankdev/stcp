@@ -60,6 +60,7 @@ private:
     void ioctl_siocgifhwaddr(stcp_ifreq* ifr);
     void ioctl_siocsifnetmask(const stcp_ifreq* ifr);
     void ioctl_siocgifnetmask(stcp_ifreq* ifr);
+    void ioctl_siocpromisc(const uint64_t* val);
 };
 
 

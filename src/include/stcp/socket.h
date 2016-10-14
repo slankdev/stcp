@@ -42,6 +42,7 @@ enum ioctl_family : uint64_t {
     STCP_SIOCGIFHWADDR,
     STCP_SIOCSIFNETMASK,
     STCP_SIOCGIFNETMASK,
+    STCP_SIOCPROMISC,
 
     /* arp  */
     STCP_SIOCAARPENT,

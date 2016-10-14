@@ -88,11 +88,9 @@ uint16_t ifnet::io_tx(size_t num_request_to_send)
         for (i=0; i+num_sent<num_request_to_send; i++) {
             bufs[i] = tx_pop();
         }
-        // printf("%s:%d: called %s(%u, 0, %p, %zd) \n", __FILE__, __LINE__, __func__, port_id, bufs, i);
         uint16_t num_tx = rte::eth_tx_burst(port_id, 0, bufs, i);
         
         if (num_tx < i) {
-            // printf("%s:%d: sendmiss \n", __FILE__, __LINE__);
             for (uint16_t j=0; j<i-num_tx; j++) {
                 rte::pktmbuf_free(bufs[num_tx+j]);
             }
@@ -183,12 +181,30 @@ void ifnet::ioctl(uint64_t request, void* arg)
             ioctl_siocgifnetmask(ifr);
             break;
         }
+        case STCP_SIOCPROMISC:
+        {
+            const uint64_t* val = reinterpret_cast<const uint64_t*>(arg);
+            ioctl_siocpromisc(val);
+            break;
+        }
         default:
         {
             throw exception("invalid arguments");
             break;
         }
     }
+}
+
+/*
+ * Description
+ *      This function must call before calling core::init().
+ * Argument
+ *      one : set
+ *      else: unset
+ */
+void ifnet::ioctl_siocpromisc(const uint64_t* val)
+{
+    promiscuous_mode = *val==1 ? true : false;
 }
 
 
