@@ -271,6 +271,26 @@ uint32_t ipv4_fragment_packet(rte_mbuf* pkt_in, rte_mbuf** pkts_out, uint16_t nb
     return res;
 }
 
+bool pktmbuf_is_contiguous(const rte_mbuf* m)
+{
+    return rte_pktmbuf_is_contiguous(m) == 1;
+}
+
+void* malloc(const char* type, size_t size, unsigned align)
+{
+    return rte_malloc(type, size, align);
+}
+void free(void* ptr)
+{
+    rte_free(ptr);
+}
+
+void* memcpy(void* dst, const void* src, size_t n)
+{
+    return rte_memcpy(dst, src, n);
+}
+
+
 void prefetch0(const volatile void* p)
 {
     rte_prefetch0(p);

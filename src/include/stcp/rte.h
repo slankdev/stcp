@@ -106,6 +106,11 @@ void prefetch0(const volatile void* p);
 void prefetch1(const volatile void* p);
 void prefetch2(const volatile void* p);
 
+bool pktmbuf_is_contiguous(const rte_mbuf* m);
+void* malloc(const char* type, size_t size, unsigned align);
+void free(void* ptr);
+void* memcpy(void* dst, const void* src, size_t n);
+
 uint32_t ipv4_fragment_packet(
         rte_mbuf* pkt_in, rte_mbuf** pkts_out, 
         uint16_t nb_pkts_out, uint16_t mtu_size, 
