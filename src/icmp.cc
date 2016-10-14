@@ -43,14 +43,30 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr* src)
     stcp_icmp_header* ih 
         = rte::pktmbuf_mtod<stcp_icmp_header*>(msg);
 
-    DEBUG("RECV ICMP MOD TYPE=%u\n", ih->icmp_type);
     switch (ih->icmp_type) {
         case STCP_ICMP_ECHO:
         {
             ih->icmp_type  = STCP_ICMP_ECHOREPLY;
             ih->icmp_code  = 0x00;
             ih->icmp_cksum = 0x0000;
-            ih->icmp_cksum = checksum((uint16_t*)ih, rte::pktmbuf_data_len(msg));
+
+            if (rte::pktmbuf_is_contiguous(msg)) {
+                ih->icmp_cksum = checksum((uint16_t*)ih, rte::pktmbuf_pkt_len(msg));
+            } else {
+                uint8_t* buf = (uint8_t*)rte::malloc("for ICMP Several buffer",
+                        rte::pktmbuf_pkt_len(msg), 0);
+                mbuf* m = msg;
+                uint8_t* p = buf;
+                while (m) {
+                    // slankdev::hexdump("M", rte::pktmbuf_mtod<void*>(m), 
+                    //         rte::pktmbuf_data_len(m));
+                    rte::memcpy(p, rte::pktmbuf_mtod<void*>(m), rte::pktmbuf_data_len(m));
+                    p += rte::pktmbuf_data_len(m);
+                    m = m->next;
+                }
+                ih->icmp_cksum = checksum((uint16_t*)buf, rte::pktmbuf_pkt_len(msg));
+                rte::free(buf);
+            }
 
             core::instance().ip.tx_push(msg, src, STCP_IPPROTO_ICMP);
             tx_cnt++;

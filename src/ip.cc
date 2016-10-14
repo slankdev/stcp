@@ -32,6 +32,9 @@ void ip_module::rx_push(mbuf* msg)
     stcp_ip_header* ih 
         = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
 
+    size_t trailer_len = rte::pktmbuf_data_len(msg) - rte::bswap16(ih->total_length);
+    rte::pktmbuf_trim(msg, trailer_len);
+
     stcp_in_addr bcast;
     bcast.addr_bytes[0] = 0xff;
     bcast.addr_bytes[1] = 0xff;
@@ -69,24 +72,21 @@ void ip_module::rx_push(mbuf* msg)
 
     if (rte::ipv4_frag_pkt_is_fragmented(ih)) {
     
-        msg->l2_len = sizeof(stcp_ether_header);
-        msg->l3_len = sizeof(stcp_ip_header);
         mbuf_push(msg, sizeof(stcp_ether_header));
 
+        msg->l2_len = sizeof(stcp_ether_header);
+        msg->l3_len = sizeof(stcp_ip_header);
         mbuf* reasmd_msg = rte::ipv4_frag_reassemble_packet(
-                tbl, &dr, msg, rte_rdtsc(), 
-                reinterpret_cast<struct ipv4_hdr*>(ih)  );
+                tbl, &dr, msg, rte_rdtsc(),
+                reinterpret_cast<struct ipv4_hdr*>(ih));
 
         if (reasmd_msg == NULL) {
             return;
         }
-
         msg = reasmd_msg;
 
         mbuf_pull(msg, sizeof(stcp_ether_header));
         ih = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
-    } else {
-        // DEBUG("non frag\n");
     }
 
     mbuf_pull(msg, sizeof(stcp_ip_header));
@@ -327,7 +327,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
             core::instance().dpdk.get_mempool());
 
     if (nb > 1) { /* packet was fragmented */
-        DEBUG("send fragmented packets\n");
+        // DEBUG("send fragmented packets\n");
         rte::pktmbuf_free(msg);
 
         stcp_sockaddr next;
@@ -343,8 +343,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
             core::instance().ether.tx_push(msgs[i]->port, msgs[i], &next);
         }
     } else { /* packet was not fragmented */
-        DEBUG("send normal packet\n");
-        rte::pktmbuf_free(msg);
+        // DEBUG("send normal packet\n");
         stcp_sockaddr next;
         uint8_t port;
         route_resolv(dst, &next, &port);
