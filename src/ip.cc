@@ -101,11 +101,12 @@ void ip_module::rx_push(mbuf* msg)
         //         rte::pktmbuf_free(msg);
         //         break;
         //     }
-        // case STCP_IPPROTO_UDP:
-        //     {
-        //         rte::pktmbuf_free(msg);
-        //         break;
-        //     }
+        case STCP_IPPROTO_UDP:
+            {
+                // rte::pktmbuf_free(msg);
+                core::instance().udp.rx_push(msg, &src);
+                break;
+            }
         default:
             {
                 mbuf_push(msg, sizeof(stcp_ip_header));
@@ -318,14 +319,14 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
             core::instance().dpdk.get_mempool(), 
             core::instance().dpdk.get_mempool());
 
+    stcp_sockaddr next(STCP_AF_INET);
+    uint8_t port;
+    route_resolv(dst, &next, &port);
+    next.sa_fam = STCP_AF_INET;
+
     if (nb > 1) { /* packet was fragmented */
         // DEBUG("send fragmented packets\n");
         rte::pktmbuf_free(msg);
-
-        stcp_sockaddr next(STCP_AF_INET);
-        uint8_t port;
-        route_resolv(dst, &next, &port);
-        next.sa_fam = STCP_AF_INET;
 
         for (size_t i=0; i<nb; i++) {
             stcp_ip_header* iph = rte::pktmbuf_mtod<stcp_ip_header*>(msgs[i]);
@@ -336,10 +337,6 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
         }
     } else { /* packet was not fragmented */
         // DEBUG("send normal packet\n");
-        stcp_sockaddr next(STCP_AF_INET);
-        uint8_t port;
-        route_resolv(dst, &next, &port);
-        next.sa_fam = STCP_AF_INET;
 
         msg->port = port;
         core::instance().ether.tx_push(msg->port, msg, &next);

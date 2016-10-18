@@ -55,7 +55,6 @@ static uint8_t* alloc_contiguous_data_from_mbufchain(mbuf* msg)
 
 void icmp_module::send_err(icmp_type type, icmp_code code, const stcp_sockaddr* dst, mbuf* msg) 
 {
-    DEBUG("icmp_module::send_err() was called now \n");
     stcp_icmp_header* ih
         = reinterpret_cast<stcp_icmp_header*>(mbuf_push(msg, sizeof(stcp_icmp_header)));
 
