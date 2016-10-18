@@ -34,9 +34,12 @@ struct stcp_udp_sock {
     udp_sock_queue rxq;
     udp_sock_queue txq;
     uint16_t port;
+
+    stcp_udp_sock(uint16_t p) : port(p) {}
 };
 
 class udp_module {
+    friend class core;
 private:
     size_t rx_cnt;
     size_t tx_cnt;
@@ -46,6 +49,12 @@ private:
 public:
     udp_module() : rx_cnt(0), tx_cnt(0) {}
     void rx_push(mbuf* msg, const stcp_sockaddr* src);
+
+    void ioctl(uint64_t request, void* args);
+
+private:
+    void ioctl_siocopenudpport(const uint16_t* port);
+    void ioctl_sioccloseudpport(const uint16_t* port);
 };
 
 

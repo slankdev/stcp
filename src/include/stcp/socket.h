@@ -56,6 +56,10 @@ enum ioctl_family : uint64_t {
     STCP_SIOCDELRT,
     STCP_SIOCGETRTS,
     STCP_SIOCADDGW,
+
+    /* udp */
+    STCP_SIOCOPENUDPPORT,
+    STCP_SIOCCLOSEUDPPORT,
 };
 
 
