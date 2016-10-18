@@ -134,7 +134,8 @@ void core::stat_all()
     }
     for (stcp_udp_sock& sock : udp.socks) {
         s.write("\t%u/udp rxq=%zd, txq=%zd", 
-                sock.port, sock.rxq.size(), sock.txq.size());
+                rte::bswap16(sock.addr.sin_port), 
+                sock.rxq.size(), sock.txq.size());
     }
 
     s.flush();

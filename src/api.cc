@@ -92,18 +92,18 @@ void set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uin
 
 
 
-void open_udp_port(uint16_t port)
-{
-    udp_module& udp = core::instance().udp;
-    udp.ioctl(STCP_SIOCOPENUDPPORT, &port);
-}
-
-
-void close_udp_port(uint16_t port)
-{
-    udp_module& udp = core::instance().udp;
-    udp.ioctl(STCP_SIOCCLOSEUDPPORT, &port);
-}
+// void open_udp_port(uint16_t port)
+// {
+//     udp_module& udp = core::instance().udp;
+//     udp.ioctl(STCP_SIOCOPENUDPPORT, &port);
+// }
+//
+//
+// void close_udp_port(uint16_t port)
+// {
+//     udp_module& udp = core::instance().udp;
+//     // udp.ioctl(STCP_SIOCCLOSEUDPPORT, &port);
+// }
 
 
 void send_packet_test_ip_mod(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
