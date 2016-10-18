@@ -7,6 +7,7 @@
 #include <stcp/ethernet.h>
 #include <stcp/socket.h>
 #include <stcp/stcp.h>
+#include <stcp/icmp.h>
 
 namespace slank {
 
@@ -95,22 +96,21 @@ void ip_module::rx_push(mbuf* msg)
                 core::instance().icmp.rx_push(msg, &src);
                 break;
             }
-        case STCP_IPPROTO_TCP:
-            {
-                rte::pktmbuf_free(msg);
-                break;
-            }
-        case STCP_IPPROTO_UDP:
-            {
-                rte::pktmbuf_free(msg);
-                break;
-            }
+        // case STCP_IPPROTO_TCP:
+        //     {
+        //         rte::pktmbuf_free(msg);
+        //         break;
+        //     }
+        // case STCP_IPPROTO_UDP:
+        //     {
+        //         rte::pktmbuf_free(msg);
+        //         break;
+        //     }
         default:
             {
-                rte::pktmbuf_free(msg);
-                DEBUG("unknown L4 type pushed");
-                // std::string errstr = "unknown l4 proto " + std::to_string(protocol);
-                // throw exception(errstr.c_str());
+                mbuf_push(msg, sizeof(stcp_ip_header));
+                core::instance().icmp.send_err(STCP_ICMP_UNREACH, 
+                        STCP_ICMP_UNREACH_PROTOCOL, &src, msg);
                 break;
             }
     }

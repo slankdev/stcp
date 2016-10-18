@@ -36,6 +36,48 @@ static uint16_t checksum(uint16_t* buf, size_t bufsz)
 }
 
 
+
+static uint8_t* alloc_contiguous_data_from_mbufchain(mbuf* msg)
+{
+        uint8_t* buf = (uint8_t*)rte::malloc("for ICMP Several buffer",
+                rte::pktmbuf_pkt_len(msg), 0);
+        mbuf* m = msg;
+        uint8_t* p = buf;
+        while (m) {
+            rte::memcpy(p, rte::pktmbuf_mtod<void*>(m), rte::pktmbuf_data_len(m));
+            p += rte::pktmbuf_data_len(m);
+            m = m->next;
+        }
+        return buf;
+}
+
+
+
+void icmp_module::send_err(icmp_type type, icmp_code code, const stcp_sockaddr* dst, mbuf* msg) 
+{
+    DEBUG("icmp_module::send_err() was called now \n");
+    stcp_icmp_header* ih
+        = reinterpret_cast<stcp_icmp_header*>(mbuf_push(msg, sizeof(stcp_icmp_header)));
+
+    ih->icmp_type   = type;
+    ih->icmp_code   = code;
+    ih->icmp_cksum  = 0x0000;
+    ih->icmp_ident  = 0x0000;
+    ih->icmp_seq_nb = 0x0000;
+
+
+    if (rte::pktmbuf_is_contiguous(msg)) {
+        ih->icmp_cksum = checksum((uint16_t*)ih, rte::pktmbuf_pkt_len(msg));
+    } else {
+        uint8_t* buf = alloc_contiguous_data_from_mbufchain(msg);
+        ih->icmp_cksum = checksum((uint16_t*)buf, rte::pktmbuf_pkt_len(msg));
+        rte::free(buf);
+    }
+    core::instance().ip.tx_push(msg, dst, STCP_IPPROTO_ICMP);
+}
+
+
+
 void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr* src)
 {
     rx_cnt++;
@@ -53,17 +95,7 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr* src)
             if (rte::pktmbuf_is_contiguous(msg)) {
                 ih->icmp_cksum = checksum((uint16_t*)ih, rte::pktmbuf_pkt_len(msg));
             } else {
-                uint8_t* buf = (uint8_t*)rte::malloc("for ICMP Several buffer",
-                        rte::pktmbuf_pkt_len(msg), 0);
-                mbuf* m = msg;
-                uint8_t* p = buf;
-                while (m) {
-                    // slankdev::hexdump("M", rte::pktmbuf_mtod<void*>(m), 
-                    //         rte::pktmbuf_data_len(m));
-                    rte::memcpy(p, rte::pktmbuf_mtod<void*>(m), rte::pktmbuf_data_len(m));
-                    p += rte::pktmbuf_data_len(m);
-                    m = m->next;
-                }
+                uint8_t* buf = alloc_contiguous_data_from_mbufchain(msg);
                 ih->icmp_cksum = checksum((uint16_t*)buf, rte::pktmbuf_pkt_len(msg));
                 rte::free(buf);
             }
@@ -80,9 +112,8 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr* src)
         default:
         {
             rte::pktmbuf_free(msg);
-            DEBUG("unknown ICMP type %d\n", ih->icmp_type);
-            // std::string errstr = "not support icmp type " + std::to_string(ih->icmp_type);
-            // throw exception(errstr.c_str());
+            std::string errstr = "not support icmp type " + std::to_string(ih->icmp_type);
+            throw exception(errstr.c_str());
             break;
         }
     }

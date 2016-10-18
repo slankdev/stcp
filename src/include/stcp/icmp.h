@@ -22,22 +22,23 @@ struct stcp_icmp_header {
 
 
 
-enum icmp_code_unreach : uint8_t {
-    // STCP_ICMP_UNREACH_PROTOCOL            = 2,   #<{(| bad protocol              |)}>#
+enum icmp_code : uint8_t {
+    /* unreachable  */
+    STCP_ICMP_UNREACH_PROTOCOL            = 2,   /* bad protocol              */
     STCP_ICMP_UNREACH_PORT                = 3,   /* bad port                  */
+
+    // #<{(| redirect     |)}>#
+    // STCP_ICMP_REDIRECT_NET                = 0,   #<{(| for network               |)}>#
+    // STCP_ICMP_REDIRECT_HOST               = 1,   #<{(| for host                  |)}>#
+    // STCP_ICMP_REDIRECT_TOSNET             = 2,   #<{(| for tos and net           |)}>#
+    // STCP_ICMP_REDIRECT_TOSHOST            = 3,   #<{(| for tos and host          |)}>#
+
+    // #<{(| timeexceeded |)}>#
+    // STCP_ICMP_TIMXCEED_INTRANS            = 0,   #<{(| ttl=0 in transit          |)}>#
+    // STCP_ICMP_TIMXCEED_REASS              = 1,   #<{(| ttl=0 in reass            |)}>#
 };
 
-// enum icmp_code_redirect : uint8_t {
-//     STCP_ICMP_REDIRECT_NET                = 0,   #<{(| for network               |)}>#
-//     STCP_ICMP_REDIRECT_HOST               = 1,   #<{(| for host                  |)}>#
-//     STCP_ICMP_REDIRECT_TOSNET             = 2,   #<{(| for tos and net           |)}>#
-//     STCP_ICMP_REDIRECT_TOSHOST            = 3,   #<{(| for tos and host          |)}>#
-// };
 
-// enum icmp_code_timxceed : uint8_t {
-//     STCP_ICMP_TIMXCEED_INTRANS            = 0,   #<{(| ttl=0 in transit          |)}>#
-//     STCP_ICMP_TIMXCEED_REASS              = 1,   #<{(| ttl=0 in reass            |)}>#
-// };
 
 enum icmp_type : uint8_t {
     STCP_ICMP_ECHOREPLY                   = 0,   /* echo reply                */
@@ -58,15 +59,7 @@ public:
     icmp_module() : rx_cnt(0), tx_cnt(0) {}
 
     void rx_push(mbuf* msg, const stcp_sockaddr* src);
-    void send_err(icmp_type type, icmp_type code, const stcp_sockaddr* dst, mbuf* msg) 
-    {
-        stcp_icmp_header ih;
-        ih.icmp_type = uint8_t(type);
-        ih.icmp_code = uint8_t(code);
-        printf("%p\n", dst);
-        rte::pktmbuf_dump(stdout, msg, 0);
-        printf("%p\n", &ih);
-    }
+    void send_err(icmp_type type, icmp_code code, const stcp_sockaddr* dst, mbuf* msg);
 };
 
 
