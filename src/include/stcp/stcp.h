@@ -13,6 +13,7 @@
 #include <stcp/arp.h>
 #include <stcp/ip.h>
 #include <stcp/icmp.h>
+#include <stcp/udp.h>
 
 
 namespace slank {
@@ -24,6 +25,7 @@ using txcap = log<class tx_packet_log>;
 
 class core {
 public:
+    udp_module udp;
     icmp_module icmp;
     ip_module  ip;
     arp_module arp;

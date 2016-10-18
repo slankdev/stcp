@@ -21,23 +21,18 @@ struct stcp_udp_header {
     uint16_t cksum;
 };
 
-
-
-
-
-struct sock_data {
+struct stcp_udp_sockdata {
     mbuf* msg;
     stcp_sockaddr addr;
 
-    sock_data(mbuf* m, stcp_sockaddr a) : msg(m), addr(a) {}
+    stcp_udp_sockdata(mbuf* m, stcp_sockaddr a) : msg(m), addr(a) {}
 };
+using udp_sock_queue = std::queue<stcp_udp_sockdata>;
 
-using sock_queue = std::queue<sock_data>;
 
-
-struct udp_sock {
-    sock_queue rxq;
-    sock_queue txq;
+struct stcp_udp_sock {
+    udp_sock_queue rxq;
+    udp_sock_queue txq;
     uint16_t port;
 };
 
@@ -46,7 +41,7 @@ private:
     size_t rx_cnt;
     size_t tx_cnt;
 
-    std::vector<udp_sock> socks;
+    std::vector<stcp_udp_sock> socks;
 
 public:
     udp_module() : rx_cnt(0), tx_cnt(0) {}
