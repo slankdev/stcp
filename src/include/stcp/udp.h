@@ -64,6 +64,15 @@ public:
     void tx_push(mbuf* msg, const stcp_sockaddr_in* dst, uint16_t srcp);
     void print_stat() const;
     stcp_udp_sock& socket();
+    void close_socket(stcp_udp_sock& s)
+    {
+        for (size_t i=0; i<socks.size(); i++) {
+            if (s == socks[i]) {
+                socks.erase(socks.begin() + i);
+                return;
+            }
+        }
+    }
 };
 
 

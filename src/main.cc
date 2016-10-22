@@ -8,10 +8,16 @@ using namespace slank;
 
 void test_udp_app(stcp_udp_sock& sock)
 {
+    static int c = 0;
     stcp_sockaddr_in src;
     mbuf* m = sock.recvfrom(&src);
     if (m) {
+        c++;
         sock.sendto(m, &src);
+        if (c > 2) {
+            core::instance().udp.close_socket(sock);
+            return;
+        }
     }
 }
 
