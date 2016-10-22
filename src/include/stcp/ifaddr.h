@@ -2,7 +2,6 @@
 #pragma once
 
 #include <stcp/config.h>
-#include <stcp/rte.h> // struct ether_addr
 #include <stcp/socket.h>
 
 #include <stdint.h>

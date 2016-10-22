@@ -7,6 +7,8 @@
 #include <stcp/stcp.h>
 #include <stcp/socket.h>
 
+#include <string>
+
 namespace slank {
 
 
@@ -33,7 +35,9 @@ const char* stcp_sockaddr::c_str() const
             }
         default:
             {
-                throw exception("Address Family is not supported");
+                std::string errstr = "Address Family is not supported ";
+                errstr += std::to_string(sa_fam);
+                throw exception(errstr.c_str());
                 break;
             }
     }
@@ -41,8 +45,17 @@ const char* stcp_sockaddr::c_str() const
 }
 
 
+const char* stcp_sockaddr_in::c_str() const
+{
+    static char str[32];
+    const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(this);
+    sprintf(str, "%d.%d.%d.%d", 
+            sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1],
+            sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
+    return str;
+}
 
-bool operator==(const stcp_sockaddr& sa, const ether_addr& addr)
+bool operator==(const stcp_sockaddr& sa, const stcp_ether_addr& addr)
 {
     if (sa.sa_fam != STCP_AF_LINK)
         return false;
@@ -53,7 +66,7 @@ bool operator==(const stcp_sockaddr& sa, const ether_addr& addr)
     }
     return true;
 }
-bool operator!=(const stcp_sockaddr& sa, const ether_addr& addr)
+bool operator!=(const stcp_sockaddr& sa, const stcp_ether_addr& addr)
 {
     return !(sa == addr);
 }
@@ -138,5 +151,9 @@ void stcp_sockaddr::inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, 
 
 
 
+void stcp_sockaddr_in::inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
+{
+    sin_addr = stcp_inet_addr(o1, o2, o3, o4);
+}
 
 } /* namespace slank */

@@ -2,7 +2,6 @@
 #pragma once
 
 #include <stcp/dpdk.h>
-#include <stcp/protocol.h>
 #include <stcp/config.h>
 
 
@@ -38,16 +37,13 @@ struct stcp_ip_header {
 
 
 struct stcp_rtentry {
-    stcp_sockaddr  rt_route;   /* route destination        */
-    stcp_sockaddr  rt_genmask;    /* netmask                  */
-    stcp_sockaddr  rt_gateway; /* next hop address         */
+    stcp_sockaddr_in  rt_route;   /* route destination        */
+    stcp_sockaddr_in  rt_genmask;    /* netmask                  */
+    stcp_sockaddr_in  rt_gateway; /* next hop address         */
     uint8_t        rt_port;       /* interface index to use   */
     uint32_t       rt_flags;   /* up/down?, host/net       */
 
     stcp_rtentry() :
-        rt_route(STCP_AF_INET),
-        rt_genmask(STCP_AF_INET),
-        rt_gateway(STCP_AF_INET),
         rt_port(0), rt_flags(0) {}
 
     bool operator==(const stcp_rtentry& rhs) const
@@ -76,7 +72,6 @@ enum ip_l4_protos : uint8_t {
 
 
 class ip_module {
-    friend class core;
 private:
     const static uint8_t ttl_default = 0x40;
     size_t rx_cnt;
@@ -95,11 +90,11 @@ public:
 
     void set_ipaddr(const stcp_in_addr* addr);
     void rx_push(mbuf* msg);
-    void tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto);
+    void tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos proto);
 
-    void sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst, ip_l4_protos p);
     void ioctl(uint64_t request, void* args);
-    void route_resolv(const stcp_sockaddr* dst, stcp_sockaddr* next, uint8_t* port);
+    void route_resolv(const stcp_sockaddr_in* dst, stcp_sockaddr_in* next, uint8_t* port);
+    void print_stat() const;
 
 private:
     void ioctl_siocaddrt(const stcp_rtentry* rt);
@@ -108,7 +103,7 @@ private:
     void ioctl_siocgetrts(std::vector<stcp_rtentry>** table);
 
 private:
-    bool is_linklocal(uint8_t port, const stcp_sockaddr* addr);
+    bool is_linklocal(uint8_t port, const stcp_sockaddr_in* addr);
 };
 
 

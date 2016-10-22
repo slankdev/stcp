@@ -8,7 +8,6 @@
 #include <stddef.h>
 
 #include <stcp/rte.h>
-#include <stcp/protocol.h>
 #include <stcp/config.h>
 #include <stcp/socket.h>
 #include <stcp/mbuf.h>
@@ -18,8 +17,8 @@ namespace slank {
 
 
 struct stcp_ether_header {
-    struct ether_addr dst;
-    struct ether_addr src;
+    struct stcp_ether_addr dst;
+    struct stcp_ether_addr src;
     uint16_t type;
 };
 
@@ -32,8 +31,6 @@ enum stcp_ether_type : uint16_t {
 
 class ether_module {
 private:
-    friend class core;
-    proto_module m;
     size_t rx_cnt;
     size_t tx_cnt;
 
@@ -43,6 +40,7 @@ public:
     void rx_push(mbuf* msg);
     void tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst);
     void proc();
+    void print_stat() const;
 
 public:
 

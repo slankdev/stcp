@@ -169,7 +169,7 @@ uint32_t socket_id()
 void pktmbuf_dump(FILE* f,const rte_mbuf* m, unsigned dump_len)
 {
     rte_pktmbuf_dump(f, m, dump_len);
-    fprintf(f, "\n\n\n\n");
+    fprintf(f, "\n\n");
 }
 
 int eth_dev_socket_id(uint8_t port_id)

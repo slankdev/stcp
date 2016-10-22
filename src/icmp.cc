@@ -53,7 +53,7 @@ static uint8_t* alloc_contiguous_data_from_mbufchain(mbuf* msg)
 
 
 
-void icmp_module::send_err(icmp_type type, icmp_code code, const stcp_sockaddr* dst, mbuf* msg) 
+void icmp_module::send_err(icmp_type type, icmp_code code, const stcp_sockaddr_in* dst, mbuf* msg) 
 {
     stcp_icmp_header* ih
         = reinterpret_cast<stcp_icmp_header*>(mbuf_push(msg, sizeof(stcp_icmp_header)));
@@ -77,7 +77,7 @@ void icmp_module::send_err(icmp_type type, icmp_code code, const stcp_sockaddr* 
 
 
 
-void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr* src)
+void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr_in* src)
 {
     rx_cnt++;
 
@@ -111,12 +111,19 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr* src)
         default:
         {
             rte::pktmbuf_free(msg);
-            std::string errstr = "not support icmp type " + std::to_string(ih->icmp_type);
-            throw exception(errstr.c_str());
+            // std::string errstr = "not support icmp type " + std::to_string(ih->icmp_type);
+            // throw exception(errstr.c_str());
             break;
         }
     }
 }
 
+void icmp_module::print_stat() const
+{
+    stat& s = stat::instance();
+    s.write("ICMP module");
+    s.write("\tRX Packets %zd", rx_cnt);
+    s.write("\tTX Packets %zd", tx_cnt);
+}
 
 } /* namespace slank */

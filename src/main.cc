@@ -8,19 +8,12 @@ using namespace slank;
 
 void test_udp_app(stcp_udp_sock& sock)
 {
-    mbuf* m;
-    stcp_sockaddr src(STCP_AF_INET);
-    bool ret = sock.recvfrom(&m, &src);
-    if (ret) { /* data was recved */
-        DEBUG("RECV FROM %s \n", src.c_str());
-
-        rte::pktmbuf_dump(stdout, m, rte::pktmbuf_pkt_len(m));
-        rte::pktmbuf_free(m);
-
+    stcp_sockaddr_in src;
+    mbuf* m = sock.recvfrom(&src);
+    if (m) {
         sock.sendto(m, &src);
     }
 }
-
 
 
 int main(int argc, char** argv)
@@ -31,9 +24,8 @@ int main(int argc, char** argv)
     set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
     set_ip_addr(192, 168, 222, 10, 24);
     set_default_gw(192, 168, 222, 1, 0);
-    add_arp_record(192, 168, 222, 11,
-            0x74, 0x03, 0xbd, 0x3d, 0x78, 0x96);
-
+    // add_arp_record(192, 168, 222, 11,
+    //         0x74, 0x03, 0xbd, 0x3d, 0x78, 0x96);
 
     stcp_sockaddr_in addr;
     addr.sin_fam  = STCP_AF_INET;

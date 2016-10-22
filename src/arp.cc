@@ -14,7 +14,7 @@ namespace slank {
 
 
 
-static void get_mymac(ether_addr* mymac, uint8_t port)
+static void get_mymac(stcp_ether_addr* mymac, uint8_t port)
 {
     for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
         if (ifa.family == STCP_AF_LINK) {
@@ -113,7 +113,7 @@ void arp_module::rx_push(mbuf* msg)
 void arp_module::tx_push(mbuf* msg)
 {
     tx_cnt++;
-    stcp_sockaddr sa(STCP_AF_ARP); // TODO #15 fix this init
+    stcp_sockaddr sa(STCP_AF_ARP);
     core::instance().ether.tx_push(msg->port, msg, &sa);
 }
 
@@ -233,31 +233,29 @@ void arp_module::ioctl_siocgdarp(bool* b)
 
 
 
-// TODO to change as below.
-// void arp_module::arp_resolv(
-//         uint8_t port, const stcp_sockaddr *dst, ether_addr* dsten, bool checkcacheonly)
-void arp_module::arp_resolv(
-        uint8_t port, const stcp_sockaddr *dst, uint8_t* dsten, bool checkcacheonly)
+bool arp_module::arp_resolv(
+        uint8_t port, const stcp_sockaddr *dst, stcp_ether_addr* dsten, bool checkcacheonly)
 {
     const stcp_sockaddr_in* dst_in = reinterpret_cast<const stcp_sockaddr_in*>(dst);
     for (stcp_arpreq& req : table) {
         stcp_sockaddr_in* req_in = reinterpret_cast<stcp_sockaddr_in*>(&req.arp_pa);
         if (req_in->sin_addr==dst_in->sin_addr && req.arp_ifindex==port) {
             for (int i=0; i<6; i++)
-                dsten[i] = req.arp_ha.sa_data[i];
-            return;
+                dsten->addr_bytes[i] = req.arp_ha.sa_data[i];
+            return true;
         }
     }
     if (checkcacheonly) {
         for (int i=0; i<6; i++)
-            dsten[i] = 0x00;
-        return;
+            dsten->addr_bytes[i] = 0x00;
+        return false;
     }
 
     if (use_dynamic_arp) {
         arp_request(port, &dst_in->sin_addr);
         for (int i=0; i<6; i++)
-            dsten[i] = 0x00;
+            dsten->addr_bytes[i] = 0x00;
+        return false;
     } else {
         throw exception("no such record in arp-table");
     }
@@ -288,6 +286,27 @@ void arp_module::arp_request(uint8_t port, const stcp_in_addr* tip)
     tx_push(msg);
 }
 
+void arp_module::print_stat() const
+{
+    stat& s = stat::instance();
+    s.write("ARP module");
+    s.write("\tRX Packets %zd", rx_cnt);
+    s.write("\tTX Packets %zd", tx_cnt);
+    s.write("");
+    s.write("\tWaiting packs  : %zd", wait.size());
+    s.write("\tUse dynamic arp: %s", use_dynamic_arp ? "YES" : "NO");
+    s.write("");
+    s.write("\tARP-chace");
+    s.write("\t%-16s %-20s %s", "Address", "HWaddress", "Iface");
+    for (const stcp_arpreq& a : table) {
+        std::string pa = a.arp_pa.c_str();
+        std::string ha = a.arp_ha.c_str();
+        s.write("\t%-16s %-20s %d",
+                pa.c_str(),
+                ha.c_str(),
+                a.arp_ifindex);
+    }
+}
 
 
 } /* namespace */

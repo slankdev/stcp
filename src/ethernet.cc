@@ -13,18 +13,22 @@ void ether_module::proc()
 {
     if (core::instance().arp.wait.size() > 0) {
         wait_ent e = core::instance().arp.wait.front();
-        tx_push(e.port, e.msg, &e.dst);
-        core::instance().arp.wait.pop();
+
+        stcp_ether_addr ether_dst;
+        bool ret = core::instance().arp.arp_resolv(e.msg->port, &e.dst, &ether_dst, true);
+
+        if (ret) {
+            tx_push(e.port, e.msg, &e.dst);
+            core::instance().arp.wait.pop();
+        }
     }
 }
 
 
 void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
 {
-    // printf("%s:%d: called %s \n", __FILE__, __LINE__, __func__);
-    
-    uint8_t ether_src[6];
-    uint8_t ether_dst[6];
+    stcp_ether_addr ether_src;
+    stcp_ether_addr ether_dst;
     uint16_t ether_type;
 
     switch (dst->sa_fam) {
@@ -32,16 +36,10 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
         {
             ether_type = rte::bswap16(STCP_ETHERTYPE_IP);
 
-            if (msg->udata64 == ARPREQ_ALREADY_SENT) { // The arpreq was already sent
-                core::instance().arp.arp_resolv(port, dst, ether_dst, true);
-            } else {
-                core::instance().arp.arp_resolv(port, dst, ether_dst);
-            }
-
-            uint8_t zeroaddr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-            if (memcmp(ether_dst, zeroaddr, sizeof zeroaddr) == 0) {
-                msg->udata64 = ARPREQ_ALREADY_SENT;
-                core::instance().arp.wait.push(wait_ent(port, msg, *dst));
+            bool  ret = core::instance().arp.arp_resolv(port, dst, &ether_dst);
+            if (!ret) {
+                wait_ent e(port, msg, *dst);
+                core::instance().arp.wait.push(e);
                 return;
             }
 
@@ -60,8 +58,8 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
                     ether_type = rte::bswap16(STCP_ETHERTYPE_REVARP);
                     break;
                 default:
-                    std::string errstr = 
-                        "not support arp operation " + std::to_string(rte::bswap16(ah->operation));
+                    std::string errstr = "not support arp operation ";
+                    errstr += std::to_string(rte::bswap16(ah->operation));
                     throw exception(errstr.c_str());
                     break;
             }
@@ -70,9 +68,9 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
             const uint8_t bcast[6] = {0xff,0xff,0xff,0xff,0xff,0xff};
             if (memcmp(&ah->hwdst, zero, sizeof zero) == 0 ||
                 memcmp(&ah->hwdst, bcast, sizeof bcast) == 0) {
-                memcpy(ether_dst, bcast, sizeof ether_dst);
+                memcpy(&ether_dst, bcast, sizeof ether_dst);
             } else {
-                memcpy(ether_dst, &ah->hwdst, sizeof ether_dst);
+                memcpy(&ether_dst, &ah->hwdst, sizeof ether_dst);
             }
 
             break;
@@ -90,22 +88,21 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
         reinterpret_cast<stcp_ether_header*>(mbuf_push(msg, sizeof(stcp_ether_header)));
 
     core& c = core::instance();
-    memset(ether_src, 0, sizeof(ether_src));
+    memset(&ether_src, 0, sizeof(ether_src));
     for (ifaddr& ifa : c.dpdk.devices[port].addrs) {
         if (ifa.family == STCP_AF_LINK) {
             for (int i=0; i<6; i++)
-                ether_src[i] = ifa.raw.sa_data[i];
+                ether_src.addr_bytes[i] = ifa.raw.sa_data[i];
             break;
         }
     }
     for (int i=0; i<6; i++) {
-        eh->dst.addr_bytes[i] = ether_dst[i];
-        eh->src.addr_bytes[i] = ether_src[i];
+        eh->dst.addr_bytes[i] = ether_dst.addr_bytes[i];
+        eh->src.addr_bytes[i] = ether_src.addr_bytes[i];
     }
     eh->type = ether_type;
 
     tx_cnt++;
-    // printf("%s:%d: dev.tx_push(msg)  msg:%p next:%p \n", __FILE__, __LINE__, msg, msg->next);
     for (ifnet& dev : core::instance().dpdk.devices) {
         dev.tx_push(msg);
     }
@@ -146,6 +143,14 @@ void ether_module::rx_push(mbuf* msg)
             break;
         }
     }
+}
+
+void ether_module::print_stat() const
+{
+    stat& s = stat::instance();
+    s.write("%s", "Ether module");
+    s.write("\tRX Packets %zd", rx_cnt);
+    s.write("\tTX Packets %zd", tx_cnt);
 }
 
 

@@ -8,7 +8,6 @@
 #include <stcp/config.h>
 #include <stcp/mbuf.h>
     
-#include <stcp/protocol.h>
 #include <stcp/ethernet.h>
 #include <stcp/arp.h>
 #include <stcp/ip.h>
@@ -22,6 +21,7 @@ namespace slank {
 using stat = log<class status_infos>;
 using rxcap = log<class rx_packet_log>;
 using txcap = log<class tx_packet_log>;
+using dmsg = log<class debug_message_log>;
 
 class core {
 public:
@@ -38,6 +38,7 @@ private:
         stat::instance().open_new("stcp.stat.log");
         rxcap::instance().open_new("stcp.rx.log");
         txcap::instance().open_new("stcp.tx.log");
+        dmsg::instance().open_new("stcp.dmsg.log");
     }
     ~core() {}
     core(const core&) = delete;

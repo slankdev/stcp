@@ -53,90 +53,18 @@ void core::stat_all()
     s.clean();
 
     for (ifnet& dev : dpdk.devices) {
-        dev.stat();
+        dev.print_stat();
     }
 
-    s.write("%s", "Ether module");
-    s.write("\tRX Packets %zd", ether.rx_cnt);
-    s.write("\tTX Packets %zd", ether.tx_cnt);
-
-
-    s.write("ARP module");
-    s.write("\tRX Packets %zd", arp.rx_cnt);
-    s.write("\tTX Packets %zd", arp.tx_cnt);
+    ether.print_stat();
     s.write("");
-    s.write("\tWaiting packs  : %zd", arp.wait.size());
-    s.write("\tUse dynamic arp: %s", arp.use_dynamic_arp ? "YES" : "NO");
+    arp.print_stat();
     s.write("");
-    s.write("\tARP-chace");
-    s.write("\t%-16s %-20s %s", "Address", "HWaddress", "Iface");
-    for (stcp_arpreq& a : arp.table) {
-        std::string pa = a.arp_pa.c_str();
-        std::string ha = a.arp_ha.c_str();
-        s.write("\t%-16s %-20s %d",
-                pa.c_str(),
-                ha.c_str(),
-                a.arp_ifindex);
-    }
-
-    s.write("IP module");
-    s.write("\tRX Packets %zd", ip.rx_cnt);
-    s.write("\tTX Packets %zd", ip.tx_cnt);
-    s.write("\tDrops      %zd", ip.not_to_me);
+    ip.print_stat();
     s.write("");
-    s.write("\tRouting-Table");
-    s.write("\t%-16s%-16s%-16s%-6s%-3s", "Destination", "Gateway", "Genmask", "Flags", "if");
-    for (stcp_rtentry& rt : ip.rttable) {
-        std::string str_dest;
-        if (rt.rt_flags & STCP_RTF_GATEWAY) {
-            str_dest = "defalt";
-        } else if (rt.rt_flags & STCP_RTF_LOCAL) {
-            str_dest = "link-local";
-        } else {
-            str_dest = rt.rt_route.c_str();
-        }
-
-        std::string flag_str = "";
-        if (rt.rt_flags & STCP_RTF_GATEWAY  )   flag_str += "G";
-        if (rt.rt_flags & STCP_RTF_MASK     )   flag_str += "M";
-        if (rt.rt_flags & STCP_RTF_LOCAL    )   flag_str += "L";
-        if (rt.rt_flags & STCP_RTF_BROADCAST)   flag_str += "B";
-
-        std::string gateway_str;
-        if (rt.rt_flags & STCP_RTF_LOCAL) {
-            gateway_str = "*";
-        } else {
-            gateway_str = rt.rt_gateway.c_str();
-        }
-        s.write("\t%-16s%-16s%-16s%-6s%-3u",
-                str_dest.c_str(),
-                gateway_str.c_str(),
-                rt.rt_genmask.c_str(),
-                flag_str.c_str(),
-                rt.rt_port);
-    }
-
-
+    icmp.print_stat();
     s.write("");
-    s.write("ICMP module");
-    s.write("\tRX Packets %zd", icmp.rx_cnt);
-    s.write("\tTX Packets %zd", icmp.tx_cnt);
-
-
-    s.write("");
-    s.write("UDP module");
-    s.write("\tRX Packets %zd", icmp.rx_cnt);
-    s.write("\tTX Packets %zd", icmp.tx_cnt);
-
-    if (udp.socks.size() > 0) {
-        s.write("");
-        s.write("\tNetStat");
-    }
-    for (stcp_udp_sock& sock : udp.socks) {
-        s.write("\t%u/udp rxq=%zd, txq=%zd", 
-                rte::bswap16(sock.addr.sin_port), 
-                sock.rxq.size(), sock.txq.size());
-    }
+    udp.print_stat();
 
     s.flush();
 }

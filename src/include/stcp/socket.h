@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stcp/config.h>
+#include <stcp/rte.h>
 
 
 
@@ -26,7 +27,7 @@ enum {
 };
 
 enum stcp_sa_family : uint16_t {
-    STCP_AF_LINK = 0x1000,
+    STCP_AF_LINK = 0x00,
     STCP_AF_INET,
     STCP_AF_ARP,
     STCP_AF_PACKET,
@@ -63,6 +64,7 @@ enum ioctl_family : uint64_t {
 };
 
 
+struct stcp_ether_addr : ether_addr {};
 
 
 
@@ -129,13 +131,14 @@ public:
     void inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
     void inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6);
 
-    friend bool operator==(const stcp_sockaddr& sa, const ether_addr& addr);
-    friend bool operator!=(const stcp_sockaddr& sa, const ether_addr& addr);
+    friend bool operator==(const stcp_sockaddr& sa, const stcp_ether_addr& addr);
+    friend bool operator!=(const stcp_sockaddr& sa, const stcp_ether_addr& addr);
     friend bool operator==(const stcp_sockaddr& sa, const stcp_in_addr& addr);
     friend bool operator!=(const stcp_sockaddr& sa, const stcp_in_addr& addr);
 
     const char* c_str() const;
 };
+
 
 struct stcp_in_addr {
     uint8_t addr_bytes[4];
@@ -170,6 +173,8 @@ struct stcp_sockaddr_in {
 	uint8_t	            sin_zero[8];
 
 public:
+    stcp_sockaddr_in() : sin_fam(STCP_AF_INET) {}
+
     bool operator==(const stcp_sockaddr_in& rhs) const
     {
         bool r1 = (sin_len  == rhs.sin_len );
@@ -190,6 +195,8 @@ public:
         sin_addr = rhs.sin_addr;
         return *this;
     }
+    const char* c_str() const;
+    void inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
 };
 
 
@@ -219,33 +226,6 @@ public:
 // };
 
 
-/* 
- * TODO 2016/09/13
- * If all names of member variables is ifr_** then 
- * compiler has error that 
- * "error: expected ‘;’ at end of member declaration"
- * but all names are if_** then compiler has not error,
- */
-#if 0
-struct stcp_ifreq {
-    char ifr_name[IFNAMSIZ]; /* Interface name */
-    union {
-        struct sockaddr ifr_addr;
-        struct sockaddr ifr_dstaddr;
-        struct sockaddr ifr_broadaddr;
-        struct sockaddr ifr_netmask;
-        struct sockaddr ifr_hwaddr;
-        short           ifr_flags;
-        int             ifr_ifindex;
-        int             ifr_metric;
-        int             ifr_mtu;
-        // struct ifmap    ifr_map;
-        char            ifr_slave[IFNAMSIZ];
-        char            ifr_newname[IFNAMSIZ];
-        char            *ifr_data;
-    };
-};
-#else
 struct stcp_ifreq {
     char if_name[STCP_IFNAMSIZ]; /* Interface name */
     uint8_t if_index;
@@ -273,7 +253,6 @@ struct stcp_ifreq {
 
 
 };
-#endif
 
 
 
@@ -299,4 +278,4 @@ struct stcp_ifreq {
 
 
 
-} /* namespace slankdev */
+} /* namespace slank */

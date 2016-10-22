@@ -9,16 +9,12 @@
 #include <stddef.h>
 #include <queue>
 
-#include <stcp/protocol.h>
 #include <stcp/config.h>
 #include <stcp/socket.h>
 
 
 namespace slank {
     
-enum pack_stat : uint64_t {
-    ARPREQ_ALREADY_SENT = 0x12121212, // TODO hardcode
-};
 
 
 enum stcp_arpop : uint16_t {
@@ -35,9 +31,9 @@ struct stcp_arphdr {
     uint8_t             hwlen;
     uint8_t             plen;
     uint16_t            operation;
-    struct ether_addr   hwsrc;
+    struct stcp_ether_addr   hwsrc;
     struct stcp_in_addr psrc;
-    struct ether_addr   hwdst;
+    struct stcp_ether_addr   hwdst;
     struct stcp_in_addr pdst;
 };
 
@@ -86,7 +82,6 @@ struct wait_ent {
 
 
 class arp_module {
-    friend class core;
 private:
     bool use_dynamic_arp;
 private:
@@ -102,10 +97,11 @@ public:
     void rx_push(mbuf* msg);
     void tx_push(mbuf* msg);
 
-    void arp_resolv(uint8_t port, const stcp_sockaddr *dst, 
-            uint8_t* dsten, bool checkcacheonly=false);
+    bool arp_resolv(uint8_t port, const stcp_sockaddr *dst, 
+            stcp_ether_addr* dsten, bool checkcacheonly=false);
     void arp_request(uint8_t port, const stcp_in_addr* tip);
     void ioctl(uint64_t request, void* arg);
+    void print_stat() const;
 
 private:
     void ioctl_siocaarpent(stcp_arpreq* req);

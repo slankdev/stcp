@@ -52,7 +52,7 @@ void ifnet::init()
 
 
 
-    struct ether_addr addr;
+    struct stcp_ether_addr addr;
     rte::eth_macaddr_get(port_id, &addr);
     stcp_sockaddr s(STCP_AF_LINK);
     for (int i=0; i<6; i++)
@@ -113,32 +113,33 @@ static const char* af2str(stcp_sa_family af)
 }
 
 
-void ifnet::stat()
+void ifnet::print_stat() const
 {
-    stat::instance().write("%s: %s", name.c_str(), promiscuous_mode?"PROMISC":"");
-    stat::instance().write("");
-    stat::instance().write("\tRX Packets %u Queue %zu", rx_packets, rx.size());
-    stat::instance().write("\tTX Packets %u Queue %zu", tx_packets, tx.size());
-    stat::instance().write("\tDrop Packets %u", drop_packets);
+    stat& s = stat::instance();
+    s.write("%s: %s", name.c_str(), promiscuous_mode?"PROMISC":"");
+    s.write("");
+    s.write("\tRX Packets %u Queue %zu", rx_packets, rx.size());
+    s.write("\tTX Packets %u Queue %zu", tx_packets, tx.size());
+    s.write("\tDrop Packets %u", drop_packets);
 
-    stat::instance().write("");
-    for (ifaddr& ifa : addrs) {
+    s.write("");
+    for (const ifaddr& ifa : addrs) {
         if (ifa.family == STCP_AF_LINK) {
-            stat::instance().write("\t%-10s %02x:%02x:%02x:%02x:%02x:%02x " 
+            s.write("\t%-10s %02x:%02x:%02x:%02x:%02x:%02x " 
                 , af2str(ifa.family)
                 , ifa.raw.sa_data[0], ifa.raw.sa_data[1]
                 , ifa.raw.sa_data[2], ifa.raw.sa_data[3]
                 , ifa.raw.sa_data[4], ifa.raw.sa_data[5]);
         } else if (ifa.family == STCP_AF_INET || ifa.family == STCP_AF_INMASK) {
-            struct stcp_sockaddr_in* sin = 
-                reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
-            stat::instance().write("\t%-10s %d.%d.%d.%d " 
+            const struct stcp_sockaddr_in* sin = 
+                reinterpret_cast<const stcp_sockaddr_in*>(&ifa.raw);
+            s.write("\t%-10s %d.%d.%d.%d " 
                 , af2str(ifa.family)
                 , sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1]
                 , sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
         }
     }
-    stat::instance().write("");
+    s.write("");
 }
 
 

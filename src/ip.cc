@@ -29,7 +29,7 @@ void ip_module::init()
             rte_socket_id()
             );
     if (!frag_tbl) {
-        throw slankdev::exception("rte_ip_frag_table_create");
+        throw exception("rte_ip_frag_table_create");
     }
 
     rte::srand(time(NULL));
@@ -86,34 +86,32 @@ void ip_module::rx_push(mbuf* msg)
 
     mbuf_pull(msg, sizeof(stcp_ip_header));
 
-    stcp_sockaddr src(STCP_AF_INET);
-    stcp_sockaddr_in* src_sin = reinterpret_cast<stcp_sockaddr_in*>(&src);
-    src_sin->sin_addr = ih->src;
+    stcp_sockaddr_in src;
+    src.sin_addr = ih->src;
     uint8_t protocol = ih->next_proto_id;
     switch (protocol) {
         case STCP_IPPROTO_ICMP:
-            {
-                core::instance().icmp.rx_push(msg, &src);
-                break;
-            }
+        {
+            core::instance().icmp.rx_push(msg, &src);
+            break;
+        }
         // case STCP_IPPROTO_TCP:
-        //     {
-        //         rte::pktmbuf_free(msg);
-        //         break;
-        //     }
+        // {
+        //     core::instance().tcp.rx_push(msg, &src);
+        //     break;
+        // }
         case STCP_IPPROTO_UDP:
-            {
-                // rte::pktmbuf_free(msg);
-                core::instance().udp.rx_push(msg, &src);
-                break;
-            }
+        {
+            core::instance().udp.rx_push(msg, &src);
+            break;
+        }
         default:
-            {
-                mbuf_push(msg, sizeof(stcp_ip_header));
-                core::instance().icmp.send_err(STCP_ICMP_UNREACH, 
-                        STCP_ICMP_UNREACH_PROTOCOL, &src, msg);
-                break;
-            }
+        {
+            mbuf_push(msg, sizeof(stcp_ip_header));
+            core::instance().icmp.send_err(STCP_ICMP_UNREACH, 
+                    STCP_ICMP_UNREACH_PROTOCOL, &src, msg);
+            break;
+        }
     }
 }
 
@@ -198,10 +196,7 @@ void ip_module::ioctl_siocgetrts(std::vector<stcp_rtentry>** table)
     *table = &rttable;
 }
 
-
-
-
-void ip_module::route_resolv(const stcp_sockaddr* dst, stcp_sockaddr* next, uint8_t* port)
+void ip_module::route_resolv(const stcp_sockaddr_in* dst, stcp_sockaddr_in* next, uint8_t* port)
 {
     dpdk_core& dpdk = core::instance().dpdk;
 
@@ -211,7 +206,6 @@ void ip_module::route_resolv(const stcp_sockaddr* dst, stcp_sockaddr* next, uint
             *port = i;
             return;
         }
-
     }
 
     for (stcp_rtentry& rt : rttable) {
@@ -225,7 +219,7 @@ void ip_module::route_resolv(const stcp_sockaddr* dst, stcp_sockaddr* next, uint
     throw exception("not found route");
 }
 
-bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr* addr)
+bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr_in* addr)
 {
     dpdk_core& dpdk = core::instance().dpdk;
     stcp_sockaddr inaddr(STCP_AF_INET);
@@ -239,7 +233,6 @@ bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr* addr)
             inaddr = ifa.raw;
             inaddr_exist = true;
         }
-
         if (ifa.family == STCP_AF_INMASK) {
             inmask = ifa.raw;
             inmask_exist = true;
@@ -259,31 +252,19 @@ bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr* addr)
                                             & inmask_sin->sin_addr.addr_bytes[i];
     }
 
-    const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(addr);
     for (int i=0; i<4; i++) {
-        if ((inmask_sin->sin_addr.addr_bytes[i] & sin->sin_addr.addr_bytes[i])
+        if ((inmask_sin->sin_addr.addr_bytes[i] & addr->sin_addr.addr_bytes[i])
                 != innet_sin->sin_addr.addr_bytes[i])
             return false;
     }
     return true;
 }
 
-void ip_module::sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst, ip_l4_protos p)
-{
-    mbuf* msg = 
-        rte::pktmbuf_alloc(::slank::core::instance().dpdk.get_mempool());
-    copy_to_mbuf(msg, buf, bufsize);
- 
-    tx_push(msg, dst, p);
-}
 
-
-void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
+void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos proto)
 {
     tx_cnt++;
 
-    const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(dst);
-    
     stcp_ip_header* ih 
         = reinterpret_cast<stcp_ip_header*>(mbuf_push(msg, sizeof(stcp_ip_header)));
     
@@ -305,10 +286,10 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
     ih->src.addr_bytes[1] = myip.addr_bytes[1];
     ih->src.addr_bytes[2] = myip.addr_bytes[2];
     ih->src.addr_bytes[3] = myip.addr_bytes[3];
-    ih->dst.addr_bytes[0] = sin->sin_addr.addr_bytes[0];
-    ih->dst.addr_bytes[1] = sin->sin_addr.addr_bytes[1];
-    ih->dst.addr_bytes[2] = sin->sin_addr.addr_bytes[2];
-    ih->dst.addr_bytes[3] = sin->sin_addr.addr_bytes[3];
+    ih->dst.addr_bytes[0] = dst->sin_addr.addr_bytes[0];
+    ih->dst.addr_bytes[1] = dst->sin_addr.addr_bytes[1];
+    ih->dst.addr_bytes[2] = dst->sin_addr.addr_bytes[2];
+    ih->dst.addr_bytes[3] = dst->sin_addr.addr_bytes[3];
 
     ih->hdr_checksum = rte_ipv4_cksum((const struct ipv4_hdr*)ih);
 
@@ -319,13 +300,12 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
             core::instance().dpdk.get_mempool(), 
             core::instance().dpdk.get_mempool());
 
-    stcp_sockaddr next(STCP_AF_INET);
+    stcp_sockaddr_in next;
     uint8_t port;
     route_resolv(dst, &next, &port);
-    next.sa_fam = STCP_AF_INET;
+    next.sin_fam = STCP_AF_INET;
 
     if (nb > 1) { /* packet was fragmented */
-        // DEBUG("send fragmented packets\n");
         rte::pktmbuf_free(msg);
 
         for (size_t i=0; i<nb; i++) {
@@ -333,15 +313,57 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr* dst, ip_l4_protos proto)
             iph->hdr_checksum = rte_ipv4_cksum(reinterpret_cast<const struct ipv4_hdr*>(iph));
 
             msgs[i]->port = port;
-            core::instance().ether.tx_push(msgs[i]->port, msgs[i], &next);
+            core::instance().ether.tx_push(msgs[i]->port, msgs[i], 
+                    reinterpret_cast<stcp_sockaddr*>(&next));
         }
     } else { /* packet was not fragmented */
-        // DEBUG("send normal packet\n");
-
         msg->port = port;
-        core::instance().ether.tx_push(msg->port, msg, &next);
+        core::instance().ether.tx_push(msg->port, msg, 
+                reinterpret_cast<stcp_sockaddr*>(&next));
     }
 }
 
+
+void ip_module::print_stat() const
+{
+    stat& s = stat::instance();
+    s.write("IP module");
+    s.write("\tRX Packets %zd", rx_cnt);
+    s.write("\tTX Packets %zd", tx_cnt);
+    s.write("\tDrops      %zd", not_to_me);
+    s.write("");
+    s.write("\tRouting-Table");
+    s.write("\t%-16s%-16s%-16s%-6s%-3s", "Destination", "Gateway", "Genmask", "Flags", "if");
+    for (const stcp_rtentry& rt : rttable) {
+        std::string str_dest;
+        if (rt.rt_flags & STCP_RTF_GATEWAY) {
+            str_dest = "defalt";
+        } else if (rt.rt_flags & STCP_RTF_LOCAL) {
+            str_dest = "link-local";
+        } else {
+            str_dest = rt.rt_route.c_str();
+        }
+
+        std::string flag_str = "";
+        if (rt.rt_flags & STCP_RTF_GATEWAY  )   flag_str += "G";
+        if (rt.rt_flags & STCP_RTF_MASK     )   flag_str += "M";
+        if (rt.rt_flags & STCP_RTF_LOCAL    )   flag_str += "L";
+        if (rt.rt_flags & STCP_RTF_BROADCAST)   flag_str += "B";
+
+        std::string gateway_str;
+        if (rt.rt_flags & STCP_RTF_LOCAL) {
+            gateway_str = "*";
+        } else {
+            gateway_str = rt.rt_gateway.c_str();
+        }
+        s.write("\t%-16s%-16s%-16s%-6s%-3u",
+                str_dest.c_str(),
+                gateway_str.c_str(),
+                rt.rt_genmask.c_str(),
+                flag_str.c_str(),
+                rt.rt_port);
+    }
+
+}
 
 };
