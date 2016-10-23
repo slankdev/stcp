@@ -321,6 +321,23 @@ uint64_t rand(void)
     return rte_rand();
 }
 
+uint64_t get_tsc_cycles()
+{
+    return rte_get_tsc_cycles();
+}
+uint64_t get_tsc_hz()
+{
+    return rte_get_tsc_hz();
+}
+void delay_us(uint32_t us)
+{
+    return rte_delay_us(us);
+}
+void delay_ms(uint32_t ms)
+{
+    return rte_delay_ms(ms);
+}
+
 
 struct rte_mbuf* ipv4_frag_reassemble_packet(
         struct rte_ip_frag_tbl*        tbl,

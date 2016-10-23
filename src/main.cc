@@ -47,3 +47,15 @@ int main(int argc, char** argv)
         s.stat_all();
     }
 }
+
+
+/* TODO Timer implementation Sample */
+// uint64_t hz   = rte::get_tsc_hz();
+// uint64_t prev = rte::get_tsc_cycles();
+// while (true) {
+//     uint64_t now = rte::get_tsc_cycles();
+//     if (now - prev > hz) {
+//         printf("Sec \n");
+//         prev = now;
+//     }
+// }

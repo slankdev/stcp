@@ -128,6 +128,10 @@ struct rte_mbuf* ipv4_frag_reassemble_packet(
 void srand(uint64_t seedval);
 uint64_t rand(void);
 
+uint64_t get_tsc_cycles();
+uint64_t get_tsc_hz();
+void delay_us(uint32_t us);
+void delay_ms(uint32_t ms);
 
 template <class T>
 T mtod(struct rte_mbuf* msg)
