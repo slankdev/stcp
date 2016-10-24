@@ -6,6 +6,8 @@
 
 namespace slank {
 
+
+std::vector<stcp_app*> core::apps;
 udp_module   core::udp;
 icmp_module  core::icmp;
 ip_module    core::ip;

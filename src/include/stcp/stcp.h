@@ -13,6 +13,9 @@
 #include <stcp/ip.h>
 #include <stcp/icmp.h>
 #include <stcp/udp.h>
+#include <stcp/app.h>
+
+#include <vector>
 
 
 namespace slank {
@@ -23,8 +26,15 @@ using rxcap = log<class rx_packet_log>;
 using txcap = log<class tx_packet_log>;
 using dmsg  = log<class debug_message_log>;
 
+class stcp_app;
+
 class core {
+    friend class stcp_app;
+private:
+
 public:
+    static std::vector<stcp_app*> apps; // should private;
+
     static udp_module    udp;
     static icmp_module   icmp;
     static ip_module     ip;
