@@ -2,6 +2,7 @@
 
 
 #include <stcp/stcp.h>
+#include <stcp/socket.h>
 
 
 namespace slank {
@@ -17,6 +18,118 @@ ether_module core::ether;
 dpdk_core    core::dpdk;
 
 
+
+
+bool core::is_request_to_me(struct stcp_arphdr* ah, uint8_t port) // TODO ERASE
+{
+	for (ifaddr& ifa : dpdk.devices[port].addrs) {
+        stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
+		if (ifa.family == STCP_AF_INET && sin->sin_addr==ah->pdst)
+			return true;
+	}
+	return false;
+}
+
+
+
+void core::get_myip(stcp_in_addr* myip, uint8_t port) // TODO ERASE
+{
+    for (ifaddr& ifa : dpdk.devices[port].addrs) {
+        if (ifa.family == STCP_AF_INET) {
+            stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
+            *myip = sin->sin_addr;
+            return ;
+        }
+    }
+    throw exception("not found my inet address");
+}
+
+
+void core::get_mymac(stcp_ether_addr* mymac, uint8_t port) // TODO ERASE
+{
+    for (ifaddr& ifa : dpdk.devices[port].addrs) {
+        if (ifa.family == STCP_AF_LINK) {
+            for (int i=0; i<6; i++)
+                mymac->addr_bytes[i] = ifa.raw.sa_data[i];
+            return ;
+        }
+    }
+    throw exception("not found my link address");
+}
+
+
+void core::add_arp_record(
+        uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4,
+        uint8_t ho1, uint8_t ho2, uint8_t ho3, 
+        uint8_t ho4, uint8_t ho5, uint8_t ho6)
+{
+    struct stcp_arpreq req;
+    stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&req.arp_pa);
+
+    req.arp_ifindex = 0;
+    req.arp_ha = stcp_inet_hwaddr(ho1, ho2, ho3, ho4, ho5, ho6);
+    sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
+    arp.ioctl(STCP_SIOCAARPENT, &req);
+}
+
+
+
+void core::set_default_gw(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t port)
+{
+    stcp_rtentry rt;
+    rt.rt_gateway.inet_addr(o1, o2, o3, o4);
+    rt.rt_port = port;
+    ip.ioctl(STCP_SIOCADDGW, &rt);
+}
+
+
+
+void core::set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t cidr)
+{
+
+    /*
+     * Set IP address
+     */
+    struct stcp_ifreq ifr;
+    memset(&ifr, 0, sizeof ifr);
+    struct stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifr.if_addr);
+    sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
+    dpdk.devices[0].ioctl(STCP_SIOCSIFADDR, &ifr);
+
+
+    /*
+     * Set Netmask
+     */
+    if (32 < cidr) {
+        throw exception("out of range");
+    }
+    union {
+        uint8_t u8[4];
+        uint32_t u32;
+    } U;
+    U.u32 = 0xffffffff;
+    U.u32 >>= (32 - cidr);
+
+    memset(&ifr, 0, sizeof ifr);
+    sin = reinterpret_cast<stcp_sockaddr_in*>(&ifr.if_addr);
+    sin->sin_addr = stcp_inet_addr(U.u8[0], U.u8[1], U.u8[2], U.u8[3]);
+    dpdk.devices[0].ioctl(STCP_SIOCSIFNETMASK, &ifr);
+}
+
+
+void core::set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6)
+{
+    struct stcp_ifreq ifr;
+
+    memset(&ifr, 0, sizeof ifr);
+    ifr.if_hwaddr.sa_data[0] = o1;
+    ifr.if_hwaddr.sa_data[1] = o2;
+    ifr.if_hwaddr.sa_data[2] = o3;
+    ifr.if_hwaddr.sa_data[3] = o4;
+    ifr.if_hwaddr.sa_data[4] = o5;
+    ifr.if_hwaddr.sa_data[5] = o6;
+    dpdk.devices[0].ioctl(STCP_SIOCSIFHWADDR, &ifr);
+}
 
 
 void core::add_cyclic(stcp_cyclic_func* f)
@@ -43,7 +156,8 @@ void core::ifs_proc()
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
 
         if (num_tx != num_reqest_to_send) {
-            ; // TODO log to dmsg
+            dmsg::instance().write(
+                "core::ifs_proc(): num_tx!=num_reqest_to_send, Oh yeah!");
         }
 
         uint16_t num_rx = dev.io_rx();
@@ -73,8 +187,6 @@ void core::run()
                 f->prev = now;
             }
         }
-
-
 
         for (auto& app : apps) {
             app->proc();

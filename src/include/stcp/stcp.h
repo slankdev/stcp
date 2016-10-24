@@ -41,12 +41,20 @@ public:
 
 class core {
     friend class stcp_app;
-private:
 
-public:
+    friend class stcp_udp_sock;
+
+    friend class ifnet;
+    friend class ether_module;
+    friend class arp_module;
+    friend class ip_module;
+    friend class icmp_module;
+    friend class udp_module;
+private:
     static std::vector<stcp_app*> apps; // should private;
     static std::vector<stcp_cyclic_func*> cyclic_funcs;
 
+private:
     static udp_module    udp;
     static icmp_module   icmp;
     static ip_module     ip;
@@ -56,17 +64,35 @@ public:
 
 public:
     static void init(int argc, char** argv);
-    static void ifs_proc();
-    static void run();
-    static void stat_all();
-
     static void add_cyclic(stcp_cyclic_func* f);
+    static void run();
 
-    // TODO add this funcs
-    // public: #<{(| APIs |)}>#
-    //     static void set_hw_addr();
-    //     static void set_ip_addr();
-    //     static void set_default_gw();
+private:
+    static void ifs_proc();
+    static void stat_all();
+    
+public:
+
+    /* 
+     * APIs 
+     */
+    static void set_hw_addr(
+            uint8_t o1, uint8_t o2, uint8_t o3, 
+            uint8_t o4, uint8_t o5, uint8_t o6);
+    static void set_ip_addr(
+            uint8_t o1, uint8_t o2, uint8_t o3, 
+            uint8_t o4, uint8_t cidr);
+    static void set_default_gw(
+            uint8_t o1, uint8_t o2, uint8_t o3, 
+            uint8_t o4, uint8_t port);
+    static void add_arp_record(
+            uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, 
+            uint8_t ho1, uint8_t ho2, uint8_t ho3, 
+            uint8_t ho4, uint8_t ho5, uint8_t ho6);
+    static void get_mymac(stcp_ether_addr* mymac, uint8_t port);
+    static void get_myip(stcp_in_addr* myip, uint8_t port);
+    static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port);
+
 
 private:
     core() = delete;

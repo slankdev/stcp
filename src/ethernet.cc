@@ -11,15 +11,15 @@ namespace slank {
 
 void ether_module::proc() 
 {
-    if (core::arp.wait.size() > 0) {
-        wait_ent e = core::arp.wait.front();
+    if (core::arp.arpresolv_wait_queue.size() > 0) {
+        wait_ent e = core::arp.arpresolv_wait_queue.front();
 
         stcp_ether_addr ether_dst;
         bool ret = core::arp.arp_resolv(e.msg->port, &e.dst, &ether_dst, true);
 
         if (ret) {
             tx_push(e.port, e.msg, &e.dst);
-            core::arp.wait.pop();
+            core::arp.arpresolv_wait_queue.pop();
         }
     }
 }
@@ -39,7 +39,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
             bool  ret = core::arp.arp_resolv(port, dst, &ether_dst);
             if (!ret) {
                 wait_ent e(port, msg, *dst);
-                core::arp.wait.push(e);
+                core::arp.arpresolv_wait_queue.push(e);
                 return;
             }
 
@@ -105,16 +105,6 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
     for (ifnet& dev : core::dpdk.devices) {
         dev.tx_push(msg);
     }
-}
-
-
-void ether_module::sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst)
-{
-    mbuf* msg = 
-        rte::pktmbuf_alloc(::slank::core::dpdk.get_mempool());
-    copy_to_mbuf(msg, buf, bufsize);
- 
-    tx_push(0, msg, dst);
 }
 
 

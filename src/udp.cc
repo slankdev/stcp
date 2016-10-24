@@ -8,6 +8,10 @@
 namespace slank {
 
 
+stcp_udp_sock& stcp_udp_sock::socket()
+{
+    return core::udp.socket(); // TODO fix the way to access socket();
+}
 
 
 mbuf* stcp_udp_sock::recvfrom(stcp_sockaddr_in* src)

@@ -22,6 +22,15 @@ template <class Tag>
 class log;
 
 
+
+/*
+ * TODO XXX
+ * Reimplement about log implementaion.
+ * Using siglethon is might heaby..?
+ */
+
+
+
 class filefd {
     template <class Tag>
     friend class log;

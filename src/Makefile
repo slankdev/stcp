@@ -14,6 +14,7 @@ TMUXVSPLIT = tmux split-window -h
 TARGET = a.out
 LOGNAME = log.log
 SRCS   = \
+		util.cc \
 		rte.cc \
 		dpdk.cc \
 		ifnet.cc \

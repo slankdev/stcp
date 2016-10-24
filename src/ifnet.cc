@@ -330,15 +330,5 @@ void ifnet::ioctl_siocgifhwaddr(stcp_ifreq* ifr)
 
 
 
-void ifnet::write(const void* buf, size_t bufsize)
-{
-    
-    mbuf* mbuf = rte::pktmbuf_alloc(core::dpdk.get_mempool());
-    copy_to_mbuf(mbuf, buf, bufsize);
-    tx_push(mbuf);
-}
-
-
-
 } /* slank */
 

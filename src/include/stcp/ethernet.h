@@ -41,18 +41,6 @@ public:
     void tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst);
     void proc();
     void print_stat() const;
-
-public:
-
-    /*
-     * XXX TODO reimpelemnt about below
-     * this function argument, dst should be destination macaddress.
-     * but this function use it as destination ipaddress.
-     * ether_module::sendto() should work as Ethernet ctrl.
-     * Now implementation, this func works as ip_module.
-     */
-    void sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst);
-
 };
 
 

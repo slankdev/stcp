@@ -14,41 +14,6 @@ namespace slank {
 
 
 
-static void get_mymac(stcp_ether_addr* mymac, uint8_t port)
-{
-    for (ifaddr& ifa : core::dpdk.devices[port].addrs) {
-        if (ifa.family == STCP_AF_LINK) {
-            for (int i=0; i<6; i++)
-                mymac->addr_bytes[i] = ifa.raw.sa_data[i];
-            return ;
-        }
-    }
-    throw exception("not found my link address");
-}
-
-
-static void get_myip(stcp_in_addr* myip, uint8_t port)
-{
-    for (ifaddr& ifa : core::dpdk.devices[port].addrs) {
-        if (ifa.family == STCP_AF_INET) {
-            stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
-            *myip = sin->sin_addr;
-            return ;
-        }
-    }
-    throw exception("not found my inet address");
-}
-
-
-static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
-{
-	for (ifaddr& ifa : core::dpdk.devices[port].addrs) {
-        stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
-		if (ifa.family == STCP_AF_INET && sin->sin_addr==ah->pdst)
-			return true;
-	}
-	return false;
-}
 
 
 void arp_module::rx_push(mbuf* msg)
@@ -78,7 +43,7 @@ void arp_module::rx_push(mbuf* msg)
         rte::pktmbuf_free(msg);
 
     } else if (ah->operation == rte::bswap16(STCP_ARPOP_REQUEST)) {
-        if (is_request_to_me(ah, port)) {
+        if (core::is_request_to_me(ah, port)) { // TODO
 
             /* 
              * Reply ARP-Reply Packet
@@ -95,7 +60,7 @@ void arp_module::rx_push(mbuf* msg)
             rep_ah->hwlen  = 6;
             rep_ah->plen   = 4;
             rep_ah->operation = rte::bswap16(STCP_ARPOP_REPLY);
-            get_mymac(&rep_ah->hwsrc, port);
+            core::get_mymac(&rep_ah->hwsrc, port); // TODO 
             rep_ah->psrc  = ah->pdst;
             rep_ah->hwdst = ah->hwsrc;
             rep_ah->pdst  = ah->psrc;
@@ -277,8 +242,8 @@ void arp_module::arp_request(uint8_t port, const stcp_in_addr* tip)
 	req_ah->hwlen  = 6;
 	req_ah->plen   = 4;
     req_ah->operation = rte::bswap16(STCP_ARPOP_REQUEST);
-    get_mymac(&req_ah->hwsrc, port);
-    get_myip(&req_ah->psrc, port);
+    core::get_mymac(&req_ah->hwsrc, port); // TODO
+    core::get_myip(&req_ah->psrc, port); // TODO
     for (int i=0; i<6; i++) {
         req_ah->hwdst.addr_bytes[i] = 0x00;
     }
@@ -293,7 +258,7 @@ void arp_module::print_stat() const
     s.write("\tRX Packets %zd", rx_cnt);
     s.write("\tTX Packets %zd", tx_cnt);
     s.write("");
-    s.write("\tWaiting packs  : %zd", wait.size());
+    s.write("\tWaiting packs  : %zd", arpresolv_wait_queue.size());
     s.write("\tUse dynamic arp: %s", use_dynamic_arp ? "YES" : "NO");
     s.write("");
     s.write("\tARP-chace");

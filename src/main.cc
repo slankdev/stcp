@@ -27,7 +27,7 @@ public:
         stcp_sockaddr_in addr;
         addr.sin_fam  = STCP_AF_INET;
         addr.sin_port = rte::bswap16(9999);
-        stcp_udp_sock& sock = core::udp.socket();
+        stcp_udp_sock& sock = stcp_udp_sock::socket();
         s = &sock;
         sock.bind(&addr);
 
@@ -51,10 +51,10 @@ int main(int argc, char** argv)
 
     core::init(argc, argv);
 
-    set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
-    set_ip_addr(192, 168, 222, 10, 24);
-    set_default_gw(192, 168, 222, 1, 0);
-    // add_arp_record(192, 168, 222, 11,
+    core::set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
+    core::set_ip_addr(192, 168, 222, 10, 24);
+    core::set_default_gw(192, 168, 222, 1, 0);
+    // core::add_arp_record(192, 168, 222, 11,
     //         0x74, 0x03, 0xbd, 0x3d, 0x78, 0x96);
 
     UdpEchoServer app;

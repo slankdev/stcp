@@ -4,36 +4,11 @@
 #include <stcp/icmp.h>
 #include <stcp/socket.h>
 #include <stcp/stcp.h>
+#include <stcp/util.h>
 
 namespace slank {
 
 
-
-/* 
- * TODO 
- * XXX review this function
- * I copyed from Geek NA Page.
- * http://www.geekpage.jp
- */
-static uint16_t checksum(uint16_t* buf, size_t bufsz)
-{
-    uint32_t sum = 0;
-
-    while (bufsz > 1) {
-        sum += *buf;
-        buf++;
-        bufsz -= 2;
-    }
-
-    if (bufsz == 1) {
-        sum += *(uint16_t *)buf;
-    }
-
-    sum = (sum & 0xffff) + (sum >> 16);
-    sum = (sum & 0xffff) + (sum >> 16);
-
-    return ~sum;
-}
 
 
 

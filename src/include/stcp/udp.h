@@ -33,6 +33,7 @@ enum udp_sock_state {
 
 using udp_sock_queue = std::queue<stcp_udp_sockdata>;
 class stcp_udp_sock {
+    friend class udp_module;
 private:
     udp_sock_state state;  /* state of the socket   */
     udp_sock_queue rxq;    /* receive queue         */
@@ -49,21 +50,24 @@ public:
     void rx_data_push(stcp_udp_sockdata d) { rxq.push(d); }
     uint16_t get_port() const { return port; }
     size_t get_rxq_size() const { return rxq.size(); }
+
+    static stcp_udp_sock& socket();
 };
 
 
 class udp_module {
+    friend class stcp_udp_sock; // TODO ERASE
 private:
     size_t rx_cnt;
     size_t tx_cnt;
     std::vector<stcp_udp_sock> socks;
+    stcp_udp_sock& socket();
 
 public:
     udp_module() : rx_cnt(0), tx_cnt(0) {}
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
     void tx_push(mbuf* msg, const stcp_sockaddr_in* dst, uint16_t srcp);
     void print_stat() const;
-    stcp_udp_sock& socket();
     void close_socket(stcp_udp_sock& s)
     {
         for (size_t i=0; i<socks.size(); i++) {
