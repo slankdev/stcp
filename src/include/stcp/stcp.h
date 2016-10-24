@@ -28,12 +28,24 @@ using dmsg  = log<class debug_message_log>;
 
 class stcp_app;
 
+
+
+class stcp_cyclic_func {
+public:
+    uint64_t prev;
+    uint64_t interval_ms;
+    stcp_cyclic_func(uint64_t ms) : interval_ms(ms) {}
+    virtual void exec() = 0;
+};
+
+
 class core {
     friend class stcp_app;
 private:
 
 public:
     static std::vector<stcp_app*> apps; // should private;
+    static std::vector<stcp_cyclic_func*> cyclic_funcs;
 
     static udp_module    udp;
     static icmp_module   icmp;
@@ -48,11 +60,13 @@ public:
     static void run();
     static void stat_all();
 
-// TODO add this funcs
-// public: #<{(| APIs |)}>#
-//     static void set_hw_addr();
-//     static void set_ip_addr();
-//     static void set_default_gw();
+    static void add_cyclic(stcp_cyclic_func* f);
+
+    // TODO add this funcs
+    // public: #<{(| APIs |)}>#
+    //     static void set_hw_addr();
+    //     static void set_ip_addr();
+    //     static void set_default_gw();
 
 private:
     core() = delete;

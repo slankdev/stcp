@@ -8,12 +8,21 @@ namespace slank {
 
 
 std::vector<stcp_app*> core::apps;
+std::vector<stcp_cyclic_func*> core::cyclic_funcs;
 udp_module   core::udp;
 icmp_module  core::icmp;
 ip_module    core::ip;
 arp_module   core::arp;
 ether_module core::ether;
 dpdk_core    core::dpdk;
+
+
+
+
+void core::add_cyclic(stcp_cyclic_func* f)
+{
+    cyclic_funcs.push_back(f);
+}
 
 
 void core::init(int argc, char** argv)
@@ -50,8 +59,23 @@ void core::ifs_proc()
 
 void core::run()
 {
+    uint64_t hz   = rte::get_tsc_hz();
+    for (auto f : cyclic_funcs) {
+        f->prev = rte::get_tsc_cycles();
+    }
+
     core::stat_all();
     while (true) {
+        uint64_t now = rte::get_tsc_cycles();
+        for (auto f : cyclic_funcs) {
+            if (now - f->prev > f->interval_ms / 1000.0 * hz) {
+                f->exec();
+                f->prev = now;
+            }
+        }
+
+
+
         for (auto& app : apps) {
             app->proc();
         }
