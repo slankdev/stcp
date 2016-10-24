@@ -45,7 +45,7 @@ public:
 public:
     static void init(int argc, char** argv);
     static void ifs_proc();
-    static void run(bool endless=true);
+    static void run();
     static void stat_all();
 
 // TODO add this funcs

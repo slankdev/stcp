@@ -6,20 +6,29 @@ using namespace slank;
 
 
 
-void test_udp_app(stcp_udp_sock& sock)
-{
-    static int c = 0;
-    stcp_sockaddr_in src;
-    mbuf* m = sock.recvfrom(&src);
-    if (m) {
-        c++;
-        sock.sendto(m, &src);
-        if (c > 2) {
-            core::udp.close_socket(sock);
-            return;
+class UdpEchoServer : public stcp_app {
+    stcp_udp_sock* s;
+public:
+    UdpEchoServer() : stcp_app()
+    {
+        stcp_sockaddr_in addr;
+        addr.sin_fam  = STCP_AF_INET;
+        addr.sin_port = rte::bswap16(9999);
+        stcp_udp_sock& sock = core::udp.socket();
+        s = &sock;
+        sock.bind(&addr);
+    }
+
+    void proc() override
+    {
+        stcp_sockaddr_in src;
+        mbuf* m = s->recvfrom(&src);
+        if (m) {
+            s->sendto(m, &src);
         }
     }
-}
+};
+
 
 
 int main(int argc, char** argv)
@@ -33,19 +42,8 @@ int main(int argc, char** argv)
     // add_arp_record(192, 168, 222, 11,
     //         0x74, 0x03, 0xbd, 0x3d, 0x78, 0x96);
 
-    stcp_sockaddr_in addr;
-    addr.sin_fam  = STCP_AF_INET;
-    addr.sin_port = rte::bswap16(9999);
-    stcp_udp_sock& sock = core::udp.socket();
-    sock.bind(&addr);
-
-
-    core::stat_all();
-    while (true) {
-        test_udp_app(sock);
-        core::run(false);
-        core::stat_all();
-    }
+    UdpEchoServer app;
+    core::run();
 }
 
 

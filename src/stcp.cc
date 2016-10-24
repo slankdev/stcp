@@ -47,12 +47,19 @@ void core::ifs_proc()
     }
 }
 
-void core::run(bool endless)
+
+void core::run()
 {
-    do {
+    core::stat_all();
+    while (true) {
+        for (auto& app : apps) {
+            app->proc();
+        }
+
         ifs_proc();
         ether.proc();
-    } while (endless);
+        core::stat_all();
+    }
 }
 
 void core::stat_all()
