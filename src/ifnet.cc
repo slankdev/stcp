@@ -26,7 +26,7 @@ void ifnet::init()
     port_conf.rxmode.max_rx_pkt_len = ETHER_MAX_LEN;
     rte::eth_dev_configure(port_id, num_rx_rings, num_tx_rings, &port_conf);
 
-    dpdk_core& d = core::instance().dpdk;
+    dpdk_core& d = core::dpdk;
     for (uint16_t ring=0; ring<num_rx_rings; ring++) {
         rte::eth_rx_queue_setup(port_id, ring, rx_ring_size,
                 rte::eth_dev_socket_id(port_id), NULL, d.get_mempool()); 
@@ -232,7 +232,7 @@ void ifnet::ioctl_siocsifaddr(const stcp_ifreq* ifr)
     const stcp_sockaddr_in* s = reinterpret_cast<const stcp_sockaddr_in*>(&ifr->if_addr);
     for (int i=0; i<4; i++)
         ad.addr_bytes[i] = s->sin_addr.addr_bytes[i];
-    core::instance().ip.set_ipaddr(&ad);
+    core::ip.set_ipaddr(&ad);
 }
 
 void ifnet::ioctl_siocsifnetmask(const stcp_ifreq* ifr)
@@ -333,7 +333,7 @@ void ifnet::ioctl_siocgifhwaddr(stcp_ifreq* ifr)
 void ifnet::write(const void* buf, size_t bufsize)
 {
     
-    mbuf* mbuf = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
+    mbuf* mbuf = rte::pktmbuf_alloc(core::dpdk.get_mempool());
     copy_to_mbuf(mbuf, buf, bufsize);
     tx_push(mbuf);
 }

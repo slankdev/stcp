@@ -15,7 +15,7 @@ void test_udp_app(stcp_udp_sock& sock)
         c++;
         sock.sendto(m, &src);
         if (c > 2) {
-            core::instance().udp.close_socket(sock);
+            core::udp.close_socket(sock);
             return;
         }
     }
@@ -24,8 +24,8 @@ void test_udp_app(stcp_udp_sock& sock)
 
 int main(int argc, char** argv)
 {
-    core& s = core::instance();  
-    s.init(argc, argv);
+
+    core::init(argc, argv);
 
     set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
     set_ip_addr(192, 168, 222, 10, 24);
@@ -36,15 +36,15 @@ int main(int argc, char** argv)
     stcp_sockaddr_in addr;
     addr.sin_fam  = STCP_AF_INET;
     addr.sin_port = rte::bswap16(9999);
-    stcp_udp_sock& sock = core::instance().udp.socket();
+    stcp_udp_sock& sock = core::udp.socket();
     sock.bind(&addr);
 
 
-    s.stat_all();
+    core::stat_all();
     while (true) {
         test_udp_app(sock);
-        s.run(false);
-        s.stat_all();
+        core::run(false);
+        core::stat_all();
     }
 }
 
@@ -58,4 +58,17 @@ int main(int argc, char** argv)
 //         printf("Sec \n");
 //         prev = now;
 //     }
+// }
+
+
+
+// int main(int argc, char** argv)
+// {
+//     core::init(argc, argv);
+//     core::set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
+//     core::set_ip_addr(192, 168, 222, 10, 24);
+//     core::set_default_gw(192, 168, 222, 1, 0);
+//
+//     UdpApp app;       
+//     core::run();
 // }

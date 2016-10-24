@@ -28,7 +28,7 @@ mbuf* stcp_udp_sock::recvfrom(stcp_sockaddr_in* src)
 
 void stcp_udp_sock::sendto(mbuf* msg, const stcp_sockaddr_in* dst) const
 {
-    core::instance().udp.tx_push(msg, dst, port);
+    core::udp.tx_push(msg, dst, port);
 }
 
 void stcp_udp_sock::bind(const stcp_sockaddr_in* a)
@@ -57,7 +57,7 @@ void udp_module::tx_push(mbuf* msg,
     uh->cksum = 0x0000;
 
     tx_cnt++;
-    core::instance().ip.tx_push(msg, dst, STCP_IPPROTO_UDP);
+    core::ip.tx_push(msg, dst, STCP_IPPROTO_UDP);
 
 }
 
@@ -81,7 +81,7 @@ void udp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
 
     /* Send ICMP Port Unreachable  */
     mbuf_push(msg, sizeof(stcp_ip_header));
-    core::instance().icmp.send_err(STCP_ICMP_UNREACH, STCP_ICMP_UNREACH_PORT, src, msg);
+    core::icmp.send_err(STCP_ICMP_UNREACH, STCP_ICMP_UNREACH_PORT, src, msg);
 }
 
 void udp_module::print_stat() const

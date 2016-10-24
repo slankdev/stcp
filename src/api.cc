@@ -16,13 +16,13 @@ void add_arp_record(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4,
     req.arp_ifindex = 0;
     req.arp_ha = stcp_inet_hwaddr(ho1, ho2, ho3, ho4, ho5, ho6);
     sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
-    core::instance().arp.ioctl(STCP_SIOCAARPENT, &req);
+    core::arp.ioctl(STCP_SIOCAARPENT, &req);
 }
 
 
 void set_default_gw(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t port)
 {
-    ip_module& ip = core::instance().ip;
+    ip_module& ip = core::ip;
 
     stcp_rtentry rt;
     rt.rt_gateway.inet_addr(o1, o2, o3, o4);
@@ -47,7 +47,7 @@ void set_netmask(uint8_t cidr)
 }
 void set_netmask(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
-    dpdk_core& dpdk = core::instance().dpdk;
+    dpdk_core& dpdk = core::dpdk;
     struct stcp_ifreq ifr;
 
     memset(&ifr, 0, sizeof ifr);
@@ -66,7 +66,7 @@ void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t cidr)
 
 void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
-    dpdk_core& dpdk = core::instance().dpdk;
+    dpdk_core& dpdk = core::dpdk;
     struct stcp_ifreq ifr;
 
     memset(&ifr, 0, sizeof ifr);
@@ -77,7 +77,7 @@ void set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 
 void set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6)
 {
-    dpdk_core& dpdk = core::instance().dpdk;
+    dpdk_core& dpdk = core::dpdk;
     struct stcp_ifreq ifr;
 
     memset(&ifr, 0, sizeof ifr);

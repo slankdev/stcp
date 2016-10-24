@@ -18,38 +18,36 @@
 namespace slank {
     
 
-using stat = log<class status_infos>;
+using stat  = log<class status_infos>;
 using rxcap = log<class rx_packet_log>;
 using txcap = log<class tx_packet_log>;
-using dmsg = log<class debug_message_log>;
+using dmsg  = log<class debug_message_log>;
 
 class core {
 public:
-    udp_module udp;
-    icmp_module icmp;
-    ip_module  ip;
-    arp_module arp;
-    ether_module ether;
-    dpdk_core dpdk;
-
-private:
-    core()
-    {
-        stat::instance().open_new("stcp.stat.log");
-        rxcap::instance().open_new("stcp.rx.log");
-        txcap::instance().open_new("stcp.tx.log");
-        dmsg::instance().open_new("stcp.dmsg.log");
-    }
-    ~core() {}
-    core(const core&) = delete;
-    core& operator=(const core&) = delete;
+    static udp_module    udp;
+    static icmp_module   icmp;
+    static ip_module     ip;
+    static arp_module    arp;
+    static ether_module  ether;
+    static dpdk_core     dpdk;
 
 public:
-    static core& instance();
-    void init(int argc, char** argv);
-    void ifs_proc();
-    void run(bool endless=true);
-    void stat_all();
+    static void init(int argc, char** argv);
+    static void ifs_proc();
+    static void run(bool endless=true);
+    static void stat_all();
+
+// TODO add this funcs
+// public: #<{(| APIs |)}>#
+//     static void set_hw_addr();
+//     static void set_ip_addr();
+//     static void set_default_gw();
+
+private:
+    core() = delete;
+    core(const core&) = delete;
+    core& operator=(const core&) = delete;
 };
 
 

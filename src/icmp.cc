@@ -72,7 +72,7 @@ void icmp_module::send_err(icmp_type type, icmp_code code, const stcp_sockaddr_i
         ih->icmp_cksum = checksum((uint16_t*)buf, rte::pktmbuf_pkt_len(msg));
         rte::free(buf);
     }
-    core::instance().ip.tx_push(msg, dst, STCP_IPPROTO_ICMP);
+    core::ip.tx_push(msg, dst, STCP_IPPROTO_ICMP);
 }
 
 
@@ -99,7 +99,7 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr_in* src)
                 rte::free(buf);
             }
 
-            core::instance().ip.tx_push(msg, src, STCP_IPPROTO_ICMP);
+            core::ip.tx_push(msg, src, STCP_IPPROTO_ICMP);
             tx_cnt++;
             break;
         }

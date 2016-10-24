@@ -16,7 +16,7 @@ namespace slank {
 
 static void get_mymac(stcp_ether_addr* mymac, uint8_t port)
 {
-    for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
+    for (ifaddr& ifa : core::dpdk.devices[port].addrs) {
         if (ifa.family == STCP_AF_LINK) {
             for (int i=0; i<6; i++)
                 mymac->addr_bytes[i] = ifa.raw.sa_data[i];
@@ -29,7 +29,7 @@ static void get_mymac(stcp_ether_addr* mymac, uint8_t port)
 
 static void get_myip(stcp_in_addr* myip, uint8_t port)
 {
-    for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
+    for (ifaddr& ifa : core::dpdk.devices[port].addrs) {
         if (ifa.family == STCP_AF_INET) {
             stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
             *myip = sin->sin_addr;
@@ -42,7 +42,7 @@ static void get_myip(stcp_in_addr* myip, uint8_t port)
 
 static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port)
 {
-	for (ifaddr& ifa : core::instance().dpdk.devices[port].addrs) {
+	for (ifaddr& ifa : core::dpdk.devices[port].addrs) {
         stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
 		if (ifa.family == STCP_AF_INET && sin->sin_addr==ah->pdst)
 			return true;
@@ -84,7 +84,7 @@ void arp_module::rx_push(mbuf* msg)
              * Reply ARP-Reply Packet
              */
 
-            mbuf* msg = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
+            mbuf* msg = rte::pktmbuf_alloc(core::dpdk.get_mempool());
             msg->data_len = sizeof(stcp_arphdr);
             msg->pkt_len  = sizeof(stcp_arphdr);
             msg->port = port;
@@ -114,7 +114,7 @@ void arp_module::tx_push(mbuf* msg)
 {
     tx_cnt++;
     stcp_sockaddr sa(STCP_AF_ARP);
-    core::instance().ether.tx_push(msg->port, msg, &sa);
+    core::ether.tx_push(msg->port, msg, &sa);
 }
 
 
@@ -266,7 +266,7 @@ bool arp_module::arp_resolv(
 
 void arp_module::arp_request(uint8_t port, const stcp_in_addr* tip)
 {
-    mbuf* msg = rte::pktmbuf_alloc(core::instance().dpdk.get_mempool());
+    mbuf* msg = rte::pktmbuf_alloc(core::dpdk.get_mempool());
     msg->data_len = sizeof(stcp_arphdr);
     msg->pkt_len  = sizeof(stcp_arphdr);
     msg->port = port;

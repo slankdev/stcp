@@ -6,15 +6,21 @@
 
 namespace slank {
 
+udp_module   core::udp;
+icmp_module  core::icmp;
+ip_module    core::ip;
+arp_module   core::arp;
+ether_module core::ether;
+dpdk_core    core::dpdk;
 
-core& core::instance()
-{
-    static core s;
-    return s;
-}
 
 void core::init(int argc, char** argv)
 {
+    stat::instance().open_new("stcp.stat.log");
+    rxcap::instance().open_new("stcp.rx.log");
+    txcap::instance().open_new("stcp.tx.log");
+    dmsg::instance().open_new("stcp.dmsg.log");
+
     dpdk.init(argc, argv);
     ip.init();
 }
@@ -68,6 +74,5 @@ void core::stat_all()
 
     s.flush();
 }
-
 
 } /* namespace */

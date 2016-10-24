@@ -92,23 +92,23 @@ void ip_module::rx_push(mbuf* msg)
     switch (protocol) {
         case STCP_IPPROTO_ICMP:
         {
-            core::instance().icmp.rx_push(msg, &src);
+            core::icmp.rx_push(msg, &src);
             break;
         }
         // case STCP_IPPROTO_TCP:
         // {
-        //     core::instance().tcp.rx_push(msg, &src);
+        //     core::tcp.rx_push(msg, &src);
         //     break;
         // }
         case STCP_IPPROTO_UDP:
         {
-            core::instance().udp.rx_push(msg, &src);
+            core::udp.rx_push(msg, &src);
             break;
         }
         default:
         {
             mbuf_push(msg, sizeof(stcp_ip_header));
-            core::instance().icmp.send_err(STCP_ICMP_UNREACH, 
+            core::icmp.send_err(STCP_ICMP_UNREACH, 
                     STCP_ICMP_UNREACH_PROTOCOL, &src, msg);
             break;
         }
@@ -198,7 +198,7 @@ void ip_module::ioctl_siocgetrts(std::vector<stcp_rtentry>** table)
 
 void ip_module::route_resolv(const stcp_sockaddr_in* dst, stcp_sockaddr_in* next, uint8_t* port)
 {
-    dpdk_core& dpdk = core::instance().dpdk;
+    dpdk_core& dpdk = core::dpdk;
 
     for (size_t i=0; i<dpdk.devices.size(); i++) {
         if (is_linklocal(i, dst)) {
@@ -221,7 +221,7 @@ void ip_module::route_resolv(const stcp_sockaddr_in* dst, stcp_sockaddr_in* next
 
 bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr_in* addr)
 {
-    dpdk_core& dpdk = core::instance().dpdk;
+    dpdk_core& dpdk = core::dpdk;
     stcp_sockaddr inaddr(STCP_AF_INET);
     stcp_sockaddr inmask(STCP_AF_INET);
     stcp_sockaddr innet(STCP_AF_INET);
@@ -273,7 +273,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
     ih->total_length      = rte::bswap16(rte::pktmbuf_pkt_len(msg));
     ih->packet_id         = rte::bswap16(rte::rand() % 0xffff);
 
-    if (rte::pktmbuf_pkt_len(msg) > core::instance().dpdk.ipv4_mtu_default) {
+    if (rte::pktmbuf_pkt_len(msg) > core::dpdk.ipv4_mtu_default) {
         ih->fragment_offset = rte::bswap16(0x0000);
     } else {
         ih->fragment_offset   = rte::bswap16(0x4000);
@@ -296,9 +296,9 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
     mbuf* msgs[100];
     memset(msgs, 0, sizeof msgs);
     uint32_t nb = rte::ipv4_fragment_packet(msg, &msgs[0], 10, 
-            core::instance().dpdk.ipv4_mtu_default, 
-            core::instance().dpdk.get_mempool(), 
-            core::instance().dpdk.get_mempool());
+            core::dpdk.ipv4_mtu_default, 
+            core::dpdk.get_mempool(), 
+            core::dpdk.get_mempool());
 
     stcp_sockaddr_in next;
     uint8_t port;
@@ -313,12 +313,12 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
             iph->hdr_checksum = rte_ipv4_cksum(reinterpret_cast<const struct ipv4_hdr*>(iph));
 
             msgs[i]->port = port;
-            core::instance().ether.tx_push(msgs[i]->port, msgs[i], 
+            core::ether.tx_push(msgs[i]->port, msgs[i], 
                     reinterpret_cast<stcp_sockaddr*>(&next));
         }
     } else { /* packet was not fragmented */
         msg->port = port;
-        core::instance().ether.tx_push(msg->port, msg, 
+        core::ether.tx_push(msg->port, msg, 
                 reinterpret_cast<stcp_sockaddr*>(&next));
     }
 }

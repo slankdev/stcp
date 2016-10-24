@@ -11,15 +11,15 @@ namespace slank {
 
 void ether_module::proc() 
 {
-    if (core::instance().arp.wait.size() > 0) {
-        wait_ent e = core::instance().arp.wait.front();
+    if (core::arp.wait.size() > 0) {
+        wait_ent e = core::arp.wait.front();
 
         stcp_ether_addr ether_dst;
-        bool ret = core::instance().arp.arp_resolv(e.msg->port, &e.dst, &ether_dst, true);
+        bool ret = core::arp.arp_resolv(e.msg->port, &e.dst, &ether_dst, true);
 
         if (ret) {
             tx_push(e.port, e.msg, &e.dst);
-            core::instance().arp.wait.pop();
+            core::arp.wait.pop();
         }
     }
 }
@@ -36,10 +36,10 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
         {
             ether_type = rte::bswap16(STCP_ETHERTYPE_IP);
 
-            bool  ret = core::instance().arp.arp_resolv(port, dst, &ether_dst);
+            bool  ret = core::arp.arp_resolv(port, dst, &ether_dst);
             if (!ret) {
                 wait_ent e(port, msg, *dst);
-                core::instance().arp.wait.push(e);
+                core::arp.wait.push(e);
                 return;
             }
 
@@ -87,9 +87,8 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
     stcp_ether_header* eh = 
         reinterpret_cast<stcp_ether_header*>(mbuf_push(msg, sizeof(stcp_ether_header)));
 
-    core& c = core::instance();
     memset(&ether_src, 0, sizeof(ether_src));
-    for (ifaddr& ifa : c.dpdk.devices[port].addrs) {
+    for (ifaddr& ifa : core::dpdk.devices[port].addrs) {
         if (ifa.family == STCP_AF_LINK) {
             for (int i=0; i<6; i++)
                 ether_src.addr_bytes[i] = ifa.raw.sa_data[i];
@@ -103,7 +102,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
     eh->type = ether_type;
 
     tx_cnt++;
-    for (ifnet& dev : core::instance().dpdk.devices) {
+    for (ifnet& dev : core::dpdk.devices) {
         dev.tx_push(msg);
     }
 }
@@ -112,7 +111,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
 void ether_module::sendto(const void* buf, size_t bufsize, const stcp_sockaddr* dst)
 {
     mbuf* msg = 
-        rte::pktmbuf_alloc(::slank::core::instance().dpdk.get_mempool());
+        rte::pktmbuf_alloc(::slank::core::dpdk.get_mempool());
     copy_to_mbuf(msg, buf, bufsize);
  
     tx_push(0, msg, dst);
@@ -129,12 +128,12 @@ void ether_module::rx_push(mbuf* msg)
     switch (etype) {
         case STCP_ETHERTYPE_IP:
         {
-            core::instance().ip.rx_push(msg);
+            core::ip.rx_push(msg);
             break;
         }
         case STCP_ETHERTYPE_ARP:
         {
-            core::instance().arp.rx_push(msg);
+            core::arp.rx_push(msg);
             break;
         }
         default:
