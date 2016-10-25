@@ -7,7 +7,7 @@
 
 
 namespace slank {
- 
+
 
 
 
@@ -37,11 +37,11 @@ struct stcp_ip_header {
 
 
 struct stcp_rtentry {
-    stcp_sockaddr_in  rt_route;   /* route destination        */
-    stcp_sockaddr_in  rt_genmask;    /* netmask                  */
-    stcp_sockaddr_in  rt_gateway; /* next hop address         */
-    uint8_t        rt_port;       /* interface index to use   */
-    uint32_t       rt_flags;   /* up/down?, host/net       */
+    stcp_sockaddr_in  rt_route;    /* route destination        */
+    stcp_sockaddr_in  rt_genmask;  /* netmask                  */
+    stcp_sockaddr_in  rt_gateway;  /* next hop address         */
+    uint8_t        rt_port;        /* interface index to use   */
+    uint32_t       rt_flags;       /* up/down?, host/net       */
 
     stcp_rtentry() :
         rt_port(0), rt_flags(0) {}

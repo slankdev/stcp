@@ -60,7 +60,7 @@ void core::get_mymac(stcp_ether_addr* mymac, uint8_t port) // TODO ERASE
 
 void core::add_arp_record(
         uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4,
-        uint8_t ho1, uint8_t ho2, uint8_t ho3, 
+        uint8_t ho1, uint8_t ho2, uint8_t ho3,
         uint8_t ho4, uint8_t ho5, uint8_t ho6)
 {
     struct stcp_arpreq req;
@@ -100,15 +100,15 @@ void core::set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t c
     /*
      * Set Netmask
      */
-    if (32 < cidr) {
+    if (32 < cidr) { // TODO hardcode
         throw exception("out of range");
     }
     union {
         uint8_t u8[4];
         uint32_t u32;
     } U;
-    U.u32 = 0xffffffff;
-    U.u32 >>= (32 - cidr);
+    U.u32 = 0xffffffff; // TODO hardcode
+    U.u32 >>= (32 - cidr); // TODO hardcode
 
     memset(&ifr, 0, sizeof ifr);
     sin = reinterpret_cast<stcp_sockaddr_in*>(&ifr.if_addr);
@@ -170,21 +170,23 @@ void core::ifs_proc()
     }
 }
 
-
 void core::run()
 {
     uint64_t hz   = rte::get_tsc_hz();
-    for (auto f : cyclic_funcs) {
-        f->prev = rte::get_tsc_cycles();
+    for (auto cf : cyclic_funcs) {
+        cf->prev = rte::get_tsc_cycles();
     }
 
-    core::stat_all();
-    while (true) {
+    core::stat_all(); // TODO ERASE
+
+    // TODO: implement below
+    // while (running) {
+    while (true) { // statement of while-loop is hardcode.
         uint64_t now = rte::get_tsc_cycles();
         for (auto f : cyclic_funcs) {
-            if (now - f->prev > f->interval_ms / 1000.0 * hz) {
-                f->exec();
-                f->prev = now;
+            if (now - cf->prev > cf->interval_ms / 1000.0 * hz) {
+                cf->exec();
+                cf->prev = now;
             }
         }
 
@@ -194,7 +196,7 @@ void core::run()
 
         ifs_proc();
         ether.proc();
-        core::stat_all();
+        core::stat_all(); // TODO ERASE
     }
 }
 

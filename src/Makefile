@@ -2,12 +2,12 @@
 
 prefix = ..
 
-# INTERFACE  = eth0
+INTERFACE  = eth0
 # INTERFACE  = wlp3s0
 # INTERFACE  = enp0s20u2
 # INTERFACE  = eth1
 # INTERFACE  = lo
-INTERFACE = vboxnet1
+# INTERFACE = vboxnet1
 
 TMUXSPLIT  = tmux split-window -v
 TMUXVSPLIT = tmux split-window -h
@@ -25,10 +25,11 @@ SRCS   = \
 		ip.cc \
 		icmp.cc \
 		udp.cc \
+		tcp.cc \
 		app.cc \
 		stcp.cc \
 		api.cc \
-		main.cc 
+		main.cc
 
 
 OBJS   = $(SRCS:.cc=.o)
@@ -56,7 +57,7 @@ runall:
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=eth0 \
 		--vdev=eth_pcap1,iface=eth1 \
-		--vdev=eth_pcap2,iface=lo 
+		--vdev=eth_pcap2,iface=lo
 
 gdb:
 	sudo gdb -q --args \

@@ -15,9 +15,9 @@ namespace slank {
 
 void ip_module::init()
 {
-    uint32_t max_flow_num   = 0x1000;
+    uint32_t max_flow_num   = 0x1000; // TODO hardcode
     uint32_t bucket_num     = max_flow_num;
-    uint32_t bucket_entries = 16;
+    uint32_t bucket_entries = 16; // TODO hardcode
     uint32_t max_entries    = max_flow_num;
     uint64_t max_cycles     = (rte_get_tsc_hz() + MS_PER_S - 1) / MS_PER_S * MS_PER_S;
 
@@ -43,17 +43,21 @@ void ip_module::set_ipaddr(const stcp_in_addr* addr)
     myip.addr_bytes[2] = addr->addr_bytes[2];
     myip.addr_bytes[3] = addr->addr_bytes[3];
 }
-    
+
 
 void ip_module::rx_push(mbuf* msg)
 {
     rx_cnt++;
-    stcp_ip_header* ih 
+    stcp_ip_header* ih
         = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
 
     size_t trailer_len = rte::pktmbuf_data_len(msg) - rte::bswap16(ih->total_length);
     rte::pktmbuf_trim(msg, trailer_len);
 
+
+    /*
+     * TODO hardcode
+     */
     stcp_in_addr bcast;
     bcast.addr_bytes[0] = 0xff;
     bcast.addr_bytes[1] = 0xff;
@@ -95,11 +99,13 @@ void ip_module::rx_push(mbuf* msg)
             core::icmp.rx_push(msg, &src);
             break;
         }
-        // case STCP_IPPROTO_TCP:
-        // {
-        //     core::tcp.rx_push(msg, &src);
-        //     break;
-        // }
+#if 0
+        case STCP_IPPROTO_TCP:
+        {
+            core::tcp.rx_push(msg, &src);
+            break;
+        }
+#endif
         case STCP_IPPROTO_UDP:
         {
             core::udp.rx_push(msg, &src);
@@ -108,7 +114,7 @@ void ip_module::rx_push(mbuf* msg)
         default:
         {
             mbuf_push(msg, sizeof(stcp_ip_header));
-            core::icmp.send_err(STCP_ICMP_UNREACH, 
+            core::icmp.send_err(STCP_ICMP_UNREACH,
                     STCP_ICMP_UNREACH_PROTOCOL, &src, msg);
             break;
         }
@@ -121,25 +127,25 @@ void ip_module::ioctl(uint64_t request, void* args)
     switch (request) {
         case STCP_SIOCADDRT:
         {
-            const stcp_rtentry* rt = reinterpret_cast<const stcp_rtentry*>(args); 
+            const stcp_rtentry* rt = reinterpret_cast<const stcp_rtentry*>(args);
             ioctl_siocaddrt(rt);
             break;
         }
         case STCP_SIOCADDGW:
         {
-            stcp_rtentry* rt = reinterpret_cast<stcp_rtentry*>(args); 
+            stcp_rtentry* rt = reinterpret_cast<stcp_rtentry*>(args);
             ioctl_siocaddgw(rt);
             break;
         }
         case STCP_SIOCDELRT:
         {
-            stcp_rtentry* rt = reinterpret_cast<stcp_rtentry*>(args); 
+            stcp_rtentry* rt = reinterpret_cast<stcp_rtentry*>(args);
             ioctl_siocdelrt(rt);
             break;
         }
         case STCP_SIOCGETRTS:
         {
-            std::vector<stcp_rtentry>** table = 
+            std::vector<stcp_rtentry>** table =
                 reinterpret_cast<std::vector<stcp_rtentry>**>(args);
             ioctl_siocgetrts(table);
             break;
@@ -242,13 +248,13 @@ bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr_in* addr)
     if (!inaddr_exist || !inmask_exist) {
         throw exception("inaddr or inmask is not exist");
     }
-    
+
     stcp_sockaddr_in* inaddr_sin = reinterpret_cast<stcp_sockaddr_in*>(&inaddr);
     stcp_sockaddr_in* inmask_sin = reinterpret_cast<stcp_sockaddr_in*>(&inmask);
     stcp_sockaddr_in* innet_sin  = reinterpret_cast<stcp_sockaddr_in*>(&innet );
-    
+
     for (int i=0; i<4; i++) {
-        innet_sin->sin_addr.addr_bytes[i] =   inaddr_sin->sin_addr.addr_bytes[i] 
+        innet_sin->sin_addr.addr_bytes[i] =   inaddr_sin->sin_addr.addr_bytes[i]
                                             & inmask_sin->sin_addr.addr_bytes[i];
     }
 
@@ -265,9 +271,9 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
 {
     tx_cnt++;
 
-    stcp_ip_header* ih 
+    stcp_ip_header* ih
         = reinterpret_cast<stcp_ip_header*>(mbuf_push(msg, sizeof(stcp_ip_header)));
-    
+
     ih->version_ihl       = 0x45;
     ih->type_of_service   = 0x00;
     ih->total_length      = rte::bswap16(rte::pktmbuf_pkt_len(msg));
@@ -281,7 +287,11 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
 
     ih->time_to_live      = ip_module::ttl_default;
     ih->next_proto_id     = proto;
-    ih->hdr_checksum      = 0x00; 
+    ih->hdr_checksum      = 0x00;
+
+    /*
+     * TODO Not smart implementation
+     */
     ih->src.addr_bytes[0] = myip.addr_bytes[0];
     ih->src.addr_bytes[1] = myip.addr_bytes[1];
     ih->src.addr_bytes[2] = myip.addr_bytes[2];
@@ -293,11 +303,11 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
 
     ih->hdr_checksum = rte_ipv4_cksum((const struct ipv4_hdr*)ih);
 
-    mbuf* msgs[100];
+    mbuf* msgs[100]; // TODO hardcode about mbuf[] size
     memset(msgs, 0, sizeof msgs);
-    uint32_t nb = rte::ipv4_fragment_packet(msg, &msgs[0], 10, 
-            core::dpdk.ipv4_mtu_default, 
-            core::dpdk.get_mempool(), 
+    uint32_t nb = rte::ipv4_fragment_packet(msg, &msgs[0], 10,
+            core::dpdk.ipv4_mtu_default,
+            core::dpdk.get_mempool(),
             core::dpdk.get_mempool());
 
     stcp_sockaddr_in next;
@@ -313,12 +323,12 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
             iph->hdr_checksum = rte_ipv4_cksum(reinterpret_cast<const struct ipv4_hdr*>(iph));
 
             msgs[i]->port = port;
-            core::ether.tx_push(msgs[i]->port, msgs[i], 
+            core::ether.tx_push(msgs[i]->port, msgs[i],
                     reinterpret_cast<stcp_sockaddr*>(&next));
         }
     } else { /* packet was not fragmented */
         msg->port = port;
-        core::ether.tx_push(msg->port, msg, 
+        core::ether.tx_push(msg->port, msg,
                 reinterpret_cast<stcp_sockaddr*>(&next));
     }
 }
@@ -363,7 +373,6 @@ void ip_module::print_stat() const
                 flag_str.c_str(),
                 rt.rt_port);
     }
-
 }
 
 };

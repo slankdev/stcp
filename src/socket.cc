@@ -19,7 +19,7 @@ const char* stcp_sockaddr::c_str() const
     switch (sa_fam) {
         case STCP_AF_LINK:
             {
-                sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x", 
+                sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x",
                         sa_data[0], sa_data[1],
                         sa_data[2], sa_data[3],
                         sa_data[4], sa_data[5]);
@@ -28,7 +28,7 @@ const char* stcp_sockaddr::c_str() const
         case STCP_AF_INET:
             {
                 const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(this);
-                sprintf(str, "%d.%d.%d.%d", 
+                sprintf(str, "%d.%d.%d.%d",
                         sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1],
                         sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
                 break;
@@ -49,7 +49,7 @@ const char* stcp_sockaddr_in::c_str() const
 {
     static char str[32];
     const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(this);
-    sprintf(str, "%d.%d.%d.%d", 
+    sprintf(str, "%d.%d.%d.%d",
             sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1],
             sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
     return str;
@@ -89,6 +89,9 @@ bool operator!=(const stcp_sockaddr& sa, const stcp_in_addr& addr)
 
 
 
+/*
+ * TODO this function should be in stcp_in_addr class as constructor
+ */
 struct stcp_in_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
 {
     stcp_in_addr a;
@@ -99,6 +102,9 @@ struct stcp_in_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o
     return a;
 }
 
+/*
+ * TODO this function should be in stcp_in_addr class as constructor
+ */
 struct stcp_in_addr stcp_inet_addr(const char* fmt)
 {
     int32_t o[4];
@@ -118,6 +124,9 @@ struct stcp_in_addr stcp_inet_addr(const char* fmt)
        uint8_t(o[3]));
 }
 
+/*
+ * TODO this function should be in stcp_ether_addr class as constructor
+ */
 struct stcp_sockaddr stcp_inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6)
 {
     stcp_sockaddr sa(STCP_AF_LINK);
@@ -133,7 +142,6 @@ struct stcp_sockaddr stcp_inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_
 
     return sa;
 }
-
 
 
 

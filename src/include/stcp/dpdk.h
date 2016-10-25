@@ -29,10 +29,10 @@ public:
 
     static uint32_t num_mbufs;        /* num of mbuf that allocated in a mempool */
     static uint32_t mbuf_cache_size;  /* packet cache size in each mbufs         */
-    static uint32_t ipv4_mtu_default; 
+    static uint32_t ipv4_mtu_default;
 
     dpdk_core() : mempool(nullptr) {}
-    ~dpdk_core() {}                  
+    ~dpdk_core() {}
 
     std::vector<ifnet> devices;
     void init(int argc, char** argv)
@@ -40,11 +40,11 @@ public:
 
         rte::eth_dev_init(argc, argv);
         mempool = rte::pktmbuf_pool_create(
-                mp_name.c_str(), 
-                num_mbufs * rte::eth_dev_count(), 
-                mbuf_cache_size, 
-                0, 
-                RTE_MBUF_DEFAULT_BUF_SIZE, 
+                mp_name.c_str(),
+                num_mbufs * rte::eth_dev_count(),
+                mbuf_cache_size,
+                0,
+                RTE_MBUF_DEFAULT_BUF_SIZE,
                 rte::socket_id()
                 );
 

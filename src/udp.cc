@@ -14,9 +14,22 @@ stcp_udp_sock& stcp_udp_sock::socket()
 }
 
 
+
+
+stcp_udp_sock::~stcp_udp_sock()
+{
+    close();
+}
+
+void stcp_udp_sock::close()
+{
+    core::udp.close_socket(*this);
+}
+
+
 mbuf* stcp_udp_sock::recvfrom(stcp_sockaddr_in* src)
 {
-    if (state == unbind) 
+    if (state == unbind)
         throw exception("socket is not binded");
 
     if (rxq.size() > 0) {
@@ -48,12 +61,12 @@ void stcp_udp_sock::bind(const stcp_sockaddr_in* a)
  * srcp: Source port as NetworkByteOrder
  * dstp: Destination port as NetworkByteOrder
  */
-void udp_module::tx_push(mbuf* msg, 
+void udp_module::tx_push(mbuf* msg,
         const stcp_sockaddr_in* dst, uint16_t srcp)
 {
     uint16_t udplen = rte::pktmbuf_pkt_len(msg);
 
-    stcp_udp_header* uh = 
+    stcp_udp_header* uh =
         reinterpret_cast<stcp_udp_header*>(mbuf_push(msg, sizeof(stcp_udp_header)));
     uh->sport = srcp;
     uh->dport = dst->sin_port;
@@ -100,8 +113,8 @@ void udp_module::print_stat() const
         s.write("\tNetStat");
     }
     for (const stcp_udp_sock& sock : socks) {
-        s.write("\t%u/udp rxq=%zd", 
-                rte::bswap16(sock.get_port()), 
+        s.write("\t%u/udp rxq=%zd",
+                rte::bswap16(sock.get_port()),
                 sock.get_rxq_size());
     }
 }
@@ -114,6 +127,17 @@ stcp_udp_sock& udp_module::socket()
     return socks[socks.size()-1];
 }
 
+
+
+void udp_module::close_socket(stcp_udp_sock& s)
+{
+    for (size_t i=0; i<socks.size(); i++) {
+        if (s == socks[i]) {
+            socks.erase(socks.begin() + i);
+            return;
+        }
+    }
+}
 
 
 } /* namespace slank */

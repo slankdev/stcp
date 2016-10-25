@@ -42,6 +42,7 @@ private:
 
 public:
     stcp_udp_sock() : state(unbind) {}
+    ~stcp_udp_sock(); // TODO impelemnt this!!
     void sendto(mbuf* msg, const stcp_sockaddr_in* src) const;
     mbuf* recvfrom(stcp_sockaddr_in* src);
     void bind(const stcp_sockaddr_in* a);
@@ -52,6 +53,7 @@ public:
     size_t get_rxq_size() const { return rxq.size(); }
 
     static stcp_udp_sock& socket();
+    void close();
 };
 
 
@@ -61,22 +63,16 @@ private:
     size_t rx_cnt;
     size_t tx_cnt;
     std::vector<stcp_udp_sock> socks;
+
     stcp_udp_sock& socket();
+    void close_socket(stcp_udp_sock& s);
 
 public:
     udp_module() : rx_cnt(0), tx_cnt(0) {}
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
     void tx_push(mbuf* msg, const stcp_sockaddr_in* dst, uint16_t srcp);
     void print_stat() const;
-    void close_socket(stcp_udp_sock& s)
-    {
-        for (size_t i=0; i<socks.size(); i++) {
-            if (s == socks[i]) {
-                socks.erase(socks.begin() + i);
-                return;
-            }
-        }
-    }
+
 };
 
 

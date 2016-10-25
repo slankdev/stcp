@@ -14,12 +14,12 @@
 
 
 namespace slank {
-    
+
 
 
 enum stcp_arpop : uint16_t {
     STCP_ARPOP_REQUEST    = 1,
-    STCP_ARPOP_REPLY      = 2,  
+    STCP_ARPOP_REPLY      = 2,
     STCP_ARPOP_REVREQUEST = 3,
     STCP_ARPOP_REVREPLY   = 4,
 };
@@ -88,7 +88,7 @@ private:
     size_t rx_cnt;
     size_t tx_cnt;
     std::vector<stcp_arpreq> table;
-    
+
 public:
     std::queue<wait_ent> arpresolv_wait_queue;
 
@@ -97,7 +97,10 @@ public:
     void rx_push(mbuf* msg);
     void tx_push(mbuf* msg);
 
-    bool arp_resolv(uint8_t port, const stcp_sockaddr *dst, 
+    /*
+     * TODO reimplement smartly
+     */
+    bool arp_resolv(uint8_t port, const stcp_sockaddr *dst,
             stcp_ether_addr* dsten, bool checkcacheonly=false);
     void arp_request(uint8_t port, const stcp_in_addr* tip);
     void ioctl(uint64_t request, void* arg);

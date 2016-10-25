@@ -1,6 +1,6 @@
 
 
-#pragma once 
+#pragma once
 
 #include <stdio.h>
 #include <string.h>
@@ -15,11 +15,15 @@
 
 namespace slank {
 
-struct stcp_in_addr stcp_inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
+/*
+ * TODO ERASE These functions
+ */
+struct stcp_in_addr stcp_inet_addr(
+        uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
 struct stcp_in_addr stcp_inet_addr(const char* fmt);
-struct stcp_sockaddr stcp_inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6);
-// char* p_sockaddr_to_str(const struct stcp_sockaddr* sa);
-// char* hw_sockaddr_to_str(const struct stcp_sockaddr* sa);
+struct stcp_sockaddr stcp_inet_hwaddr(
+        uint8_t o1, uint8_t o2, uint8_t o3,
+        uint8_t o4, uint8_t o5, uint8_t o6);
 
 
 enum {
@@ -88,7 +92,7 @@ public:
     {
         if (sa_fam != rhs.sa_fam)
             return false;
-    
+
         switch (sa_fam) {
             case STCP_AF_LINK:
             {
@@ -144,10 +148,10 @@ struct stcp_in_addr {
     uint8_t addr_bytes[4];
 
 public:
-    bool operator==(const stcp_in_addr& rhs) const 
+    bool operator==(const stcp_in_addr& rhs) const
     {
         for (int i=0; i<4; i++) {
-            if (addr_bytes[i] != rhs.addr_bytes[i]) 
+            if (addr_bytes[i] != rhs.addr_bytes[i])
                 return false;
         }
         return true;
@@ -244,37 +248,11 @@ struct stcp_ifreq {
         char            *if_data;
     };
 
-    stcp_ifreq() :
-        if_addr     (STCP_AF_INET) {}
-        // if_dstaddr  (STCP_AF_INET),
-        // if_broadaddr(STCP_AF_INET),
-        // if_netmask  (STCP_AF_INET),
-        // if_hwaddr   (STCP_AF_LINK) {}
-
-
+    stcp_ifreq() : if_addr(STCP_AF_INET) {}
 };
 
 
 
-// class socket_impl {
-// public:
-//     virtual void open(stcp_sa_family domain);
-//     virtual void close();
-//     virtual void ioctl();
-//     // virtual void write();
-//     // virtual size_t read();
-// };
-//
-// class socket {
-// private:
-//     socket_impl* sock;
-// public:
-//     socket(stcp_sa_family domain)
-//     {
-//     }
-//
-//     void 
-// };
 
 
 

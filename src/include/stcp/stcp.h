@@ -7,19 +7,20 @@
 #include <stcp/dpdk.h>
 #include <stcp/config.h>
 #include <stcp/mbuf.h>
-    
+
 #include <stcp/ethernet.h>
 #include <stcp/arp.h>
 #include <stcp/ip.h>
 #include <stcp/icmp.h>
 #include <stcp/udp.h>
+#include <stcp/tcp.h>
 #include <stcp/app.h>
 
 #include <vector>
 
 
 namespace slank {
-    
+
 
 using stat  = log<class status_infos>;
 using rxcap = log<class rx_packet_log>;
@@ -40,9 +41,13 @@ public:
 
 
 class core {
+    /*
+     * TODO XXX delete friend code
+     */
     friend class stcp_app;
 
     friend class stcp_udp_sock;
+    friend class stcp_tcp_sock;
 
     friend class ifnet;
     friend class ether_module;
@@ -50,11 +55,14 @@ class core {
     friend class ip_module;
     friend class icmp_module;
     friend class udp_module;
+    friend class tcp_module;
+
 private:
     static std::vector<stcp_app*> apps; // should private;
     static std::vector<stcp_cyclic_func*> cyclic_funcs;
 
 private:
+    static tcp_module    tcp;
     static udp_module    udp;
     static icmp_module   icmp;
     static ip_module     ip;
@@ -70,27 +78,35 @@ public:
 private:
     static void ifs_proc();
     static void stat_all();
-    
+
 public:
 
-    /* 
-     * APIs 
+    /*
+     * APIs
+     */
+    static void set_default_gw(
+            uint8_t o1, uint8_t o2, uint8_t o3,
+            uint8_t o4, uint8_t port);
+
+    /*
+     * TODO XXX Not Support Multi Interface
      */
     static void set_hw_addr(
-            uint8_t o1, uint8_t o2, uint8_t o3, 
+            uint8_t o1, uint8_t o2, uint8_t o3,
             uint8_t o4, uint8_t o5, uint8_t o6);
     static void set_ip_addr(
-            uint8_t o1, uint8_t o2, uint8_t o3, 
+            uint8_t o1, uint8_t o2, uint8_t o3,
             uint8_t o4, uint8_t cidr);
-    static void set_default_gw(
-            uint8_t o1, uint8_t o2, uint8_t o3, 
-            uint8_t o4, uint8_t port);
     static void add_arp_record(
-            uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, 
-            uint8_t ho1, uint8_t ho2, uint8_t ho3, 
+            uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4,
+            uint8_t ho1, uint8_t ho2, uint8_t ho3,
             uint8_t ho4, uint8_t ho5, uint8_t ho6);
     static void get_mymac(stcp_ether_addr* mymac, uint8_t port);
     static void get_myip(stcp_in_addr* myip, uint8_t port);
+
+    /*
+     * TODO rename
+     */
     static bool is_request_to_me(struct stcp_arphdr* ah, uint8_t port);
 
 

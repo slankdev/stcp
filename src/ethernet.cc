@@ -9,7 +9,7 @@ namespace slank {
 
 
 
-void ether_module::proc() 
+void ether_module::proc()
 {
     if (core::arp.arpresolv_wait_queue.size() > 0) {
         wait_ent e = core::arp.arpresolv_wait_queue.front();
@@ -64,8 +64,8 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
                     break;
             }
 
-            const uint8_t zero[6] = {0,0,0,0,0,0};
-            const uint8_t bcast[6] = {0xff,0xff,0xff,0xff,0xff,0xff};
+            const uint8_t zero[6] = {0,0,0,0,0,0}; // TODO hardcode
+            const uint8_t bcast[6] = {0xff,0xff,0xff,0xff,0xff,0xff}; // TODO hardcode
             if (memcmp(&ah->hwdst, zero, sizeof zero) == 0 ||
                 memcmp(&ah->hwdst, bcast, sizeof bcast) == 0) {
                 memcpy(&ether_dst, bcast, sizeof ether_dst);
@@ -83,8 +83,8 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
         }
     }
 
-    
-    stcp_ether_header* eh = 
+
+    stcp_ether_header* eh =
         reinterpret_cast<stcp_ether_header*>(mbuf_push(msg, sizeof(stcp_ether_header)));
 
     memset(&ether_src, 0, sizeof(ether_src));

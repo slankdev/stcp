@@ -26,10 +26,10 @@ void arp_module::rx_push(mbuf* msg)
     if (ah->operation == rte::bswap16(STCP_ARPOP_REPLY)) {
 
         /*
-         * Proc ARP-Reply Packet 
-         * to ARP-Table.
+         * Proc ARP-Reply Packet
+         * using ARP table.
          */
-            
+
         stcp_sockaddr     sa_pa(STCP_AF_INET);
         stcp_sockaddr     sa_ha(STCP_AF_LINK);
         stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
@@ -45,7 +45,7 @@ void arp_module::rx_push(mbuf* msg)
     } else if (ah->operation == rte::bswap16(STCP_ARPOP_REQUEST)) {
         if (core::is_request_to_me(ah, port)) { // TODO
 
-            /* 
+            /*
              * Reply ARP-Reply Packet
              */
 
@@ -60,7 +60,7 @@ void arp_module::rx_push(mbuf* msg)
             rep_ah->hwlen  = 6;
             rep_ah->plen   = 4;
             rep_ah->operation = rte::bswap16(STCP_ARPOP_REPLY);
-            core::get_mymac(&rep_ah->hwsrc, port); // TODO 
+            core::get_mymac(&rep_ah->hwsrc, port); // TODO
             rep_ah->psrc  = ah->pdst;
             rep_ah->hwdst = ah->hwsrc;
             rep_ah->pdst  = ah->psrc;
@@ -100,7 +100,7 @@ void arp_module::ioctl(uint64_t request, void* arg)
         }
         case STCP_SIOCGARPENT:
         {
-            std::vector<stcp_arpreq>** tbl = 
+            std::vector<stcp_arpreq>** tbl =
                 reinterpret_cast<std::vector<stcp_arpreq>**>(arg);
             ioctl_siocgarpent(tbl);
             break;
@@ -153,7 +153,7 @@ void arp_module::ioctl_siocaarpent(stcp_arpreq* req)
 }
 
 
-/* 
+/*
  * IOCTL SocketIO Delete ARP Entry
  *
  * Description

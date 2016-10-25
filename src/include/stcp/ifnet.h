@@ -6,7 +6,7 @@
 
 
 namespace slank {
-    
+
 
 
 
@@ -24,6 +24,9 @@ private:
     uint16_t drop_packets;
     std::string name;
 
+    /*
+     * TODO use static variable or enum
+     */
     uint8_t  port_id;
     uint16_t rx_ring_size;     /* rx ring size */
     uint16_t tx_ring_size;     /* tx ring size */
@@ -33,16 +36,20 @@ private:
 public:
     bool promiscuous_mode;
     std::vector<ifaddr> addrs;
-    ifnet(uint8_t p) : 
+
+    /*
+     * TODO XXX can't set ring_size before constructor().
+     */
+    ifnet(uint8_t p) :
         rx_packets(0),
         tx_packets(0),
         drop_packets(0),
 
         port_id(p),
-        rx_ring_size(128),
-        tx_ring_size(512),
-        num_rx_rings(1  ),
-        num_tx_rings(1  ),
+        rx_ring_size(128), // TODO fix
+        tx_ring_size(512), // TODO fix
+        num_rx_rings(1  ), // TODO fix
+        num_tx_rings(1  ), // TODO fix
         promiscuous_mode(true)
     { name = "PORT" + std::to_string(port_id); }
 
@@ -67,16 +74,24 @@ private:
 public:
     void rx_push(mbuf* msg) { rx.push(msg); rx_packets++; }
     void tx_push(mbuf* msg) { tx.push(msg); tx_packets++; }
-    mbuf* rx_pop() 
-    { 
+
+    /*
+     * TODO This implementation should be capseled in pkt_queue class.
+     */
+    mbuf* rx_pop()
+    {
         mbuf* m = rx.front();
-        rx.pop(); 
+        rx.pop();
         return m;
     }
-    mbuf* tx_pop() 
-    { 
+
+    /*
+     * TODO This implementation should be capseled in pkt_queue class.
+     */
+    mbuf* tx_pop()
+    {
         mbuf* m = tx.front();
-        tx.pop(); 
+        tx.pop();
         return m;
     }
 };
