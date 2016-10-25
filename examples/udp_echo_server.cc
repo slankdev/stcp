@@ -14,7 +14,7 @@ class UdpEchoServer : public stcp_app {
     class cf : public stcp_cyclic_func {
     public:
         UdpEchoServer* parent;
-        cf(uint64_t ms, UdpEchoServer* p) 
+        cf(uint64_t ms, UdpEchoServer* p)
             : stcp_cyclic_func(ms), parent(p) {}
         void exec() override
         {
@@ -28,7 +28,7 @@ public:
         stcp_sockaddr_in addr;
         addr.sin_fam  = STCP_AF_INET;
         addr.sin_port = rte::bswap16(9999);
-        stcp_udp_sock& sock = core::udp.socket();
+        stcp_udp_sock& sock = stcp_udp_sock::socket();
         s = &sock;
         sock.bind(&addr);
 
@@ -44,6 +44,7 @@ public:
         }
     }
 };
+
 
 
 

@@ -99,7 +99,7 @@ void ip_module::rx_push(mbuf* msg)
             core::icmp.rx_push(msg, &src);
             break;
         }
-#if 0
+#if 1
         case STCP_IPPROTO_TCP:
         {
             core::tcp.rx_push(msg, &src);

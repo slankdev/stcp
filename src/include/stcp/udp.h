@@ -32,6 +32,7 @@ enum udp_sock_state {
 };
 
 using udp_sock_queue = std::queue<stcp_udp_sockdata>;
+
 class stcp_udp_sock {
     friend class udp_module;
 private:

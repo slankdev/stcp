@@ -10,6 +10,7 @@ namespace slank {
 
 std::vector<stcp_app*> core::apps;
 std::vector<stcp_cyclic_func*> core::cyclic_funcs;
+tcp_module   core::tcp;
 udp_module   core::udp;
 icmp_module  core::icmp;
 ip_module    core::ip;
@@ -183,7 +184,7 @@ void core::run()
     // while (running) {
     while (true) { // statement of while-loop is hardcode.
         uint64_t now = rte::get_tsc_cycles();
-        for (auto f : cyclic_funcs) {
+        for (auto cf : cyclic_funcs) {
             if (now - cf->prev > cf->interval_ms / 1000.0 * hz) {
                 cf->exec();
                 cf->prev = now;
@@ -218,6 +219,8 @@ void core::stat_all()
     icmp.print_stat();
     s.write("");
     udp.print_stat();
+    s.write("");
+    tcp.print_stat();
 
     s.flush();
 }
