@@ -8,6 +8,181 @@ namespace slank {
 
 
 
+void stcp_tcp_sock::move_state(tcp_socket_state next_state)
+{
+    switch (state) {
+        case STCP_TCP_ST_CLOSED     :
+            move_state_from_CLOSED(next_state);
+            break;
+        case STCP_TCP_ST_LISTEN     :
+            move_state_from_LISTEN(next_state);
+            break;
+        case STCP_TCP_ST_SYN_SENT   :
+            move_state_from_SYN_SENT(next_state);
+            break;
+        case STCP_TCP_ST_SYN_RCVD   :
+            move_state_from_SYN_RCVD(next_state);
+            break;
+        case STCP_TCP_ST_ESTABLISHED:
+            move_state_from_ESTABLISHED(next_state);
+            break;
+        case STCP_TCP_ST_FIN_WAIT_1 :
+            move_state_from_FIN_WAIT_1(next_state);
+            break;
+        case STCP_TCP_ST_FIN_WAIT_2 :
+            move_state_from_FIN_WAIT_2(next_state);
+            break;
+        case STCP_TCP_ST_CLOSE_WAIT :
+            move_state_from_CLOSE_WAIT(next_state);
+            break;
+        case STCP_TCP_ST_CLOSING    :
+            move_state_from_CLOSING(next_state);
+            break;
+        case STCP_TCP_ST_LAST_ACK   :
+            move_state_from_LAST_ACK(next_state);
+            break;
+        case STCP_TCP_ST_TIME_WAIT  :
+            move_state_from_TIME_WAIT(next_state);
+            break;
+        default:
+            throw exception("invalid tcp sock state");
+            break;
+    }
+}
+
+
+void stcp_tcp_sock::move_state_from_CLOSED(tcp_socket_state next_state)
+{
+    switch (next_state) {
+        case STCP_TCP_ST_LISTEN:
+        case STCP_TCP_ST_SYN_SENT:
+            state = next_state;
+            break;
+        default:
+            throw exception("invalid state-change");
+            break;
+    }
+}
+void stcp_tcp_sock::move_state_from_LISTEN(tcp_socket_state next_state)
+{
+    switch (next_state) {
+        case STCP_TCP_ST_CLOSED:
+        case STCP_TCP_ST_SYN_SENT:
+        case STCP_TCP_ST_SYN_RCVD:
+            state = next_state;
+            break;
+        default:
+            throw exception("invalid state-change");
+            break;
+    }
+}
+void stcp_tcp_sock::move_state_from_SYN_SENT(tcp_socket_state next_state)
+{
+    switch (next_state) {
+        case STCP_TCP_ST_CLOSED:
+        case STCP_TCP_ST_SYN_RCVD:
+        case STCP_TCP_ST_ESTABLISHED:
+            state = next_state;
+            break;
+        default:
+            throw exception("invalid state-change");
+            break;
+    }
+}
+void stcp_tcp_sock::move_state_from_SYN_RCVD(tcp_socket_state next_state)
+{
+    switch (next_state) {
+        case STCP_TCP_ST_ESTABLISHED:
+        case STCP_TCP_ST_FIN_WAIT_1:
+            state = next_state;
+            break;
+        default:
+            throw exception("invalid state-change");
+            break;
+    }
+}
+void stcp_tcp_sock::move_state_from_ESTABLISHED(tcp_socket_state next_state)
+{
+    switch (next_state) {
+        case STCP_TCP_ST_FIN_WAIT_1:
+        case STCP_TCP_ST_CLOSE_WAIT:
+            state = next_state;
+            break;
+        default:
+            throw exception("invalid state-change");
+            break;
+    }
+}
+void stcp_tcp_sock::move_state_from_FIN_WAIT_1(tcp_socket_state next_state)
+{
+    switch (next_state) {
+        case STCP_TCP_ST_CLOSING:
+        case STCP_TCP_ST_FIN_WAIT_2:
+            state = next_state;
+            break;
+        default:
+            throw exception("invalid state-change");
+            break;
+    }
+}
+void stcp_tcp_sock::move_state_from_FIN_WAIT_2(tcp_socket_state next_state)
+{
+    switch (next_state) {
+        case STCP_TCP_ST_TIME_WAIT:
+            state = next_state;
+            break;
+        default:
+            throw exception("invalid state-change");
+            break;
+    }
+}
+void stcp_tcp_sock::move_state_from_CLOSE_WAIT(tcp_socket_state next_state)
+{
+    switch (next_state) {
+        case STCP_TCP_ST_LAST_ACK:
+            state = next_state;
+            break;
+        default:
+            throw exception("invalid state-change");
+            break;
+    }
+}
+void stcp_tcp_sock::move_state_from_CLOSING(tcp_socket_state next_state)
+{
+    switch (next_state) {
+        case STCP_TCP_ST_TIME_WAIT:
+            state = next_state;
+            break;
+        default:
+            throw exception("invalid state-change");
+            break;
+    }
+}
+void stcp_tcp_sock::move_state_from_LAST_ACK(tcp_socket_state next_state)
+{
+    switch (next_state) {
+        case STCP_TCP_ST_CLOSED:
+            state = next_state;
+            break;
+        default:
+            throw exception("invalid state-change");
+            break;
+    }
+}
+void stcp_tcp_sock::move_state_from_TIME_WAIT(tcp_socket_state next_state)
+{
+    switch (next_state) {
+        case STCP_TCP_ST_CLOSED:
+            state = next_state;
+            break;
+        default:
+            throw exception("invalid state-change");
+            break;
+    }
+}
+
+
+
 size_t tcp_module::mss = 1460; // TODO hardcode
 
 void tcp_module::print_stat() const

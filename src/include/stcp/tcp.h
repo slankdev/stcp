@@ -102,10 +102,6 @@ struct tcp_stream_info {
 };
 
 
-enum stcp_tcp_sock_event {
-};
-
-
 
 
 class stcp_tcp_sock {
@@ -114,16 +110,22 @@ private:
     tcp_socket_state state;
     uint16_t port;
 
-    void handle_event(stcp_tcp_sock_event event) // TODO NOT IMPLE
-    {
-        switch (event) {
-            default:
-                break;
-        }
-    }
+private:
+    void move_state_from_CLOSED(tcp_socket_state next_state);
+    void move_state_from_LISTEN(tcp_socket_state next_state);
+    void move_state_from_SYN_SENT(tcp_socket_state next_state);
+    void move_state_from_SYN_RCVD(tcp_socket_state next_state);
+    void move_state_from_ESTABLISHED(tcp_socket_state next_state);
+    void move_state_from_FIN_WAIT_1(tcp_socket_state next_state);
+    void move_state_from_FIN_WAIT_2(tcp_socket_state next_state);
+    void move_state_from_CLOSE_WAIT(tcp_socket_state next_state);
+    void move_state_from_CLOSING(tcp_socket_state next_state);
+    void move_state_from_LAST_ACK(tcp_socket_state next_state);
+    void move_state_from_TIME_WAIT(tcp_socket_state next_state);
 
 public:
     stcp_tcp_sock() : state(STCP_TCP_ST_CLOSED), port(0) {}
+    void move_state(tcp_socket_state next_state);
 
 public: /* for Getting Status */
     tcp_socket_state get_state() const { return state; }
