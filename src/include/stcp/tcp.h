@@ -48,27 +48,27 @@ inline const char* tcp_socket_state2str(tcp_socket_state state)
 {
     switch (state) {
         case STCP_TCP_ST_CLOSED     :
-            return "CLOSED     ";
+            return "CLOSED";
         case STCP_TCP_ST_LISTEN     :
-            return "LISTEN     ";
+            return "LISTEN";
         case STCP_TCP_ST_SYN_SENT   :
-            return "SYN_SENT   ";
+            return "SYN_SENT";
         case STCP_TCP_ST_SYN_RCVD   :
-            return "SYN_RCVD   ";
+            return "SYN_RCVD";
         case STCP_TCP_ST_ESTABLISHED:
             return "ESTABLISHED";
         case STCP_TCP_ST_FIN_WAIT_1 :
-            return "FIN_WAIT_1 ";
+            return "FIN_WAIT_1";
         case STCP_TCP_ST_FIN_WAIT_2 :
-            return "FIN_WAIT_2 ";
+            return "FIN_WAIT_2";
         case STCP_TCP_ST_CLOSE_WAIT :
-            return "CLOSE_WAIT ";
+            return "CLOSE_WAIT";
         case STCP_TCP_ST_CLOSING    :
-            return "CLOSING    ";
+            return "CLOSING";
         case STCP_TCP_ST_LAST_ACK   :
-            return "LAST_ACK   ";
+            return "LAST_ACK";
         case STCP_TCP_ST_TIME_WAIT  :
-            return "TIME_WAIT  ";
+            return "TIME_WAIT";
         default:
             return "UNKNOWN";
     }
@@ -118,6 +118,9 @@ struct tcp_stream_info {
 
 class stcp_tcp_sock {
     friend class tcp_module;
+private: /* for server socket, accept(), listen() */
+    std::vector<stcp_tcp_sock> connections;
+
 private:
     tcp_socket_state state;
     uint16_t port;
@@ -146,8 +149,8 @@ public: /* for Getting Status */
 public: /* for Users Operation */
 
     void bind(const struct stcp_sockaddr_in* addr, size_t addrlen);
-#if 0
     void listen(size_t backlog);
+#if 0
     stcp_tcp_sock* accept(struct stcp_sockaddr_in* addr, size_t addrlen);
     void write(mbuf* msg);
     void read(mbuf* msg);

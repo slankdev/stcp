@@ -47,15 +47,18 @@ public:
 
 
 class TcpEchoServer : public stcp_app {
+    stcp_tcp_sock* sock;
 public:
     TcpEchoServer() : stcp_app()
     {
-        stcp_tcp_sock* sock = core::create_tcp_socket();
+        sock = core::create_tcp_socket();
 
         stcp_sockaddr_in addr;
         addr.sin_fam  = STCP_AF_INET;
         addr.sin_port = rte::bswap16(9999);
         sock->bind(&addr, sizeof(addr));
+        sock->listen(5);
+
     }
     void proc() override
     {
