@@ -21,6 +21,17 @@ dpdk_core    core::dpdk;
 
 
 
+stcp_tcp_sock* core::create_tcp_socket()
+{
+    return tcp.create_socket();
+}
+
+void core::destroy_tcp_socket(stcp_tcp_sock* sock)
+{
+    tcp.destroy_socket(sock);
+}
+
+
 bool core::is_request_to_me(struct stcp_arphdr* ah, uint8_t port) // TODO ERASE
 {
 	for (ifaddr& ifa : dpdk.devices[port].addrs) {

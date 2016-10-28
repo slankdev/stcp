@@ -28,6 +28,8 @@ using txcap = log<class tx_packet_log>;
 using dmsg  = log<class debug_message_log>;
 
 class stcp_app;
+class tcp_module;
+class stcp_tcp_sock;
 
 
 
@@ -56,6 +58,10 @@ class core {
     friend class icmp_module;
     friend class udp_module;
     friend class tcp_module;
+
+public:
+    static stcp_tcp_sock* create_tcp_socket();
+    static void destroy_tcp_socket(stcp_tcp_sock* sock);
 
 private:
     static std::vector<stcp_app*> apps; // should private;

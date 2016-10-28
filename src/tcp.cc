@@ -1,24 +1,14 @@
 
 
 #include <stcp/tcp.h>
-#include <stcp/stcp.h>
 #include <stcp/config.h>
 
 namespace slank {
 
 
+
+
 size_t tcp_module::mss = 1460; // TODO hardcode
-
-
-
-void tcp_module::close_socket(stcp_tcp_sock& s) {
-    for (size_t i=0; i<socks.size(); i++) {
-        if (s == socks[i]) {
-            socks.erase(socks.begin() + i);
-            return;
-        }
-    }
-}
 
 void tcp_module::print_stat() const
 {
@@ -31,8 +21,9 @@ void tcp_module::print_stat() const
         s.write("");
         s.write("\tNetStat %zd ports", socks.size());
     }
-    for (const stcp_tcp_sock& sock : socks) {
-        s.write("\t%u/tcp", rte::bswap16(sock.get_port()));
+    for (const auto sock : socks) {
+        s.write("\t%u/tcp state=%s", rte::bswap16(sock.get_port()),
+                tcp_socket_state2str(sock.get_state()));
     }
 }
 
@@ -44,7 +35,7 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
     rx_cnt++;
 
     uint16_t dst_port = th->dport;
-    for (stcp_tcp_sock& sock : socks) {
+    for (auto sock : socks) {
         src->sin_port = th->sport;
         if (sock.get_port() == dst_port) {
             throw exception("NOT IMPLE");
@@ -98,39 +89,6 @@ void tcp_module::send_RSTACK(mbuf* msg, stcp_sockaddr_in* dst,
 
 
 
-
-
-
-
-
-
-
-
-stcp_tcp_sock& stcp_tcp_sock::socket()
-{
-    return core::tcp.socket();
-}
-
-void stcp_tcp_sock::close()
-{
-    core::tcp.close_socket(*this);
-}
-
-
-stcp_tcp_sock& tcp_module::socket()
-{
-    stcp_tcp_sock s;
-    socks.push_back(s);
-    return socks[socks.size()-1];
-}
-
-
-stcp_tcp_sock::~stcp_tcp_sock() {}
-
-
-void tcp_module::proc()
-{
-}
 
 
 } /* namespace slank */

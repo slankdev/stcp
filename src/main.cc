@@ -4,7 +4,7 @@
 
 using namespace slank;
 
-
+# if 0
 class UdpEchoServer : public stcp_app {
     stcp_udp_sock* s;
     size_t recv_count;
@@ -43,20 +43,19 @@ public:
         }
     }
 };
+#endif
 
 
 class TcpEchoServer : public stcp_app {
-    stcp_tcp_sock* s;
 public:
     TcpEchoServer() : stcp_app()
     {
-        stcp_tcp_sock& sock = stcp_tcp_sock::socket();
-        s = &sock;
+        stcp_tcp_sock* sock = core::create_tcp_socket();
 
         stcp_sockaddr_in addr;
         addr.sin_fam  = STCP_AF_INET;
         addr.sin_port = rte::bswap16(9999);
-        // sock.bind(&addr);
+        // sock->bind(&addr);
     }
     void proc() override
     {
@@ -75,7 +74,6 @@ int main(int argc, char** argv)
     core::set_ip_addr(192, 168, 222, 10, 24);
     core::set_default_gw(192, 168, 222, 1, 0);
 
-    // UdpEchoServer app;
     TcpEchoServer app;
     core::run();
 }

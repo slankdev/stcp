@@ -6,6 +6,7 @@
 #include <stcp/config.h>
 #include <stcp/socket.h>
 #include <stcp/dpdk.h>
+#include <stcp/stcp.h>
 
 #include <vector>
 #include <queue>
@@ -43,6 +44,37 @@ enum tcp_socket_state {
 
 
 
+inline const char* tcp_socket_state2str(tcp_socket_state state)
+{
+    switch (state) {
+        case STCP_TCP_ST_CLOSED     :
+            return "CLOSED     ";
+        case STCP_TCP_ST_LISTEN     :
+            return "LISTEN     ";
+        case STCP_TCP_ST_SYN_SENT   :
+            return "SYN_SENT   ";
+        case STCP_TCP_ST_SYN_RCVD   :
+            return "SYN_RCVD   ";
+        case STCP_TCP_ST_ESTABLISHED:
+            return "ESTABLISHED";
+        case STCP_TCP_ST_FIN_WAIT_1 :
+            return "FIN_WAIT_1 ";
+        case STCP_TCP_ST_FIN_WAIT_2 :
+            return "FIN_WAIT_2 ";
+        case STCP_TCP_ST_CLOSE_WAIT :
+            return "CLOSE_WAIT ";
+        case STCP_TCP_ST_CLOSING    :
+            return "CLOSING    ";
+        case STCP_TCP_ST_LAST_ACK   :
+            return "LAST_ACK   ";
+        case STCP_TCP_ST_TIME_WAIT  :
+            return "TIME_WAIT  ";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+
 struct stcp_tcp_header {
 	uint16_t sport;     /**< TCP source port.            */
 	uint16_t dport;     /**< TCP destination port.       */
@@ -57,9 +89,7 @@ struct stcp_tcp_header {
 
 
 
-
-
-class stcp_tcp_sockdata {
+struct stcp_tcp_sockdata {
 };
 
 
@@ -72,24 +102,41 @@ struct tcp_stream_info {
 };
 
 
+enum stcp_tcp_sock_event {
+};
+
+
 
 
 class stcp_tcp_sock {
     friend class tcp_module;
+private:
     tcp_socket_state state;
     uint16_t port;
 
+    void handle_event(stcp_tcp_sock_event event) // TODO NOT IMPLE
+    {
+        switch (event) {
+            default:
+                break;
+        }
+    }
+
 public:
     stcp_tcp_sock() : state(STCP_TCP_ST_CLOSED), port(0) {}
-    ~stcp_tcp_sock(); // TODO IMPLE
-    bool operator==(const stcp_tcp_sock& rhs) const { return port==rhs.port; }
-    bool operator!=(const stcp_tcp_sock& rhs) const { return !(*this==rhs); }
-    uint16_t get_port() const { return port; }
 
-    static stcp_tcp_sock& socket();
+public: /* for Getting Status */
+    tcp_socket_state get_state() const { return state; }
+    uint16_t   get_port() const { return port; }
+
+public: /* for Users Operation */
     void close();
+    void bind(const struct sockaddr_in* addr, size_t addrlen);
+    void listen(size_t backlog);
+    stcp_tcp_sock* accept(struct sockaddr_in* addr, size_t addrlen);
+    void write(mbuf* msg);
+    void read(mbuf* msg);
 };
-
 
 
 
@@ -100,18 +147,33 @@ private:
     size_t rx_cnt;
     size_t tx_cnt;
     std::vector<stcp_tcp_sock> socks;
-    stcp_tcp_sock& socket();
-    void close_socket(stcp_tcp_sock& s);
 
 public:
     tcp_module() : rx_cnt(0), tx_cnt(0) {}
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
+    void tx_push(mbuf* msg, const stcp_sockaddr_in* dst, uint16_t srcp);
     void send_RSTACK(mbuf* msg, stcp_sockaddr_in* src, tcp_stream_info* info);
-    // void tx_push(mbuf* msg, const stcp_sockaddr_in* dst, uint16_t srcp);
-    void proc();
-    void print_stat() const;
-};
 
+    void proc() {}
+    void print_stat() const;
+
+    stcp_tcp_sock* create_socket()
+    {
+        stcp_tcp_sock s;
+        socks.push_back(s);
+        return &socks[socks.size()-1];
+    }
+    void destroy_socket(stcp_tcp_sock* sock)
+    {
+        for (size_t i=0; i<socks.size(); i++) {
+            if (sock == &socks[i]) {
+                socks.erase(socks.begin() + i);
+                return;
+            }
+        }
+        throw exception("OKASHIII");
+    }
+};
 
 
 
