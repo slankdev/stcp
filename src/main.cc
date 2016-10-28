@@ -55,7 +55,7 @@ public:
         stcp_sockaddr_in addr;
         addr.sin_fam  = STCP_AF_INET;
         addr.sin_port = rte::bswap16(9999);
-        // sock->bind(&addr);
+        sock->bind(&addr, sizeof(addr));
     }
     void proc() override
     {

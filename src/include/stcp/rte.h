@@ -26,7 +26,7 @@
 
 
 namespace slank {
-    
+
 
 
 
@@ -41,8 +41,8 @@ class exception : public std::exception {
     public:
         explicit exception(const char* s="") noexcept {
             // int e = errno;
-            str = s; 
-        } 
+            str = s;
+        }
         template<class T>
         exception& operator<<(const T& t) noexcept {
             std::ostringstream os;
@@ -51,7 +51,7 @@ class exception : public std::exception {
             return *this;
         }
         const char* what() const noexcept {
-            return str.c_str(); 
+            return str.c_str();
         }
 };
 
@@ -60,25 +60,25 @@ size_t mbuf2len(struct rte_mbuf* mbuf);
 void eth_dev_init(int argc, char** argv);
 void eth_dev_configure(uint8_t port_id, uint16_t nb_rx_queue,
         uint16_t nb_tx_queue, const struct rte_eth_conf* eth_conf);
-void eth_rx_queue_setup(uint8_t port_id, uint16_t rx_queue_id, 
-        uint16_t nb_rx_desc, uint32_t socket_id, 
+void eth_rx_queue_setup(uint8_t port_id, uint16_t rx_queue_id,
+        uint16_t nb_rx_desc, uint32_t socket_id,
         const struct rte_eth_rxconf* rx_conf, struct rte_mempool* mbuf_pool);
-void eth_tx_queue_setup(uint8_t port_id, uint16_t tx_queue_id, 
-        uint16_t nb_tx_desc, uint32_t socket_id, 
+void eth_tx_queue_setup(uint8_t port_id, uint16_t tx_queue_id,
+        uint16_t nb_tx_desc, uint32_t socket_id,
         const struct rte_eth_txconf* tx_conf);
 void eth_dev_start(uint8_t port_id);
 void eth_promiscuous_enable(uint8_t port_id);
 void eth_promiscuous_disable(uint8_t port_id);
 int eth_promiscuous_get(uint8_t port_id);
-struct rte_mempool* pktmbuf_pool_create(const char* name, uint32_t n, 
-        uint32_t cache_size, uint16_t priv_size, 
+struct rte_mempool* pktmbuf_pool_create(const char* name, uint32_t n,
+        uint32_t cache_size, uint16_t priv_size,
         uint16_t data_room_size, int socket_id);
 size_t eth_dev_count();
 size_t lcore_count();
 void eth_macaddr_get(uint8_t port_id, struct ether_addr* mac_addr);
-uint16_t eth_rx_burst(uint8_t port_id, uint16_t queue_id, 
+uint16_t eth_rx_burst(uint8_t port_id, uint16_t queue_id,
         struct rte_mbuf** rx_pkts, const uint16_t nb_pkts);
-uint16_t eth_tx_burst(uint8_t port_id, uint16_t queue_id, 
+uint16_t eth_tx_burst(uint8_t port_id, uint16_t queue_id,
         struct rte_mbuf** tx_pkts, uint16_t nb_pkts);
 void pktmbuf_free(struct rte_mbuf* m);
 uint32_t socket_id();
@@ -112,9 +112,9 @@ void free(void* ptr);
 void* memcpy(void* dst, const void* src, size_t n);
 
 uint32_t ipv4_fragment_packet(
-        rte_mbuf* pkt_in, rte_mbuf** pkts_out, 
-        uint16_t nb_pkts_out, uint16_t mtu_size, 
-        struct rte_mempool* pool_direct, 
+        rte_mbuf* pkt_in, rte_mbuf** pkts_out,
+        uint16_t nb_pkts_out, uint16_t mtu_size,
+        struct rte_mempool* pool_direct,
         struct rte_mempool* pool_indirect) noexcept;
 bool ipv4_frag_pkt_is_fragmented(const void* iph);
 struct rte_mbuf* ipv4_frag_reassemble_packet(
@@ -144,6 +144,13 @@ T pktmbuf_mtod(struct rte_mbuf* msg)
 {
     return rte_pktmbuf_mtod(msg, T);
 }
+template <class T>
+T pktmbuf_mtod_offset(struct rte_mbuf* msg, ssize_t offset)
+{
+    return rte_pktmbuf_mtod_offset(msg, T, offset);
+}
+
+
 
 
 } /* namespace rte */

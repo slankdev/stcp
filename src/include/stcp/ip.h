@@ -22,16 +22,33 @@ enum : uint32_t {
 
 
 struct stcp_ip_header {
-	uint8_t  version_ihl;		/**< version and header length */
-	uint8_t  type_of_service;	/**< type of service */
-	uint16_t total_length;		/**< length of packet */
-	uint16_t packet_id;		/**< packet ID */
-	uint16_t fragment_offset;	/**< fragmentation offset */
-	uint8_t  time_to_live;		/**< time to live */
-	uint8_t  next_proto_id;		/**< protocol ID */
-	uint16_t hdr_checksum;		/**< header checksum */
+	uint8_t  version_ihl    ;  /**< version and header length */
+	uint8_t  type_of_service;  /**< type of service */
+	uint16_t total_length   ;  /**< length of packet */
+	uint16_t packet_id      ;  /**< packet ID */
+	uint16_t fragment_offset;  /**< fragmentation offset */
+	uint8_t  time_to_live   ;  /**< time to live */
+	uint8_t  next_proto_id  ;  /**< protocol ID */
+	uint16_t hdr_checksum   ;  /**< header checksum */
     stcp_in_addr src;
     stcp_in_addr dst;
+
+    void print()
+    {
+        printf("version_ihl    : 0x%02x    \n", version_ihl                  );
+        printf("type_of_service: 0x%02x    \n", type_of_service              );
+        printf("total_length   : %u 0x%04x \n",
+                rte::bswap16(total_length), rte::bswap16(total_length)       );
+        printf("packet_id      : %u 0x%04x \n",
+                rte::bswap16(packet_id), rte::bswap16(packet_id)             );
+        printf("fragment_offset: %u 0x%04x \n",
+                rte::bswap16(fragment_offset), rte::bswap16(fragment_offset) );
+        printf("time_to_live   : 0x%02x \n"   , time_to_live                 );
+        printf("next_proto_id  : 0x%02x \n"   , next_proto_id                );
+        printf("hdr_checksum   : 0x%04x \n"   , rte::bswap16(hdr_checksum)   );
+        printf("src address    : %s \n"       , src.c_str()                  );
+        printf("dst address    : %s \n"       , dst.c_str()                  );
+    }
 } ;
 
 

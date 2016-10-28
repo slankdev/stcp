@@ -85,6 +85,18 @@ struct stcp_tcp_header {
 	uint16_t rx_win;    /**< RX flow control window.     */
 	uint16_t cksum;     /**< TCP checksum.               */
 	uint16_t tcp_urp;   /**< TCP urgent pointer, if any. */
+
+    void print()
+    {
+        printf("sport    : %u 0x%04x \n", rte::bswap16(sport), rte::bswap16(sport)   );
+        printf("dport    : %u 0x%04x \n", rte::bswap16(dport), rte::bswap16(dport)   );
+        printf("seq num  : %u 0x%08x \n", rte::bswap32(seq_num), rte::bswap32(seq_num) );
+        printf("ack num  : %u 0x%08x \n", rte::bswap32(ack_num), rte::bswap32(ack_num) );
+        printf("data off : 0x%02x \n", data_off              );
+        printf("tcp flags: 0x%02x \n", tcp_flags             );
+        printf("rx win   : 0x%04x \n", rte::bswap16(rx_win)  );
+        printf("cksum    : 0x%04x \n", rte::bswap16(cksum )  );
+    }
 };
 
 
@@ -132,12 +144,17 @@ public: /* for Getting Status */
     uint16_t   get_port() const { return port; }
 
 public: /* for Users Operation */
-    void close();
-    void bind(const struct sockaddr_in* addr, size_t addrlen);
+
+    void bind(const struct stcp_sockaddr_in* addr, size_t addrlen);
+#if 0
     void listen(size_t backlog);
-    stcp_tcp_sock* accept(struct sockaddr_in* addr, size_t addrlen);
+    stcp_tcp_sock* accept(struct stcp_sockaddr_in* addr, size_t addrlen);
     void write(mbuf* msg);
     void read(mbuf* msg);
+#endif
+
+public:
+    void rx_push(mbuf* msg, stcp_sockaddr_in* src);
 };
 
 

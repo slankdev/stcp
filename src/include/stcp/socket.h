@@ -167,6 +167,14 @@ public:
         }
         return *this;
     }
+    const char* c_str()
+    {
+        static char str[32];
+        sprintf(str, "%d.%d.%d.%d",
+                addr_bytes[0], addr_bytes[1],
+                addr_bytes[2], addr_bytes[3]);
+        return str;
+    }
 };
 
 struct stcp_sockaddr_in {

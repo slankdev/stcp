@@ -7,6 +7,16 @@ namespace slank {
 
 
 
+void stcp_tcp_sock::bind(const struct stcp_sockaddr_in* addr, size_t addrlen)
+{
+    if (addrlen < sizeof(sockaddr_in))
+        throw exception("Invalid addrlen");
+    port = addr->sin_port;
+}
+
+
+
+
 
 void stcp_tcp_sock::move_state(tcp_socket_state next_state)
 {
@@ -182,6 +192,68 @@ void stcp_tcp_sock::move_state_from_TIME_WAIT(tcp_socket_state next_state)
 }
 
 
+/*
+ *
+ * msg: points ip_header
+ */
+void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
+{
+    DEBUG("RXPUSH TCP SOCK\n");
+
+    stcp_ip_header*  ih
+        = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
+    stcp_tcp_header* th
+        = rte::pktmbuf_mtod_offset<stcp_tcp_header*>(msg, sizeof(stcp_ip_header));
+    ih->print();
+    th->print();
+    rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
+
+
+    switch (state) {
+        case STCP_TCP_ST_CLOSED:
+        {
+            /* reply RSTACK */
+            uint16_t myport = th->dport;
+            th->dport = th->sport;
+            th->sport = myport;
+            th->ack_num = th->seq_num + rte::bswap32(1);
+            th->seq_num = 0;
+
+            th->data_off  = sizeof(stcp_tcp_header)/4 << 4;
+            th->tcp_flags = STCP_TCP_FLAG_RST|STCP_TCP_FLAG_ACK;
+            th->rx_win    = 0;
+            th->cksum     = 0x0000; // TODO
+            th->tcp_urp   = 0x0000;
+
+            th->cksum = rte_ipv4_udptcp_cksum(
+                    reinterpret_cast<ipv4_hdr*>(ih), th);
+
+            mbuf_pull(msg, sizeof(stcp_ip_header));
+            core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
+            break;
+        }
+
+        /*
+         * TODO add behaviours each state
+         */
+        case STCP_TCP_ST_LISTEN:
+        case STCP_TCP_ST_SYN_SENT:
+        case STCP_TCP_ST_SYN_RCVD:
+        case STCP_TCP_ST_ESTABLISHED:
+        case STCP_TCP_ST_FIN_WAIT_1:
+        case STCP_TCP_ST_FIN_WAIT_2:
+        case STCP_TCP_ST_CLOSE_WAIT:
+        case STCP_TCP_ST_CLOSING:
+        case STCP_TCP_ST_LAST_ACK:
+        case STCP_TCP_ST_TIME_WAIT:
+            throw exception("NOT IMPLEMENT YET");
+            break;
+        default:
+            throw exception("invalid tcp sock state");
+            break;
+    }
+}
+
 
 size_t tcp_module::mss = 1460; // TODO hardcode
 
@@ -211,17 +283,14 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
 
     uint16_t dst_port = th->dport;
     for (auto sock : socks) {
-        src->sin_port = th->sport;
         if (sock.get_port() == dst_port) {
-            throw exception("NOT IMPLE");
-            // mbuf_pull(msg, sizeof(stcp_tcp_header)); // TODO tcp hlen hardcode
-            // TODO
-            // sock.rx_data_push(d);
-            // return ;
+            mbuf_push(msg, sizeof(stcp_ip_header));
+            sock.rx_push(msg, src);
+            return;
         }
     }
 
-    /* Send ICMP Port Unreachable  */
+    /* Send Port Unreachable as TCP-RSTACK */
     // mbuf_push(msg, sizeof(stcp_ip_header));
     struct tcp_stream_info info;
     info.my_port   = th->dport;
@@ -252,7 +321,7 @@ void tcp_module::send_RSTACK(mbuf* msg, stcp_sockaddr_in* dst,
     th->data_off = sizeof(stcp_tcp_header)/4 << 4;
     th->tcp_flags    = STCP_TCP_FLAG_RST|STCP_TCP_FLAG_ACK;
     th->rx_win   = 0;
-    th->cksum    = 0x0000; // TODO
+    th->cksum    = 0x0000;
     th->tcp_urp  = 0x0000;
 
     th->cksum = rte_ipv4_udptcp_cksum(
