@@ -291,12 +291,40 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
             }
             break;
         }
+        case STCP_TCP_ST_ESTABLISHED:
+        {
+            DEBUG("Not Implement AAAA\n");
+            if ((th->tcp_flags|STCP_TCP_FLAG_PSH) != 0x00) {
+                // DEBUG("TODO send ack\n");
+
+                uint16_t iptotlen = rte::bswap16(ih->total_length);
+
+                uint16_t myport = th->dport;
+                th->dport = th->sport;
+                th->sport = myport;
+                uint32_t ack_tmp = rte::bswap32(th->ack_num);
+                th->ack_num = th->seq_num + rte::bswap32(0x11); // TODO hardcode
+                th->seq_num = rte::bswap16(ack_tmp + iptotlen - 20);
+                th->cksum     = 0x0000;
+                th->tcp_urp   = 0x0000;
+
+                ih->total_length = rte::bswap16(
+                        sizeof(stcp_tcp_header) +
+                        sizeof(stcp_ip_header));
+                th->cksum = rte_ipv4_udptcp_cksum(
+                        reinterpret_cast<ipv4_hdr*>(ih), th);
+
+                mbuf_pull(msg, sizeof(stcp_ip_header));
+                core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
+            }
+            break;
+        }
+
 
         /*
          * TODO add behaviours each state
          */
         case STCP_TCP_ST_SYN_SENT:
-        case STCP_TCP_ST_ESTABLISHED:
         case STCP_TCP_ST_FIN_WAIT_1:
         case STCP_TCP_ST_FIN_WAIT_2:
         case STCP_TCP_ST_CLOSE_WAIT:
