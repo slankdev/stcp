@@ -86,16 +86,17 @@ struct stcp_tcp_header {
 	uint16_t cksum;     /**< TCP checksum.               */
 	uint16_t tcp_urp;   /**< TCP urgent pointer, if any. */
 
-    void print()
+    void print() const
     {
-        printf("sport    : %u 0x%04x \n", rte::bswap16(sport), rte::bswap16(sport)   );
-        printf("dport    : %u 0x%04x \n", rte::bswap16(dport), rte::bswap16(dport)   );
-        printf("seq num  : %u 0x%08x \n", rte::bswap32(seq_num), rte::bswap32(seq_num) );
-        printf("ack num  : %u 0x%08x \n", rte::bswap32(ack_num), rte::bswap32(ack_num) );
-        printf("data off : 0x%02x \n", data_off              );
-        printf("tcp flags: 0x%02x \n", tcp_flags             );
-        printf("rx win   : 0x%04x \n", rte::bswap16(rx_win)  );
-        printf("cksum    : 0x%04x \n", rte::bswap16(cksum )  );
+        printf("TCP header \n");
+        printf("+ sport    : %u 0x%04x \n", rte::bswap16(sport), rte::bswap16(sport)   );
+        printf("+ dport    : %u 0x%04x \n", rte::bswap16(dport), rte::bswap16(dport)   );
+        printf("+ seq num  : %u 0x%08x \n", rte::bswap32(seq_num), rte::bswap32(seq_num) );
+        printf("+ ack num  : %u 0x%08x \n", rte::bswap32(ack_num), rte::bswap32(ack_num) );
+        printf("+ data off : 0x%02x \n", data_off              );
+        printf("+ tcp flags: 0x%02x \n", tcp_flags             );
+        printf("+ rx win   : 0x%04x \n", rte::bswap16(rx_win)  );
+        printf("+ cksum    : 0x%04x \n", rte::bswap16(cksum )  );
     }
 };
 
@@ -106,12 +107,54 @@ struct stcp_tcp_sockdata {
 
 
 
+// TODO ERASE
 struct tcp_stream_info {
     uint16_t my_port;   /* store as NetworkByteOrder */
     uint16_t pair_port; /* store as NetworkByteOrder */
     uint32_t seq_num;   /* store as NetworkByteOrder */
     uint32_t ack_num;   /* store as NetworkByteOrder */
 };
+
+
+enum tcp_op_number : uint8_t {
+    TCP_OP_FIN = 0x00,
+    TCP_OP_NOP = 0x01,
+    TCP_OP_MSS = 0x02,
+};
+struct tcp_op_fin {
+    uint8_t op_num;
+};
+struct tcp_op_nop {
+    uint8_t op_num;
+};
+struct tcp_op_mss {
+    uint8_t op_num;
+    uint8_t op_len;
+    uint16_t seg_siz;
+};
+
+
+
+/*
+ * All of variables are stored HostByteOrder
+ */
+struct currend_seg {
+    uint32_t seg_seq; /* segument's sequence number    */
+    uint32_t seg_ack; /* segument's acknouledge number */
+    uint32_t seg_len; /* segument's length             */
+    uint16_t seg_wnd; /* segument's window size        */
+    uint16_t seg_up ; /* segument's urgent pointer     */
+    uint32_t srg_prc; /* segument's priority           */
+
+    currend_seg(const stcp_tcp_header* th, const stcp_ip_header* ih) :
+        seg_seq(rte::bswap32(th->seq_num)),
+        seg_ack(rte::bswap32(th->ack_num)),
+        seg_len(rte::bswap16(ih->total_length) - th->data_off/4),
+        seg_wnd(rte::bswap16(th->rx_win )),
+        seg_up (rte::bswap16(th->tcp_urp)),
+        srg_prc(rte::bswap32(0)) {}
+};
+
 
 
 
@@ -124,6 +167,30 @@ private: /* for server socket, accept(), listen() */
 private:
     tcp_socket_state state;
     uint16_t port;
+
+
+#if 0
+    uint32_t sock_seq_num; /* Store as HostByteOrder */
+    uint32_t sock_ack_num; /* Store as HostByteOrder */
+    uint16_t sock_win_siz; /* Store as HostByteOrder */
+#else
+
+    /*
+     * Variables for TCP connected sequence number
+     * All of variables are stored as HostByteOrder
+     */
+    uint32_t snd_una; /* unconfirmed send                  */ //?
+    uint32_t snd_nxt; /* next send                         */ //?
+    uint16_t snd_win; /* send window size                  */
+    uint16_t snd_up ; /* send urgent pointer               */
+    uint32_t snd_wl1; /* used sequence num at last send    */
+    uint32_t snd_wl2; /* used acknouledge num at last send */
+    uint32_t iss    ; /* initial send sequence number      */
+    uint32_t rcv_nxt; /* next receive                      */
+    uint16_t rcv_wnd; /* receive window size               */
+    uint16_t rcv_up ; /* receive urgent pointer            */
+    uint32_t irs    ; /* initial reseive sequence number   */
+#endif
 
 private:
     void move_state_from_CLOSED(tcp_socket_state next_state);
@@ -138,8 +205,19 @@ private:
     void move_state_from_LAST_ACK(tcp_socket_state next_state);
     void move_state_from_TIME_WAIT(tcp_socket_state next_state);
 
+    void check_RST(stcp_tcp_header* th);
+    void move_state_DEBUG(tcp_socket_state next_state);
+
 public:
-    stcp_tcp_sock() : state(STCP_TCP_ST_CLOSED), port(0) {}
+#if 0
+    stcp_tcp_sock() : state(STCP_TCP_ST_CLOSED), port(0),
+                            sock_seq_num(0), sock_ack_num(0), sock_win_siz(0) {}
+#else
+    stcp_tcp_sock() : state(STCP_TCP_ST_CLOSED), port(0),
+                            snd_una(0), snd_nxt(0), snd_win(0), snd_up (0),
+                            snd_wl1(0), snd_wl2(0), iss    (0),
+                            rcv_nxt(0), rcv_wnd(0), rcv_up (0), irs(0) {}
+#endif
     void move_state(tcp_socket_state next_state);
 
 public: /* for Getting Status */

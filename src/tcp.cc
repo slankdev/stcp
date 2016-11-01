@@ -5,16 +5,28 @@
 
 namespace slank {
 
+size_t tcp_module::mss = 1460;
 
 
+void stcp_tcp_sock::check_RST(stcp_tcp_header* th)
+{
+    if ((th->tcp_flags & STCP_TCP_FLAG_RST) != 0x00) {
+        move_state_DEBUG(STCP_TCP_ST_LISTEN);
+    }
+}
+void stcp_tcp_sock::move_state_DEBUG(tcp_socket_state next_state)
+{
+    DEBUG("%s -> %s (MOVE state debug) \n",
+            tcp_socket_state2str(state),
+            tcp_socket_state2str(next_state) );
+    state = next_state;
+}
 void stcp_tcp_sock::bind(const struct stcp_sockaddr_in* addr, size_t addrlen)
 {
     if (addrlen < sizeof(sockaddr_in))
         throw exception("Invalid addrlen");
     port = addr->sin_port;
 }
-
-
 void stcp_tcp_sock::listen(size_t backlog)
 {
     if (backlog < 1) throw exception("OKASHII");
@@ -27,7 +39,7 @@ void stcp_tcp_sock::listen(size_t backlog)
 
 void stcp_tcp_sock::move_state(tcp_socket_state next_state)
 {
-    DEBUG("%s to %s \n",
+    DEBUG("%s -> %s \n",
             tcp_socket_state2str(state),
             tcp_socket_state2str(next_state) );
 
@@ -203,6 +215,28 @@ void stcp_tcp_sock::move_state_from_TIME_WAIT(tcp_socket_state next_state)
 }
 
 
+inline uint16_t data_length(const stcp_tcp_header* th,
+        const stcp_ip_header* ih)
+{
+    uint16_t iptotlen = rte::bswap16(ih->total_length);
+    uint16_t iphlen = (ih->version_ihl & 0x0f)<<2;
+    uint16_t tcphlen  = ((th->data_off>>4)<<2);
+    return iptotlen - iphlen - tcphlen;
+}
+
+
+
+inline void swap_port(stcp_tcp_header* th)
+{
+    uint16_t tmp = th->sport;
+    th->sport    = th->dport;
+    th->dport    = tmp;
+}
+
+
+
+
+
 /*
  * msg: points ip_header
  */
@@ -212,24 +246,36 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
         = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
     stcp_tcp_header* th
         = rte::pktmbuf_mtod_offset<stcp_tcp_header*>(msg, sizeof(stcp_ip_header));
+    currend_seg cseg(th, ih);
+    uint16_t tcpdlen = data_length(th, ih);
 
-#if 0 // for debug
-    ih->print();
-    th->print();
-    rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
-#endif
+    /* TODO ERASE */
+    {
+        /*
+         * Zero Clear at TCP option field
+         */
+        uint8_t* buf = reinterpret_cast<uint8_t*>(th);
+        buf += sizeof(stcp_tcp_header);
+        size_t tcpoplen = th->data_off/4 - sizeof(stcp_tcp_header);
+        // if (tcpoplen > 0) {
+        //     DEBUG("clear opt %zd byte\n", tcpoplen);
+        // } else {
+        //     DEBUG("no option \n");
+        // }
+        memset(buf, 0x00, tcpoplen);
+    }
 
     switch (state) {
         case STCP_TCP_ST_CLOSED:
         {
-            /* reply RSTACK */
-            uint16_t myport = th->dport;
-            th->dport = th->sport;
-            th->sport = myport;
+            /*
+             * reply RSTACK
+             */
+
+            swap_port(th);
             th->ack_num = th->seq_num + rte::bswap32(1);
             th->seq_num = 0;
 
-            th->data_off  = sizeof(stcp_tcp_header)/4 << 4;
             th->tcp_flags = STCP_TCP_FLAG_RST|STCP_TCP_FLAG_ACK;
             th->rx_win    = 0;
             th->cksum     = 0x0000;
@@ -242,34 +288,61 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
             core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
             break;
         }
-
         case STCP_TCP_ST_LISTEN:
         {
             if (th->tcp_flags == STCP_TCP_FLAG_SYN) {
 
                 /*
-                 * when it recvd SYN, it reply SYNACK
+                 * Recv SYN
+                 *
+                 * Tasks
+                 * + Init stream information.
+                 * + Craft SYNACK packet to reply.
+                 * + Ctrl Mbuf and send it.
+                 * + Update Stream information.
                  */
-                move_state(STCP_TCP_ST_SYN_RCVD);
+                iss = 123456700; // TODO hardcode
+                snd_una = 0;
+                snd_nxt = iss;
+                snd_win = 512; // TODO hardcode
+                snd_up  = 0;
+                snd_wl1 = cseg.seg_seq;
+                snd_wl2 = cseg.seg_ack;
 
-                uint16_t myport = th->dport;
-                th->dport = th->sport;
-                th->sport = myport;
-                th->ack_num = th->seq_num + rte::bswap32(1);
-                th->seq_num = 0;
 
-                th->data_off  = (2*sizeof(stcp_tcp_header)) << 2;
+                irs = cseg.seg_seq;
+                rcv_nxt = irs+1;
+                rcv_wnd = cseg.seg_wnd;
+                rcv_up  = 0;
+
+                /*
+                 * craft SYNACK packet to reply.
+                 */
+                swap_port(th);
+                th->seq_num = rte::bswap32(snd_nxt);
+                th->ack_num = rte::bswap32(rcv_nxt);
+
+                th->rx_win    = rte::bswap16(snd_win);
                 th->tcp_flags = STCP_TCP_FLAG_SYN | STCP_TCP_FLAG_ACK;
-                th->rx_win    = 0;
                 th->cksum     = 0x0000;
-                th->tcp_urp   = 0x0000;
+                th->tcp_urp   = 0x0000; // TODO hardcode
 
                 th->cksum = rte_ipv4_udptcp_cksum(
                         reinterpret_cast<ipv4_hdr*>(ih), th);
 
+                /*
+                 * Ctrl Mbuf and send it.
+                 * + pull mbuf
+                 * + send mbuf
+                 */
                 mbuf_pull(msg, sizeof(stcp_ip_header));
                 core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
+                move_state(STCP_TCP_ST_SYN_RCVD);
 
+                /*
+                 * Update stream information.
+                 */
+                snd_nxt ++;
                 return ;
             }
             break;
@@ -277,36 +350,100 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
         case STCP_TCP_ST_SYN_RCVD:
         {
             /*
-             * check packet
+             * check packet is this stream's one.
              */
+            if (cseg.seg_seq != rcv_nxt) {
+                DEBUG("invalid sequence number \n");
+                return;
+            }
+            if (cseg.seg_ack != snd_nxt) {
+                DEBUG("invalid acknouledge number \n");
+                return;
+            }
 
             if (th->tcp_flags == STCP_TCP_FLAG_ACK) {
-
                 /*
-                 * when is recvd ack packet,
+                 * when recvd packet is ACK,
                  * move state to ESTABLISHED
                  */
-
                 move_state(STCP_TCP_ST_ESTABLISHED);
+            } else {
+                DEBUG("Unexpected packet \n");
             }
             break;
         }
         case STCP_TCP_ST_ESTABLISHED:
         {
-            DEBUG("Not Implement AAAA\n");
-            if ((th->tcp_flags|STCP_TCP_FLAG_PSH) != 0x00) {
-                // DEBUG("TODO send ack\n");
+            /*
+             * TODO ERASE move implementation location
+             * The code that checks msg is RST need to
+             * move implementation location to it that
+             * should implement location.
+             */
+            check_RST(th);
 
-                uint16_t iptotlen = rte::bswap16(ih->total_length);
+            if ((th->tcp_flags&STCP_TCP_FLAG_PSH) != 0x00 &&
+                    (th->tcp_flags&STCP_TCP_FLAG_ACK) != 0x00) {
+                DEBUG("ESTABLISHED: recv PSHACK \n");
 
-                uint16_t myport = th->dport;
-                th->dport = th->sport;
-                th->sport = myport;
-                uint32_t ack_tmp = rte::bswap32(th->ack_num);
-                th->ack_num = th->seq_num + rte::bswap32(0x11); // TODO hardcode
-                th->seq_num = rte::bswap16(ack_tmp + iptotlen - 20);
+                /*
+                 * Recved PSHACK+data
+                 * Reply ACK
+                 *
+                 * Tasks
+                 *  + Update Stream infos
+                 *  + Craft packet to reply
+                 *  + Update mbuf data length.
+                 *  + Ctrl mbuf and send it.
+                 */
+
+                /*
+                 * Update Stream infos
+                 */
+                snd_nxt  = cseg.seg_ack;
+                rcv_nxt  = cseg.seg_seq + tcpdlen;
+
+                /*
+                 * Craft ACK-packet to reply
+                 */
+                swap_port(th);
+                th->rx_win  = rte::bswap16(snd_win);
+                th->tcp_flags = STCP_TCP_FLAG_ACK;
+                th->seq_num = rte::bswap32(snd_nxt);
+                th->ack_num = rte::bswap32(rcv_nxt);
                 th->cksum     = 0x0000;
-                th->tcp_urp   = 0x0000;
+                th->tcp_urp   = 0x0000; // TODO hardcode
+
+                ih->total_length = rte::bswap16(
+                        sizeof(stcp_tcp_header) +
+                        sizeof(stcp_ip_header));
+                th->cksum = rte_ipv4_udptcp_cksum(
+                        reinterpret_cast<ipv4_hdr*>(ih), th);
+
+                /*
+                 * Update mbuf data length
+                 */
+                rte::pktmbuf_trim(msg, tcpdlen);
+
+                /*
+                 * Ctrl mbuf and Send it.
+                 */
+                mbuf_pull(msg, sizeof(stcp_ip_header));
+                core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
+
+            } else if ((th->tcp_flags&STCP_TCP_FLAG_FIN) != 0x00) {
+
+                /*
+                 * Recv FIN
+                 * Send ACK
+                 */
+                swap_port(th);
+                uint32_t ack_tmp = rte::bswap32(th->ack_num);
+                th->tcp_flags = STCP_TCP_FLAG_FIN|STCP_TCP_FLAG_ACK;
+                th->ack_num = th->seq_num + rte::bswap32(0x01);
+                th->seq_num = rte::bswap32(ack_tmp);
+                th->cksum   = 0x0000;
+                th->tcp_urp = 0x0000;
 
                 ih->total_length = rte::bswap16(
                         sizeof(stcp_tcp_header) +
@@ -316,6 +453,20 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
 
                 mbuf_pull(msg, sizeof(stcp_ip_header));
                 core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
+
+                // move_state(STCP_TCP_ST_CLOSE_WAIT); // TODO HONTOHA KOTTI
+                move_state_DEBUG(STCP_TCP_ST_LAST_ACK);
+
+            } else {
+                DEBUG("independent packet \n");
+            }
+
+            break;
+        }
+        case STCP_TCP_ST_LAST_ACK:
+        {
+            if ((th->tcp_flags&STCP_TCP_FLAG_ACK) != 0x00) {
+                move_state(STCP_TCP_ST_CLOSED);
             }
             break;
         }
@@ -324,12 +475,11 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
         /*
          * TODO add behaviours each state
          */
+        case STCP_TCP_ST_CLOSE_WAIT:
         case STCP_TCP_ST_SYN_SENT:
         case STCP_TCP_ST_FIN_WAIT_1:
         case STCP_TCP_ST_FIN_WAIT_2:
-        case STCP_TCP_ST_CLOSE_WAIT:
         case STCP_TCP_ST_CLOSING:
-        case STCP_TCP_ST_LAST_ACK:
         case STCP_TCP_ST_TIME_WAIT:
             throw exception("NOT IMPLEMENT YET");
             break;
@@ -340,7 +490,6 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
 }
 
 
-size_t tcp_module::mss = 1460; // TODO hardcode
 
 void tcp_module::print_stat() const
 {

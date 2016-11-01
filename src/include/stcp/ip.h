@@ -33,21 +33,22 @@ struct stcp_ip_header {
     stcp_in_addr src;
     stcp_in_addr dst;
 
-    void print()
+    void print() const
     {
-        printf("version_ihl    : 0x%02x    \n", version_ihl                  );
-        printf("type_of_service: 0x%02x    \n", type_of_service              );
-        printf("total_length   : %u 0x%04x \n",
+        printf("IP header \n");
+        printf("+ version_ihl    : 0x%02x    \n", version_ihl                  );
+        printf("+ type_of_service: 0x%02x    \n", type_of_service              );
+        printf("+ total_length   : %u 0x%04x \n",
                 rte::bswap16(total_length), rte::bswap16(total_length)       );
-        printf("packet_id      : %u 0x%04x \n",
+        printf("+ packet_id      : %u 0x%04x \n",
                 rte::bswap16(packet_id), rte::bswap16(packet_id)             );
-        printf("fragment_offset: %u 0x%04x \n",
+        printf("+ fragment_offset: %u 0x%04x \n",
                 rte::bswap16(fragment_offset), rte::bswap16(fragment_offset) );
-        printf("time_to_live   : 0x%02x \n"   , time_to_live                 );
-        printf("next_proto_id  : 0x%02x \n"   , next_proto_id                );
-        printf("hdr_checksum   : 0x%04x \n"   , rte::bswap16(hdr_checksum)   );
-        printf("src address    : %s \n"       , src.c_str()                  );
-        printf("dst address    : %s \n"       , dst.c_str()                  );
+        printf("+ time_to_live   : 0x%02x \n"   , time_to_live                 );
+        printf("+ next_proto_id  : 0x%02x \n"   , next_proto_id                );
+        printf("+ hdr_checksum   : 0x%04x \n"   , rte::bswap16(hdr_checksum)   );
+        printf("+ src address    : %s \n"       , src.c_str()                  );
+        printf("+ dst address    : %s \n"       , dst.c_str()                  );
     }
 } ;
 

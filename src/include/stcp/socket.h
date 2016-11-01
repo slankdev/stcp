@@ -167,7 +167,7 @@ public:
         }
         return *this;
     }
-    const char* c_str()
+    const char* c_str() const
     {
         static char str[32];
         sprintf(str, "%d.%d.%d.%d",
