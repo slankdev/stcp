@@ -107,14 +107,6 @@ struct stcp_tcp_sockdata {
 
 
 
-// TODO ERASE
-struct tcp_stream_info {
-    uint16_t my_port;   /* store as NetworkByteOrder */
-    uint16_t pair_port; /* store as NetworkByteOrder */
-    uint32_t seq_num;   /* store as NetworkByteOrder */
-    uint32_t ack_num;   /* store as NetworkByteOrder */
-};
-
 
 enum tcp_op_number : uint8_t {
     TCP_OP_FIN = 0x00,
@@ -168,8 +160,13 @@ private:
     tcp_socket_state state;
     uint16_t port; /* store as NetworkByteOrder*/
     uint16_t pair_port; /* store as NetworkByteOrder */
+
+#if 1
     stcp_sockaddr_in addr;
     stcp_sockaddr_in pair;
+#else
+    stcp_ip_header pip; /* TODO This field must be inited when connectin is established*/
+#endif
 
     /*
      * Variables for TCP connected sequence number
@@ -244,7 +241,7 @@ public:
     tcp_module() : rx_cnt(0), tx_cnt(0) {}
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
     void tx_push(mbuf* msg, const stcp_sockaddr_in* dst, uint16_t srcp);
-    void send_RSTACK(mbuf* msg, stcp_sockaddr_in* src, tcp_stream_info* info);
+    void send_RSTACK(mbuf* msg, stcp_sockaddr_in* src);
 
     void proc();
     void print_stat() const;

@@ -355,7 +355,11 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
     currend_seg cseg(th, ih);
     uint16_t tcpdlen = data_length(th, ih);
 
-    /* TODO ERASE */
+    /*
+     * TODO Proc TCP-Option
+     */
+
+    /* TODO ERASE zeroclear tcp options */
     {
         /*
          * Zero Clear at TCP option field
@@ -371,6 +375,21 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
         memset(buf, 0x00, tcpoplen);
     }
 
+
+    /*
+     * TODO
+     * Drop or Reply RSTACK to independent packet.
+     */
+
+    /*
+     * TODO
+     * Enqueue packet as TCP-SEG to socket-queue
+     */
+
+
+    /*
+     * TODO move implementation in socket::proc()
+     */
     switch (state) {
         case STCP_TCPS_CLOSED:
         {
@@ -640,20 +659,14 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
         }
     }
 
-    /* Send Port Unreachable as TCP-RSTACK */
-    // mbuf_push(msg, sizeof(stcp_ip_header));
-    struct tcp_stream_info info;
-    info.my_port   = th->dport;
-    info.pair_port = th->sport;
-    info.seq_num   = th->seq_num;
-    info.ack_num   = th->ack_num;
-
-    send_RSTACK(msg, src, &info);
+    /*
+     * Send Port Unreachable as TCP-RSTACK
+     */
+    send_RSTACK(msg, src);
 }
 
 
-void tcp_module::send_RSTACK(mbuf* msg, stcp_sockaddr_in* dst,
-        tcp_stream_info* info)
+void tcp_module::send_RSTACK(mbuf* msg, stcp_sockaddr_in* dst)
 {
 
     stcp_tcp_header* th
@@ -663,10 +676,9 @@ void tcp_module::send_RSTACK(mbuf* msg, stcp_sockaddr_in* dst,
     stcp_ip_header* ih =
         reinterpret_cast<stcp_ip_header*>(((uint8_t*)th) - sizeof(stcp_ip_header));
 
-    th->sport = info->my_port;
-    th->dport = info->pair_port;
+    swap_port(th);
     th->seq_num  = 0;
-    th->ack_num  = info->seq_num + rte::bswap32(1);
+    th->ack_num  = th->seq_num + rte::bswap32(1);
 
     th->data_off = sizeof(stcp_tcp_header)/4 << 4;
     th->tcp_flags    = STCP_TCP_FLAG_RST|STCP_TCP_FLAG_ACK;
