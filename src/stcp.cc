@@ -197,8 +197,8 @@ void core::run()
         uint64_t now = rte::get_tsc_cycles();
         for (auto cf : cyclic_funcs) {
             if (now - cf->prev > cf->interval_ms / 1000.0 * hz) {
+                cf->prev = now; // TODO itiguyouiue
                 cf->exec();
-                cf->prev = now;
             }
         }
 
@@ -208,6 +208,7 @@ void core::run()
 
         ifs_proc();
         ether.proc();
+        tcp.proc();
         core::stat_all(); // TODO ERASE
     }
 }

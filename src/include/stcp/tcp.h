@@ -47,27 +47,27 @@ enum tcp_socket_state {
 inline const char* tcp_socket_state2str(tcp_socket_state state)
 {
     switch (state) {
-        case STCP_TCPS_CLOSED     :
+        case STCP_TCPS_CLOSED:
             return "CLOSED";
-        case STCP_TCPS_LISTEN     :
+        case STCP_TCPS_LISTEN:
             return "LISTEN";
-        case STCP_TCPS_SYN_SENT   :
+        case STCP_TCPS_SYN_SENT:
             return "SYN_SENT";
-        case STCP_TCPS_SYN_RCVD   :
+        case STCP_TCPS_SYN_RCVD:
             return "SYN_RCVD";
         case STCP_TCPS_ESTABLISHED:
             return "ESTABLISHED";
-        case STCP_TCPS_FIN_WAIT_1 :
+        case STCP_TCPS_FIN_WAIT_1:
             return "FIN_WAIT_1";
-        case STCP_TCPS_FIN_WAIT_2 :
+        case STCP_TCPS_FIN_WAIT_2:
             return "FIN_WAIT_2";
-        case STCP_TCPS_CLOSE_WAIT :
+        case STCP_TCPS_CLOSE_WAIT:
             return "CLOSE_WAIT";
-        case STCP_TCPS_CLOSING    :
+        case STCP_TCPS_CLOSING:
             return "CLOSING";
-        case STCP_TCPS_LAST_ACK   :
+        case STCP_TCPS_LAST_ACK:
             return "LAST_ACK";
-        case STCP_TCPS_TIME_WAIT  :
+        case STCP_TCPS_TIME_WAIT:
             return "TIME_WAIT";
         default:
             return "UNKNOWN";
@@ -166,7 +166,10 @@ private: /* for server socket, accept(), listen() */
 
 private:
     tcp_socket_state state;
-    uint16_t port;
+    uint16_t port; /* store as NetworkByteOrder*/
+    uint16_t pair_port; /* store as NetworkByteOrder */
+    stcp_sockaddr_in addr;
+    stcp_sockaddr_in pair;
 
     /*
      * Variables for TCP connected sequence number
@@ -183,7 +186,6 @@ private:
     uint16_t rcv_wnd; /* receive window size               */
     uint16_t rcv_up ; /* receive urgent pointer            */
     uint32_t irs    ; /* initial reseive sequence number   */
-#endif
 
 private:
     void move_state_from_CLOSED(tcp_socket_state next_state);
@@ -200,6 +202,8 @@ private:
 
     void check_RST(stcp_tcp_header* th);
     void move_state_DEBUG(tcp_socket_state next_state);
+
+    void proc();
 
 public:
     stcp_tcp_sock() : state(STCP_TCPS_CLOSED), port(0),
@@ -242,7 +246,7 @@ public:
     void tx_push(mbuf* msg, const stcp_sockaddr_in* dst, uint16_t srcp);
     void send_RSTACK(mbuf* msg, stcp_sockaddr_in* src, tcp_stream_info* info);
 
-    void proc() {}
+    void proc();
     void print_stat() const;
 
     stcp_tcp_sock* create_socket()
