@@ -29,17 +29,17 @@ enum tcp_flags {
 };
 
 enum tcp_socket_state {
-    STCP_TCP_ST_CLOSED      = 0,
-    STCP_TCP_ST_LISTEN      = 1,
-    STCP_TCP_ST_SYN_SENT    = 2,
-    STCP_TCP_ST_SYN_RCVD    = 3,
-    STCP_TCP_ST_ESTABLISHED = 4,
-    STCP_TCP_ST_FIN_WAIT_1  = 5,
-    STCP_TCP_ST_FIN_WAIT_2  = 6,
-    STCP_TCP_ST_CLOSE_WAIT  = 7,
-    STCP_TCP_ST_CLOSING     = 8,
-    STCP_TCP_ST_LAST_ACK    = 9,
-    STCP_TCP_ST_TIME_WAIT   = 10,
+    STCP_TCPS_CLOSED      = 0,
+    STCP_TCPS_LISTEN      = 1,
+    STCP_TCPS_SYN_SENT    = 2,
+    STCP_TCPS_SYN_RCVD    = 3,
+    STCP_TCPS_ESTABLISHED = 4,
+    STCP_TCPS_FIN_WAIT_1  = 5,
+    STCP_TCPS_FIN_WAIT_2  = 6,
+    STCP_TCPS_CLOSE_WAIT  = 7,
+    STCP_TCPS_CLOSING     = 8,
+    STCP_TCPS_LAST_ACK    = 9,
+    STCP_TCPS_TIME_WAIT   = 10,
 };
 
 
@@ -47,27 +47,27 @@ enum tcp_socket_state {
 inline const char* tcp_socket_state2str(tcp_socket_state state)
 {
     switch (state) {
-        case STCP_TCP_ST_CLOSED     :
+        case STCP_TCPS_CLOSED     :
             return "CLOSED";
-        case STCP_TCP_ST_LISTEN     :
+        case STCP_TCPS_LISTEN     :
             return "LISTEN";
-        case STCP_TCP_ST_SYN_SENT   :
+        case STCP_TCPS_SYN_SENT   :
             return "SYN_SENT";
-        case STCP_TCP_ST_SYN_RCVD   :
+        case STCP_TCPS_SYN_RCVD   :
             return "SYN_RCVD";
-        case STCP_TCP_ST_ESTABLISHED:
+        case STCP_TCPS_ESTABLISHED:
             return "ESTABLISHED";
-        case STCP_TCP_ST_FIN_WAIT_1 :
+        case STCP_TCPS_FIN_WAIT_1 :
             return "FIN_WAIT_1";
-        case STCP_TCP_ST_FIN_WAIT_2 :
+        case STCP_TCPS_FIN_WAIT_2 :
             return "FIN_WAIT_2";
-        case STCP_TCP_ST_CLOSE_WAIT :
+        case STCP_TCPS_CLOSE_WAIT :
             return "CLOSE_WAIT";
-        case STCP_TCP_ST_CLOSING    :
+        case STCP_TCPS_CLOSING    :
             return "CLOSING";
-        case STCP_TCP_ST_LAST_ACK   :
+        case STCP_TCPS_LAST_ACK   :
             return "LAST_ACK";
-        case STCP_TCP_ST_TIME_WAIT  :
+        case STCP_TCPS_TIME_WAIT  :
             return "TIME_WAIT";
         default:
             return "UNKNOWN";
@@ -210,10 +210,10 @@ private:
 
 public:
 #if 0
-    stcp_tcp_sock() : state(STCP_TCP_ST_CLOSED), port(0),
+    stcp_tcp_sock() : state(STCP_TCPS_CLOSED), port(0),
                             sock_seq_num(0), sock_ack_num(0), sock_win_siz(0) {}
 #else
-    stcp_tcp_sock() : state(STCP_TCP_ST_CLOSED), port(0),
+    stcp_tcp_sock() : state(STCP_TCPS_CLOSED), port(0),
                             snd_una(0), snd_nxt(0), snd_win(0), snd_up (0),
                             snd_wl1(0), snd_wl2(0), iss    (0),
                             rcv_nxt(0), rcv_wnd(0), rcv_up (0), irs(0) {}
