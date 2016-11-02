@@ -439,7 +439,8 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
                  */
                 swap_port(th);
                 uint32_t ack_tmp = rte::bswap32(th->ack_num);
-                th->tcp_flags = STCP_TCP_FLAG_FIN|STCP_TCP_FLAG_ACK;
+                // th->tcp_flags = STCP_TCP_FLAG_FIN|STCP_TCP_FLAG_ACK;
+                th->tcp_flags = STCP_TCP_FLAG_ACK;
                 th->ack_num = th->seq_num + rte::bswap32(0x01);
                 th->seq_num = rte::bswap32(ack_tmp);
                 th->cksum   = 0x0000;
@@ -454,8 +455,8 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
                 mbuf_pull(msg, sizeof(stcp_ip_header));
                 core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
 
-                // move_state(STCP_TCPS_CLOSE_WAIT); // TODO HONTOHA KOTTI
-                move_state_DEBUG(STCP_TCPS_LAST_ACK);
+                move_state(STCP_TCPS_CLOSE_WAIT);
+                // move_state_DEBUG(STCP_TCPS_LAST_ACK);
 
             } else {
                 DEBUG("independent packet \n");

@@ -168,13 +168,6 @@ private:
     tcp_socket_state state;
     uint16_t port;
 
-
-#if 0
-    uint32_t sock_seq_num; /* Store as HostByteOrder */
-    uint32_t sock_ack_num; /* Store as HostByteOrder */
-    uint16_t sock_win_siz; /* Store as HostByteOrder */
-#else
-
     /*
      * Variables for TCP connected sequence number
      * All of variables are stored as HostByteOrder
@@ -209,15 +202,10 @@ private:
     void move_state_DEBUG(tcp_socket_state next_state);
 
 public:
-#if 0
-    stcp_tcp_sock() : state(STCP_TCPS_CLOSED), port(0),
-                            sock_seq_num(0), sock_ack_num(0), sock_win_siz(0) {}
-#else
     stcp_tcp_sock() : state(STCP_TCPS_CLOSED), port(0),
                             snd_una(0), snd_nxt(0), snd_win(0), snd_up (0),
                             snd_wl1(0), snd_wl2(0), iss    (0),
                             rcv_nxt(0), rcv_wnd(0), rcv_up (0), irs(0) {}
-#endif
     void move_state(tcp_socket_state next_state);
 
 public: /* for Getting Status */
