@@ -2,10 +2,25 @@
 
 #include <stcp/tcp.h>
 #include <stcp/config.h>
+#define UNUSED(x) (void)(x)
 
 namespace slank {
 
 size_t tcp_module::mss = 1460;
+
+
+
+stcp_tcp_sock* stcp_tcp_sock::accept(struct stcp_sockaddr_in* addr)
+{
+    UNUSED(addr);
+    for (stcp_tcp_sock* sock : core::tcp.socks) {
+        if (sock->head == this && !sock->accepted) {
+            return sock;
+        }
+    }
+    return nullptr;
+    // throw exception("NAAIIIIII\n");
+}
 
 
 
@@ -18,8 +33,6 @@ void stcp_tcp_sock::proc()
              * TODO
              * These must be implemented
              */
-
-
 
             mbuf* msg = rte::pktmbuf_alloc(core::dpdk.get_mempool());
 
@@ -108,18 +121,25 @@ void stcp_tcp_sock::proc()
 
 void tcp_module::proc()
 {
-    for (stcp_tcp_sock& sock : socks) {
-        sock.proc();
+    for (size_t i=0; i<socks.size(); i++) {
+        if (socks[i]->state == STCP_TCPS_CLOSED) {
+            stcp_tcp_sock* s = socks[i];
+            delete s;
+            socks.erase(socks.begin() + i);
+            return;
+        }
+        socks[i]->proc();
     }
 }
 
 
-#define UNUSED(x) (void)(x)
 
 void stcp_tcp_sock::do_RST(stcp_tcp_header* th)
 {
+
+#define UNUSED(x) (void)(x)
     UNUSED(th); // TODO ERASE
-#if 1
+
     switch (state) {
         case STCP_TCPS_ESTABLISHED:
         {
@@ -149,11 +169,6 @@ void stcp_tcp_sock::do_RST(stcp_tcp_header* th)
         }
 
     }
-#else
-    if ((th->tcp_flags & STCP_TCP_FLAG_RST) != 0x00) {
-        move_state_DEBUG(STCP_TCPS_CLOSED);
-    }
-#endif
 }
 void stcp_tcp_sock::move_state_DEBUG(tcp_socket_state next_state)
 {
@@ -171,7 +186,8 @@ void stcp_tcp_sock::bind(const struct stcp_sockaddr_in* addr, size_t addrlen)
 void stcp_tcp_sock::listen(size_t backlog)
 {
     if (backlog < 1) throw exception("OKASHII");
-    // connections.resize(backlog);
+    num_connected = 0;
+    max_connect   = backlog;
     move_state(STCP_TCPS_LISTEN);
 }
 
@@ -337,6 +353,7 @@ void stcp_tcp_sock::move_state_from_LAST_ACK(tcp_socket_state next_state)
     switch (next_state) {
         case STCP_TCPS_CLOSED:
             state = next_state;
+            dead = true;
             break;
         default:
             throw exception("invalid state-change");
@@ -348,6 +365,7 @@ void stcp_tcp_sock::move_state_from_TIME_WAIT(tcp_socket_state next_state)
     switch (next_state) {
         case STCP_TCPS_CLOSED:
             state = next_state;
+            dead = true;
             break;
         default:
             throw exception("invalid state-change");
@@ -402,11 +420,6 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
         uint8_t* buf = reinterpret_cast<uint8_t*>(th);
         buf += sizeof(stcp_tcp_header);
         size_t tcpoplen = th->data_off/4 - sizeof(stcp_tcp_header);
-        // if (tcpoplen > 0) {
-        //     DEBUG("clear opt %zd byte\n", tcpoplen);
-        // } else {
-        //     DEBUG("no option \n");
-        // }
         memset(buf, 0x00, tcpoplen);
     }
 
@@ -452,37 +465,58 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
         {
             if (th->tcp_flags == STCP_TCP_FLAG_SYN) {
 
+                if (max_connect <= num_connected)
+                    throw exception("No such space to connect");
+
                 /*
                  * Recv SYN
                  *
                  * Tasks
+                 * + Create new socket.
                  * + Init stream information.
                  * + Craft SYNACK packet to reply.
                  * + Ctrl Mbuf and send it.
                  * + Update Stream information.
                  */
-                iss = 123456700; // TODO hardcode
-                snd_una = 0;
-                snd_nxt = iss;
-                snd_win = 512; // TODO hardcode
-                snd_up  = 0;
-                snd_wl1 = cseg.seg_seq;
-                snd_wl2 = cseg.seg_ack;
 
+                /*
+                 * Create new socket
+                 */
+                stcp_tcp_sock* newsock = core::create_tcp_socket();
+                num_connected ++;
+                newsock->head = this;
+                newsock->port = port;
+                newsock->pair_port = pair_port;
+                newsock->addr = addr;
+                newsock->pair = pair;
+                newsock->state = STCP_TCPS_SYN_RCVD;
 
-                irs = cseg.seg_seq;
-                rcv_nxt = irs+1;
-                rcv_wnd = cseg.seg_wnd;
-                rcv_up  = 0;
+                /*
+                 * Init stream information
+                 */
+                newsock->iss = (rte::rand() % 0xffffffff); // TODO hardcode
+                newsock->snd_una = 0;
+                newsock->snd_nxt = newsock->iss;
+                newsock->snd_win = 512; // TODO hardcode
+                newsock->snd_up  = 0;
+                newsock->snd_wl1 = cseg.seg_seq;
+                newsock->snd_wl2 = cseg.seg_ack;
+
+                newsock->irs = cseg.seg_seq;
+                newsock->rcv_nxt = newsock->irs + 1;
+                newsock->rcv_wnd = cseg.seg_wnd;
+                newsock->rcv_up  = 0;
 
                 /*
                  * craft SYNACK packet to reply.
                  */
                 swap_port(th);
-                th->seq_num = rte::bswap32(snd_nxt);
-                th->ack_num = rte::bswap32(rcv_nxt);
 
-                th->rx_win    = rte::bswap16(snd_win);
+
+                th->seq_num = rte::bswap32(newsock->snd_nxt);
+                th->ack_num = rte::bswap32(newsock->rcv_nxt);
+
+                th->rx_win    = rte::bswap16(newsock->snd_win);
                 th->tcp_flags = STCP_TCP_FLAG_SYN | STCP_TCP_FLAG_ACK;
                 th->cksum     = 0x0000;
                 th->tcp_urp   = 0x0000; // TODO hardcode
@@ -497,12 +531,11 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
                  */
                 mbuf_pull(msg, sizeof(stcp_ip_header));
                 core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
-                move_state(STCP_TCPS_SYN_RCVD);
 
                 /*
                  * Update stream information.
                  */
-                snd_nxt ++;
+                newsock->snd_nxt ++;
                 return ;
             }
             break;
@@ -513,7 +546,9 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
              * check packet is this stream's one.
              */
             if (cseg.seg_seq != rcv_nxt) {
-                DEBUG("invalid sequence number \n");
+                DEBUG("invalid sequence number seg=%u(0x%x), sock=%u(0x%x)\n",
+                        cseg.seg_seq, cseg.seg_seq,
+                        rcv_nxt, rcv_nxt);
                 return;
             }
             if (cseg.seg_ack != snd_nxt) {
@@ -540,15 +575,30 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
              * move implementation location to it that
              * should implement location.
              */
-            if ((th->tcp_flags & STCP_TCP_FLAG_RST) != 0x00) {
-                do_RST(th);
+
+#if 0
+            // if ((th->tcp_flags & STCP_TCP_FLAG_RST) != 0x00) {
+            //     do_RST(th);
+            //     rte::pktmbuf_free(msg);
+            //     return;
+            // }
+#endif
+
+
+            /*
+             * Check that packet is this stream's packet.
+             */
+            if (!(th->seq_num == rte::bswap32(rcv_nxt) &&
+                    th->ack_num == rte::bswap32(snd_nxt))) {
                 rte::pktmbuf_free(msg);
                 return;
             }
 
+
+
             if ((th->tcp_flags&STCP_TCP_FLAG_PSH) != 0x00 &&
                     (th->tcp_flags&STCP_TCP_FLAG_ACK) != 0x00) {
-                DEBUG("ESTABLISHED: recv PSHACK \n");
+                DEBUG("ESTABLISHED RCV DATA with PSHACK on this=%p\n", this);
 
                 /*
                  * Recved PSHACK+data
@@ -665,6 +715,42 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
 
 
 
+void stcp_tcp_sock::print_stat() const
+{
+    stat& s = stat::instance();
+    s.write("\t%u/tcp state=%s seq=%u ack=%u [this=%p]", rte::bswap16(get_port()),
+            tcp_socket_state2str(get_state()), snd_nxt, rcv_nxt, this);
+
+#if 0
+    // switch (state) {
+    //     case STCP_TCPS_LISTEN:
+    //         s.write("\t - socket alloced %zd/%zd", num_connected, max_connect);
+    //         s.write("\n\n\n");
+    //         break;
+    //     case STCP_TCPS_ESTABLISHED:
+    //         s.write("\t - iss    : %u", iss    );
+    //         // s.write("\t - snd_una: %u", snd_una);
+    //         s.write("\t - snd_nxt: %u", snd_nxt);
+    //         // s.write("\t - snd_win: %u", snd_win);
+    //         // s.write("\t - snd_up : %u", snd_up );
+    //         // s.write("\t - snd_wl1: %u", snd_wl1);
+    //         // s.write("\t - snd_wl2: %u", snd_wl2);
+    //         s.write("\t - irs    : %u", irs    );
+    //         s.write("\t - rcv_nxt: %u", rcv_nxt);
+    //         // s.write("\t - rcv_wnd: %u", rcv_wnd);
+    //         // s.write("\t - rcv_up : %u", rcv_up );
+    //         break;
+    //     case STCP_TCPS_CLOSED:
+    //         s.write("\n\n\n");
+    //         break;
+    //     default:
+    //         s.write("\n\n\n");
+    //         break;
+    // }
+#endif
+}
+
+
 void tcp_module::print_stat() const
 {
     stat& s = stat::instance();
@@ -676,9 +762,8 @@ void tcp_module::print_stat() const
         s.write("");
         s.write("\tNetStat %zd ports", socks.size());
     }
-    for (const stcp_tcp_sock& sock : socks) {
-        s.write("\t%u/tcp state=%s", rte::bswap16(sock.get_port()),
-                tcp_socket_state2str(sock.get_state()));
+    for (size_t i=0; i<socks.size(); i++) {
+        socks[i]->print_stat();
     }
 }
 
@@ -689,19 +774,24 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
         = rte::pktmbuf_mtod<stcp_tcp_header*>(msg);
     rx_cnt++;
 
+    bool find_socket = false;
     uint16_t dst_port = th->dport;
-    for (stcp_tcp_sock& sock : socks) {
-        if (sock.get_port() == dst_port) {
-            mbuf_push(msg, sizeof(stcp_ip_header));
-            sock.rx_push(msg, src);
-            return;
+    for (stcp_tcp_sock* sock : socks) {
+        if (sock->get_port() == dst_port) {
+            mbuf* m = rte::pktmbuf_clone(msg, core::dpdk.get_mempool());
+            mbuf_push(m, sizeof(stcp_ip_header));
+            sock->rx_push(m, src);
+            find_socket = true;
         }
     }
 
-    /*
-     * Send Port Unreachable as TCP-RSTACK
-     */
-    send_RSTACK(msg, src);
+    if (!find_socket) {
+        /*
+         * Send Port Unreachable as TCP-RSTACK
+         */
+        send_RSTACK(msg, src);
+    }
+    rte::pktmbuf_free(msg);
 }
 
 

@@ -145,6 +145,13 @@ struct currend_seg {
         seg_wnd(rte::bswap16(th->rx_win )),
         seg_up (rte::bswap16(th->tcp_urp)),
         srg_prc(rte::bswap32(0)) {}
+
+    void print()
+    {
+        printf("Current Segument \n");
+        printf(" - seq : %u(0x%x) \n", seg_seq, seg_seq);
+        printf(" - ack : %u(0x%x) \n", seg_ack, seg_ack);
+    }
 };
 
 
@@ -154,12 +161,11 @@ using tcp_sock_queue = std::queue<mbuf*>;
 class stcp_tcp_sock {
     friend class tcp_module;
 private:
-
-    // TODO no use
-#if 0
-    std::vector<stcp_tcp_sock> connections;
-    tcp_sock_queue rxq;
-#endif
+    bool accepted;
+    bool dead;
+    stcp_tcp_sock* head;
+    size_t num_connected;
+    size_t max_connect;
 
 private:
     tcp_socket_state state;
@@ -206,12 +212,25 @@ private:
     void move_state_DEBUG(tcp_socket_state next_state);
 
     void proc();
+    void print_stat() const;
 
 public:
-    stcp_tcp_sock() : state(STCP_TCPS_CLOSED), port(0),
+    stcp_tcp_sock() :
+                            accepted(false),
+                            dead(false),
+                            head(nullptr),
+                            num_connected(0),
+                            state(STCP_TCPS_CLOSED), port(0),
                             snd_una(0), snd_nxt(0), snd_win(0), snd_up (0),
                             snd_wl1(0), snd_wl2(0), iss    (0),
                             rcv_nxt(0), rcv_wnd(0), rcv_up (0), irs(0) {}
+    ~stcp_tcp_sock()
+    {
+        if (head) {
+            head->num_connected --;
+        }
+    }
+
     void move_state(tcp_socket_state next_state);
 
 public: /* for Getting Status */
@@ -222,8 +241,8 @@ public: /* for Users Operation */
 
     void bind(const struct stcp_sockaddr_in* addr, size_t addrlen);
     void listen(size_t backlog);
+    stcp_tcp_sock* accept(struct stcp_sockaddr_in* addr);
 #if 0
-    stcp_tcp_sock* accept(struct stcp_sockaddr_in* addr, size_t addrlen);
     void write(mbuf* msg);
     void read(mbuf* msg);
 #endif
@@ -236,11 +255,12 @@ public:
 
 class tcp_module {
     friend class stcp_tcp_sock;
+    friend class core;
 private:
     static size_t mss;
     size_t rx_cnt;
     size_t tx_cnt;
-    std::vector<stcp_tcp_sock> socks;
+    std::vector<stcp_tcp_sock*> socks;
 
 public:
     tcp_module() : rx_cnt(0), tx_cnt(0) {}
@@ -251,22 +271,6 @@ public:
     void proc();
     void print_stat() const;
 
-    stcp_tcp_sock* create_socket()
-    {
-        stcp_tcp_sock s;
-        socks.push_back(s);
-        return &socks[socks.size()-1];
-    }
-    void destroy_socket(stcp_tcp_sock* sock)
-    {
-        for (size_t i=0; i<socks.size(); i++) {
-            if (sock == &socks[i]) {
-                socks.erase(socks.begin() + i);
-                return;
-            }
-        }
-        throw exception("OKASHIII");
-    }
 };
 
 

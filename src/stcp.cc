@@ -21,14 +21,24 @@ dpdk_core    core::dpdk;
 
 
 
+
+
 stcp_tcp_sock* core::create_tcp_socket()
 {
-    return tcp.create_socket();
+    stcp_tcp_sock* s = new stcp_tcp_sock;
+    tcp.socks.push_back(s);
+    return s;
 }
 
 void core::destroy_tcp_socket(stcp_tcp_sock* sock)
 {
-    tcp.destroy_socket(sock);
+    for (size_t i=0; i<tcp.socks.size(); i++) {
+        if (sock == tcp.socks[i]) {
+            tcp.socks.erase(tcp.socks.begin() + i);
+            return;
+        }
+    }
+    throw exception("OKASHIII");
 }
 
 
