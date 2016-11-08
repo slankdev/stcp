@@ -149,12 +149,17 @@ struct currend_seg {
 
 
 
-
+using tcp_sock_queue = std::queue<mbuf*>;
 
 class stcp_tcp_sock {
     friend class tcp_module;
-private: /* for server socket, accept(), listen() */
+private:
+
+    // TODO no use
+#if 0
     std::vector<stcp_tcp_sock> connections;
+    tcp_sock_queue rxq;
+#endif
 
 private:
     tcp_socket_state state;
@@ -197,7 +202,7 @@ private:
     void move_state_from_LAST_ACK(tcp_socket_state next_state);
     void move_state_from_TIME_WAIT(tcp_socket_state next_state);
 
-    void check_RST(stcp_tcp_header* th);
+    void do_RST(stcp_tcp_header* th);
     void move_state_DEBUG(tcp_socket_state next_state);
 
     void proc();

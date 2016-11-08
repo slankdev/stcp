@@ -114,11 +114,46 @@ void tcp_module::proc()
 }
 
 
-void stcp_tcp_sock::check_RST(stcp_tcp_header* th)
+#define UNUSED(x) (void)(x)
+
+void stcp_tcp_sock::do_RST(stcp_tcp_header* th)
 {
-    if ((th->tcp_flags & STCP_TCP_FLAG_RST) != 0x00) {
-        move_state_DEBUG(STCP_TCPS_LISTEN);
+    UNUSED(th); // TODO ERASE
+#if 1
+    switch (state) {
+        case STCP_TCPS_ESTABLISHED:
+        {
+            /* nop */
+            break;
+        }
+
+
+        /*
+         * TODO implement
+         * each behaviours
+         */
+        case STCP_TCPS_LISTEN:
+        case STCP_TCPS_CLOSED:
+        case STCP_TCPS_SYN_SENT:
+        case STCP_TCPS_SYN_RCVD:
+        case STCP_TCPS_FIN_WAIT_1:
+        case STCP_TCPS_FIN_WAIT_2:
+        case STCP_TCPS_CLOSE_WAIT:
+        case STCP_TCPS_CLOSING:
+        case STCP_TCPS_LAST_ACK:
+        case STCP_TCPS_TIME_WAIT:
+        default:
+        {
+            throw exception("NOT implement");
+            break;
+        }
+
     }
+#else
+    if ((th->tcp_flags & STCP_TCP_FLAG_RST) != 0x00) {
+        move_state_DEBUG(STCP_TCPS_CLOSED);
+    }
+#endif
 }
 void stcp_tcp_sock::move_state_DEBUG(tcp_socket_state next_state)
 {
@@ -136,7 +171,7 @@ void stcp_tcp_sock::bind(const struct stcp_sockaddr_in* addr, size_t addrlen)
 void stcp_tcp_sock::listen(size_t backlog)
 {
     if (backlog < 1) throw exception("OKASHII");
-    connections.resize(backlog);
+    // connections.resize(backlog);
     move_state(STCP_TCPS_LISTEN);
 }
 
@@ -505,7 +540,11 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
              * move implementation location to it that
              * should implement location.
              */
-            check_RST(th);
+            if ((th->tcp_flags & STCP_TCP_FLAG_RST) != 0x00) {
+                do_RST(th);
+                rte::pktmbuf_free(msg);
+                return;
+            }
 
             if ((th->tcp_flags&STCP_TCP_FLAG_PSH) != 0x00 &&
                     (th->tcp_flags&STCP_TCP_FLAG_ACK) != 0x00) {
