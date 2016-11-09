@@ -42,6 +42,14 @@ public:
 };
 
 
+struct stcp_usrapp_arg {
+    int argc;
+    char** argv;
+};
+using stcp_usrapp = int (*)(stcp_usrapp_arg*);
+
+
+
 class core {
     /*
      * TODO XXX delete friend code
@@ -79,7 +87,7 @@ private:
 public:
     static void init(int argc, char** argv);
     static void add_cyclic(stcp_cyclic_func* f);
-    static void run();
+    static void run(); // TODO #21 modify to launch userapplication
 
 private:
     static void ifs_proc();
@@ -93,6 +101,7 @@ public:
     static void set_default_gw(
             uint8_t o1, uint8_t o2, uint8_t o3,
             uint8_t o4, uint8_t port);
+    // static void set_app(stcp_usrapp func_ptr, stcp_usrapp_arg* func_arg); // TODO #21
 
     /*
      * TODO XXX Not Support Multi Interface

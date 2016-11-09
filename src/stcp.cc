@@ -192,8 +192,18 @@ void core::ifs_proc()
     }
 }
 
+/*
+ * TODO #21 Modify core::run() to launch user application
+ */
 void core::run()
 {
+
+    /*
+     * TODO #21 Launch user app.
+     */
+    // rte::eal_remote_launch(...);
+
+
     uint64_t hz   = rte::get_tsc_hz();
     for (auto cf : cyclic_funcs) {
         cf->prev = rte::get_tsc_cycles();
