@@ -43,7 +43,7 @@ private:
 
 public:
     stcp_udp_sock() : state(unbind) {}
-    ~stcp_udp_sock(); // TODO impelemnt this!!
+    ~stcp_udp_sock();
     void sendto(mbuf* msg, const stcp_sockaddr_in* src) const;
     mbuf* recvfrom(stcp_sockaddr_in* src);
     void bind(const stcp_sockaddr_in* a);

@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     core::set_ip_addr(192, 168, 222, 10, 24);
     core::set_default_gw(192, 168, 222, 1, 0);
 
-#if 1 // for test
+#if 0 // for test
     core::add_arp_record(192, 168, 222, 11,
             0x74, 0x03, 0xbd, 0x3d, 0x78, 0x96);
 #endif

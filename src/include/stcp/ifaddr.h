@@ -27,7 +27,7 @@ public:
         switch (family) {
             case STCP_AF_LINK:
             {
-                for (int i=0; i<6; i++) { // TODO hardcode
+                for (size_t i=0; i<stcp_ether_addr::addrlen; i++) {
                     raw.sa_data[i] = addr->sa_data[i];
                 }
                 break;

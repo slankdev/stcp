@@ -64,11 +64,8 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
                     break;
             }
 
-            const uint8_t zero[6] = {0,0,0,0,0,0}; // TODO hardcode
-            const uint8_t bcast[6] = {0xff,0xff,0xff,0xff,0xff,0xff}; // TODO hardcode
-            if (memcmp(&ah->hwdst, zero, sizeof zero) == 0 ||
-                memcmp(&ah->hwdst, bcast, sizeof bcast) == 0) {
-                memcpy(&ether_dst, bcast, sizeof ether_dst);
+            if (ah->hwdst == stcp_ether_addr::zero || ah->hwdst == stcp_ether_addr::broadcast) {
+                ether_dst = stcp_ether_addr::broadcast;
             } else {
                 memcpy(&ether_dst, &ah->hwdst, sizeof ether_dst);
             }
@@ -90,12 +87,12 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
     memset(&ether_src, 0, sizeof(ether_src));
     for (ifaddr& ifa : core::dpdk.devices[port].addrs) {
         if (ifa.family == STCP_AF_LINK) {
-            for (int i=0; i<6; i++)
+            for (size_t i=0; i<stcp_ether_addr::addrlen; i++)
                 ether_src.addr_bytes[i] = ifa.raw.sa_data[i];
             break;
         }
     }
-    for (int i=0; i<6; i++) {
+    for (size_t i=0; i<stcp_ether_addr::addrlen; i++) {
         eh->dst.addr_bytes[i] = ether_dst.addr_bytes[i];
         eh->src.addr_bytes[i] = ether_src.addr_bytes[i];
     }

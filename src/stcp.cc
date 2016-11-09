@@ -71,7 +71,7 @@ void core::get_mymac(stcp_ether_addr* mymac, uint8_t port) // TODO ERASE
 {
     for (ifaddr& ifa : dpdk.devices[port].addrs) {
         if (ifa.family == STCP_AF_LINK) {
-            for (int i=0; i<6; i++)
+            for (size_t i=0; i<stcp_ether_addr::addrlen; i++)
                 mymac->addr_bytes[i] = ifa.raw.sa_data[i];
             return ;
         }
@@ -86,11 +86,10 @@ void core::add_arp_record(
         uint8_t ho4, uint8_t ho5, uint8_t ho6)
 {
     struct stcp_arpreq req;
-    stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&req.arp_pa);
 
     req.arp_ifindex = 0;
-    req.arp_ha = stcp_inet_hwaddr(ho1, ho2, ho3, ho4, ho5, ho6);
-    sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
+    req.arp_ha.inet_hwaddr(ho1, ho2, ho3, ho4, ho5, ho6);
+    req.arp_pa.inet_addr(o1, o2, o3, o4);
     arp.ioctl(STCP_SIOCAARPENT, &req);
 }
 
@@ -115,14 +114,15 @@ void core::set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t c
     struct stcp_ifreq ifr;
     memset(&ifr, 0, sizeof ifr);
     struct stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(&ifr.if_addr);
-    sin->sin_addr = stcp_inet_addr(o1, o2, o3, o4);
+    sin->sin_addr.set(o1, o2, o3, o4);
     dpdk.devices[0].ioctl(STCP_SIOCSIFADDR, &ifr);
 
 
     /*
      * Set Netmask
      */
-    if (32 < cidr) { // TODO hardcode
+    uint8_t num_bit = stcp_in_addr::addrlen * 8;
+    if (num_bit < cidr) {
         throw exception("out of range");
     }
     union {
@@ -130,11 +130,11 @@ void core::set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t c
         uint32_t u32;
     } U;
     U.u32 = 0xffffffff; // TODO hardcode
-    U.u32 >>= (32 - cidr); // TODO hardcode
+    U.u32 >>= (num_bit - cidr);
 
     memset(&ifr, 0, sizeof ifr);
     sin = reinterpret_cast<stcp_sockaddr_in*>(&ifr.if_addr);
-    sin->sin_addr = stcp_inet_addr(U.u8[0], U.u8[1], U.u8[2], U.u8[3]);
+    sin->sin_addr.set(U.u8[0], U.u8[1], U.u8[2], U.u8[3]);
     dpdk.devices[0].ioctl(STCP_SIOCSIFNETMASK, &ifr);
 }
 
@@ -211,13 +211,11 @@ void core::run()
 
     core::stat_all(); // TODO ERASE
 
-    // TODO: implement below
-    // while (running) {
-    while (true) { // statement of while-loop is hardcode.
+    while (true) {
         uint64_t now = rte::get_tsc_cycles();
         for (auto cf : cyclic_funcs) {
             if (now - cf->prev > cf->interval_ms / 1000.0 * hz) {
-                cf->prev = now; // TODO itiguyouiue
+                cf->prev = now;
                 cf->exec();
             }
         }

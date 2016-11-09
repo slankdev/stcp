@@ -91,7 +91,8 @@ enum ip_l4_protos : uint8_t {
 
 class ip_module {
 private:
-    const static uint8_t ttl_default = 0x40;
+    static const uint8_t ttl_default      = 0x40;
+    static const size_t  num_max_fragment = 10;
     size_t rx_cnt;
     size_t tx_cnt;
     size_t not_to_me;

@@ -38,10 +38,7 @@ void ip_module::init()
 
 void ip_module::set_ipaddr(const stcp_in_addr* addr)
 {
-    myip.addr_bytes[0] = addr->addr_bytes[0];
-    myip.addr_bytes[1] = addr->addr_bytes[1];
-    myip.addr_bytes[2] = addr->addr_bytes[2];
-    myip.addr_bytes[3] = addr->addr_bytes[3];
+    myip = *addr;
 }
 
 
@@ -54,17 +51,7 @@ void ip_module::rx_push(mbuf* msg)
     size_t trailer_len = rte::pktmbuf_data_len(msg) - rte::bswap16(ih->total_length);
     rte::pktmbuf_trim(msg, trailer_len);
 
-
-    /*
-     * TODO hardcode
-     */
-    stcp_in_addr bcast;
-    bcast.addr_bytes[0] = 0xff;
-    bcast.addr_bytes[1] = 0xff;
-    bcast.addr_bytes[2] = 0xff;
-    bcast.addr_bytes[3] = 0xff;
-
-    if (myip != ih->dst && bcast != ih->dst) {
+    if (myip != ih->dst && stcp_in_addr::broadcast != ih->dst) {
         not_to_me++;
         rte::pktmbuf_free(msg);
         return;
@@ -251,12 +238,12 @@ bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr_in* addr)
     stcp_sockaddr_in* inmask_sin = reinterpret_cast<stcp_sockaddr_in*>(&inmask);
     stcp_sockaddr_in* innet_sin  = reinterpret_cast<stcp_sockaddr_in*>(&innet );
 
-    for (int i=0; i<4; i++) {
+    for (size_t i=0; i<stcp_in_addr::addrlen; i++) {
         innet_sin->sin_addr.addr_bytes[i] =   inaddr_sin->sin_addr.addr_bytes[i]
                                             & inmask_sin->sin_addr.addr_bytes[i];
     }
 
-    for (int i=0; i<4; i++) {
+    for (size_t i=0; i<stcp_in_addr::addrlen; i++) {
         if ((inmask_sin->sin_addr.addr_bytes[i] & addr->sin_addr.addr_bytes[i])
                 != innet_sin->sin_addr.addr_bytes[i])
             return false;
@@ -285,23 +272,13 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
 
     ih->time_to_live      = ip_module::ttl_default;
     ih->next_proto_id     = proto;
+    ih->src               = myip;
+    ih->dst               = dst->sin_addr;
     ih->hdr_checksum      = 0x00;
-
-    /*
-     * TODO Not smart implementation
-     */
-    ih->src.addr_bytes[0] = myip.addr_bytes[0];
-    ih->src.addr_bytes[1] = myip.addr_bytes[1];
-    ih->src.addr_bytes[2] = myip.addr_bytes[2];
-    ih->src.addr_bytes[3] = myip.addr_bytes[3];
-    ih->dst.addr_bytes[0] = dst->sin_addr.addr_bytes[0];
-    ih->dst.addr_bytes[1] = dst->sin_addr.addr_bytes[1];
-    ih->dst.addr_bytes[2] = dst->sin_addr.addr_bytes[2];
-    ih->dst.addr_bytes[3] = dst->sin_addr.addr_bytes[3];
 
     ih->hdr_checksum = rte_ipv4_cksum((const struct ipv4_hdr*)ih);
 
-    mbuf* msgs[100]; // TODO hardcode about mbuf[] size
+    mbuf* msgs[ip_module::num_max_fragment];
     memset(msgs, 0, sizeof msgs);
     uint32_t nb = rte::ipv4_fragment_packet(msg, &msgs[0], 10,
             core::dpdk.ipv4_mtu_default,
@@ -316,7 +293,11 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
     if (nb > 1) { /* packet was fragmented */
         rte::pktmbuf_free(msg);
 
+        if (ip_module::num_max_fragment < nb) {
+            throw exception("Too Fragment maybe overflow");
+        }
         for (size_t i=0; i<nb; i++) {
+
             stcp_ip_header* iph = rte::pktmbuf_mtod<stcp_ip_header*>(msgs[i]);
             iph->hdr_checksum = rte_ipv4_cksum(reinterpret_cast<const struct ipv4_hdr*>(iph));
 

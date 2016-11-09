@@ -15,19 +15,10 @@
 
 namespace slank {
 
-/*
- * TODO ERASE These functions
- */
-struct stcp_in_addr stcp_inet_addr(
-        uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
-struct stcp_in_addr stcp_inet_addr(const char* fmt);
-struct stcp_sockaddr stcp_inet_hwaddr(
-        uint8_t o1, uint8_t o2, uint8_t o3,
-        uint8_t o4, uint8_t o5, uint8_t o6);
 
 
 enum {
-    STCP_IFNAMSIZ=16,
+    STCP_IFNAMSIZ=16, // TODO ERASE
 };
 
 enum stcp_sa_family : uint16_t {
@@ -68,8 +59,51 @@ enum ioctl_family : uint64_t {
 };
 
 
-struct stcp_ether_addr : ether_addr {};
+struct stcp_ether_addr : ether_addr {
+public:
+    static const stcp_ether_addr broadcast;
+    static const stcp_ether_addr zero;
 
+    static const size_t addrlen = sizeof(ether_addr);
+    stcp_ether_addr() {}
+    stcp_ether_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6) : stcp_ether_addr()
+    { set(o1, o2, o3, o4, o5, o6); }
+    stcp_ether_addr(const stcp_ether_addr& rhs)
+    {
+        *this = rhs;
+    }
+
+    void set(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6)
+    {
+        addr_bytes[0] = o1;
+        addr_bytes[1] = o2;
+        addr_bytes[2] = o3;
+        addr_bytes[3] = o4;
+        addr_bytes[4] = o5;
+        addr_bytes[5] = o6;
+    }
+    stcp_ether_addr& operator=(const stcp_ether_addr& rhs)
+    {
+        for (size_t i=0; i<stcp_ether_addr::addrlen; i++) {
+            this->addr_bytes[i] = rhs.addr_bytes[i];
+        }
+        return *this;
+    }
+    bool operator==(const stcp_ether_addr& rhs) const
+    {
+        for (size_t i=0; i<stcp_ether_addr::addrlen; i++) {
+            if (addr_bytes[i] != rhs.addr_bytes[i])
+                return false;
+        }
+        return true;
+    }
+    bool operator!=(const stcp_ether_addr& rhs) const { return !(*this == rhs); }
+};
+
+
+
+struct stcp_in_addr;
+struct stcp_ether_addr;
 
 
 struct stcp_sockaddr {
@@ -87,43 +121,8 @@ public:
         memcpy(sa_data, rhs.sa_data, sizeof(sa_data));
     }
 
-
-    bool operator==(const stcp_sockaddr& rhs) const
-    {
-        if (sa_fam != rhs.sa_fam)
-            return false;
-
-        switch (sa_fam) {
-            case STCP_AF_LINK:
-            {
-                for (int i=0; i<6; i++) {
-                    if (sa_data[i] != rhs.sa_data[i])
-                        return false;
-                }
-                return true;
-                break;
-            }
-            case STCP_AF_INET:
-            {
-                for (int i=0; i<6; i++) {
-                    if (sa_data[i] != rhs.sa_data[i])
-                        return false;
-                }
-                return true;
-                break;
-            }
-            default:
-            {
-                throw exception("sorry not impl yet");
-                break;
-            }
-        }
-
-    }
-    bool operator!=(const stcp_sockaddr& rhs) const
-    {
-        return !(*this == rhs);
-    }
+    bool operator==(const stcp_sockaddr& rhs) const;
+    bool operator!=(const stcp_sockaddr& rhs) const { return !(*this == rhs); }
     stcp_sockaddr& operator=(const stcp_sockaddr& rhs)
     {
         sa_len = rhs.sa_len;
@@ -145,12 +144,23 @@ public:
 
 
 struct stcp_in_addr {
+public:
+    static const size_t addrlen = sizeof(uint8_t)*4;
+    static const stcp_in_addr broadcast;
+    static const stcp_in_addr zero;
+
+public:
     uint8_t addr_bytes[4];
 
 public:
+    stcp_in_addr() {}
+    stcp_in_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
+    { set(o1, o2, o3, o4); }
+
+
     bool operator==(const stcp_in_addr& rhs) const
     {
-        for (int i=0; i<4; i++) {
+        for (size_t i=0; i<stcp_in_addr::addrlen; i++) {
             if (addr_bytes[i] != rhs.addr_bytes[i])
                 return false;
         }
@@ -162,7 +172,7 @@ public:
     }
     stcp_in_addr& operator=(const stcp_in_addr& rhs)
     {
-        for (int i=0; i<4; i++) {
+        for (size_t i=0; i<stcp_in_addr::addrlen; i++) {
             this->addr_bytes[i] = rhs.addr_bytes[i];
         }
         return *this;
@@ -174,6 +184,13 @@ public:
                 addr_bytes[0], addr_bytes[1],
                 addr_bytes[2], addr_bytes[3]);
         return str;
+    }
+    void set(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
+    {
+        addr_bytes[0] = o1;
+        addr_bytes[1] = o2;
+        addr_bytes[2] = o3;
+        addr_bytes[3] = o4;
     }
 };
 

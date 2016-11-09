@@ -35,7 +35,7 @@ void arp_module::rx_push(mbuf* msg)
         stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
 
         sin_pa->sin_addr = ah->psrc;
-        for (int i=0; i<6; i++)
+        for (size_t i=0; i<stcp_ether_addr::addrlen; i++)
             sa_ha.sa_data[i] = ah->hwsrc.addr_bytes[i];
 
         stcp_arpreq req(&sa_pa, &sa_ha, port);
@@ -57,8 +57,8 @@ void arp_module::rx_push(mbuf* msg)
             stcp_arphdr* rep_ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
             rep_ah->hwtype = rte::bswap16(0x0001);
             rep_ah->ptype  = rte::bswap16(0x0800);
-            rep_ah->hwlen  = 6;
-            rep_ah->plen   = 4;
+            rep_ah->hwlen  = static_cast<uint8_t>(stcp_ether_addr::addrlen);
+            rep_ah->plen   = static_cast<uint8_t>(stcp_in_addr::addrlen   );
             rep_ah->operation = rte::bswap16(STCP_ARPOP_REPLY);
             core::get_mymac(&rep_ah->hwsrc, port); // TODO
             rep_ah->psrc  = ah->pdst;
@@ -141,7 +141,7 @@ void arp_module::ioctl_siocaarpent(stcp_arpreq* req)
             if (ent.arp_ha == req->arp_ha) {
                 return;
             } else {
-                for (int i=0; i<6; i++)
+                for (size_t i=0; i<stcp_ether_addr::addrlen; i++)
                     ent.arp_ha.sa_data[i] = req->arp_ha.sa_data[i];
                 return;
             }
@@ -205,20 +205,20 @@ bool arp_module::arp_resolv(
     for (stcp_arpreq& req : table) {
         stcp_sockaddr_in* req_in = reinterpret_cast<stcp_sockaddr_in*>(&req.arp_pa);
         if (req_in->sin_addr==dst_in->sin_addr && req.arp_ifindex==port) {
-            for (int i=0; i<6; i++)
+            for (size_t i=0; i<stcp_ether_addr::addrlen; i++)
                 dsten->addr_bytes[i] = req.arp_ha.sa_data[i];
             return true;
         }
     }
     if (checkcacheonly) {
-        for (int i=0; i<6; i++)
+        for (size_t i=0; i<stcp_ether_addr::addrlen; i++)
             dsten->addr_bytes[i] = 0x00;
         return false;
     }
 
     if (use_dynamic_arp) {
         arp_request(port, &dst_in->sin_addr);
-        for (int i=0; i<6; i++)
+        for (size_t i=0; i<stcp_ether_addr::addrlen; i++)
             dsten->addr_bytes[i] = 0x00;
         return false;
     } else {
@@ -239,12 +239,12 @@ void arp_module::arp_request(uint8_t port, const stcp_in_addr* tip)
     stcp_arphdr* req_ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
     req_ah->hwtype = rte::bswap16(0x0001);
 	req_ah->ptype  = rte::bswap16(0x0800);
-	req_ah->hwlen  = 6;
-	req_ah->plen   = 4;
+	req_ah->hwlen  = static_cast<uint8_t>(stcp_ether_addr::addrlen);
+	req_ah->plen   = static_cast<uint8_t>(stcp_in_addr::addrlen   );
     req_ah->operation = rte::bswap16(STCP_ARPOP_REQUEST);
     core::get_mymac(&req_ah->hwsrc, port); // TODO
     core::get_myip(&req_ah->psrc, port); // TODO
-    for (int i=0; i<6; i++) {
+    for (size_t i=0; i<stcp_ether_addr::addrlen; i++) {
         req_ah->hwdst.addr_bytes[i] = 0x00;
     }
     req_ah->pdst = *tip;

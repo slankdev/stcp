@@ -29,18 +29,18 @@ void ifnet::init()
     dpdk_core& d = core::dpdk;
     for (uint16_t ring=0; ring<num_rx_rings; ring++) {
         rte::eth_rx_queue_setup(port_id, ring, rx_ring_size,
-                rte::eth_dev_socket_id(port_id), NULL, d.get_mempool()); 
+                rte::eth_dev_socket_id(port_id), NULL, d.get_mempool());
     }
     for (uint16_t ring=0; ring<num_tx_rings; ring++) {
         rte::eth_tx_queue_setup(port_id, ring, tx_ring_size,
-                rte::eth_dev_socket_id(port_id), NULL); 
+                rte::eth_dev_socket_id(port_id), NULL);
     }
     rte::eth_dev_start(port_id);
 
     if (promiscuous_mode)
         rte::eth_promiscuous_enable(port_id);
 
-    if (rte::eth_dev_socket_id(port_id) > 0 && 
+    if (rte::eth_dev_socket_id(port_id) > 0 &&
             rte::eth_dev_socket_id(port_id) != (int)rte::socket_id()) {
         std::string str;
         str = "WARNING: port" + std::to_string(port_id);
@@ -55,7 +55,7 @@ void ifnet::init()
     struct stcp_ether_addr addr;
     rte::eth_macaddr_get(port_id, &addr);
     stcp_sockaddr s(STCP_AF_LINK);
-    for (int i=0; i<6; i++)
+    for (size_t i=0; i<stcp_ether_addr::addrlen; i++)
         s.sa_data[i] = addr.addr_bytes[i];
     ifaddr ifa(STCP_AF_LINK, &s);
     addrs.push_back(ifa);
@@ -89,7 +89,7 @@ uint16_t ifnet::io_tx(size_t num_request_to_send)
             bufs[i] = tx_pop();
         }
         uint16_t num_tx = rte::eth_tx_burst(port_id, 0, bufs, i);
-        
+
         if (num_tx < i) {
             for (uint16_t j=0; j<i-num_tx; j++) {
                 rte::pktmbuf_free(bufs[num_tx+j]);
@@ -125,15 +125,15 @@ void ifnet::print_stat() const
     s.write("");
     for (const ifaddr& ifa : addrs) {
         if (ifa.family == STCP_AF_LINK) {
-            s.write("\t%-10s %02x:%02x:%02x:%02x:%02x:%02x " 
+            s.write("\t%-10s %02x:%02x:%02x:%02x:%02x:%02x "
                 , af2str(ifa.family)
                 , ifa.raw.sa_data[0], ifa.raw.sa_data[1]
                 , ifa.raw.sa_data[2], ifa.raw.sa_data[3]
                 , ifa.raw.sa_data[4], ifa.raw.sa_data[5]);
         } else if (ifa.family == STCP_AF_INET || ifa.family == STCP_AF_INMASK) {
-            const struct stcp_sockaddr_in* sin = 
+            const struct stcp_sockaddr_in* sin =
                 reinterpret_cast<const stcp_sockaddr_in*>(&ifa.raw);
-            s.write("\t%-10s %d.%d.%d.%d " 
+            s.write("\t%-10s %d.%d.%d.%d "
                 , af2str(ifa.family)
                 , sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1]
                 , sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
@@ -215,14 +215,14 @@ void ifnet::ioctl_siocsifaddr(const stcp_ifreq* ifr)
 
     for (size_t i=0; i<addrs.size(); i++) {
         if (addrs[i].family == STCP_AF_INET) {
-            const struct stcp_sockaddr_in* sin = 
+            const struct stcp_sockaddr_in* sin =
                 reinterpret_cast<const stcp_sockaddr_in*>(&ifr->if_addr);
             stcp_sockaddr_in* s = reinterpret_cast<stcp_sockaddr_in*>(&addrs[i].raw);
             s->sin_addr = sin->sin_addr;
             in_addr_setted = true;
         }
     }
-    
+
     if (in_addr_setted == false) {
         struct ifaddr ifa_new(STCP_AF_INET, &ifr->if_addr);
         addrs.push_back(ifa_new);
@@ -230,7 +230,7 @@ void ifnet::ioctl_siocsifaddr(const stcp_ifreq* ifr)
 
     stcp_in_addr ad;
     const stcp_sockaddr_in* s = reinterpret_cast<const stcp_sockaddr_in*>(&ifr->if_addr);
-    for (int i=0; i<4; i++)
+    for (size_t i=0; i<stcp_in_addr::addrlen; i++)
         ad.addr_bytes[i] = s->sin_addr.addr_bytes[i];
     core::ip.set_ipaddr(&ad);
 }
@@ -241,14 +241,14 @@ void ifnet::ioctl_siocsifnetmask(const stcp_ifreq* ifr)
 
     for (size_t i=0; i<addrs.size(); i++) {
         if (addrs[i].family == STCP_AF_INMASK) {
-            const struct stcp_sockaddr_in* sin = 
+            const struct stcp_sockaddr_in* sin =
                 reinterpret_cast<const stcp_sockaddr_in*>(&ifr->if_addr);
             stcp_sockaddr_in* s = reinterpret_cast<stcp_sockaddr_in*>(&addrs[i].raw);
             s->sin_addr = sin->sin_addr;
             in_addr_setted = true;
         }
     }
-    
+
     if (in_addr_setted == false) {
         struct ifaddr ifa_new(STCP_AF_INMASK, &ifr->if_addr);
         addrs.push_back(ifa_new);
@@ -260,7 +260,7 @@ void ifnet::ioctl_siocgifaddr(stcp_ifreq* ifr)
 {
     for (ifaddr ifa : addrs) {
         if (ifa.family == STCP_AF_INET) {
-            struct stcp_sockaddr_in* sin = 
+            struct stcp_sockaddr_in* sin =
                 reinterpret_cast<stcp_sockaddr_in*>(&ifr->if_addr);
             struct stcp_sockaddr_in* s =
                 reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
@@ -276,7 +276,7 @@ void ifnet::ioctl_siocgifnetmask(stcp_ifreq* ifr)
 {
     for (ifaddr ifa : addrs) {
         if (ifa.family == STCP_AF_INMASK) {
-            struct stcp_sockaddr_in* sin = 
+            struct stcp_sockaddr_in* sin =
                 reinterpret_cast<stcp_sockaddr_in*>(&ifr->if_addr);
             struct stcp_sockaddr_in* s =
                 reinterpret_cast<stcp_sockaddr_in*>(&ifa.raw);
@@ -303,7 +303,7 @@ void ifnet::ioctl_siocsifhwaddr(const stcp_ifreq* ifr)
             in_addr_setted = true;
         }
     }
-    
+
     if (in_addr_setted == false) {
         struct ifaddr ifa_new(STCP_AF_LINK, &ifr->if_hwaddr);
         addrs.push_back(ifa_new);

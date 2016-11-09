@@ -71,7 +71,7 @@ void udp_module::tx_push(mbuf* msg,
     uh->sport = srcp;
     uh->dport = dst->sin_port;
     uh->len   = rte::bswap16(sizeof(stcp_udp_header) + udplen);
-    uh->cksum = 0x0000; // TODO calc cksum
+    uh->cksum = 0x0000;
 
     tx_cnt++;
     core::ip.tx_push(msg, dst, STCP_IPPROTO_UDP);
