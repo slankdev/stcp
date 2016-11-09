@@ -42,11 +42,7 @@ public:
 };
 
 
-struct stcp_usrapp_arg {
-    int argc;
-    char** argv;
-};
-using stcp_usrapp = int (*)(stcp_usrapp_arg*);
+using stcp_usrapp = int (*)(void*);
 
 
 

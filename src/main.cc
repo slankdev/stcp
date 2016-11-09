@@ -26,11 +26,7 @@ public:
 };
 
 
-// static int user_main(stcp_usrapp_arg* arg) { // TODO #21
-//     #<{(|
-//      * int argc    = arg->argc;
-//      * char** argv = arg->argv;
-//      |)}>#
+// static int user_main(void* arg) { // TODO #21
 //     return 0;
 // }
 
