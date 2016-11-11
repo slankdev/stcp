@@ -8,7 +8,27 @@ using namespace slank;
 
 
 
+int user_main2(void* arg)
+{
+    UNUSED(arg);
 
+    stcp_sockaddr_in addr;
+    addr.sin_fam  = STCP_AF_INET;
+    addr.sin_port = rte::bswap16(9999);
+    stcp_udp_sock* sock = core::create_udp_socket();
+    sock->bind(&addr);
+
+    stcp_sockaddr_in src;
+    while (1) {
+        mbuf* m = sock->recvfrom(&src);
+        sock->sendto(m, &src);
+    }
+    return 0;
+}
+
+
+
+#if 0
 // TODO #21
 int user_main1(void* arg)
 {
@@ -32,6 +52,7 @@ int user_main1(void* arg)
     // }
     return 0;
 }
+#endif
 
 
 
@@ -43,7 +64,7 @@ int main(int argc, char** argv)
     core::set_ip_addr(192, 168, 222, 10, 24);
     core::set_default_gw(192, 168, 222, 1, 0);
 
-    core::set_app(user_main1, NULL); // TODO #21
-    // TcpEchoServer app;
+    // core::set_app(user_main1, NULL); // TODO #21
+    core::set_app(user_main2, NULL); // TODO #21
     core::run();
 }

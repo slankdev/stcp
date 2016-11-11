@@ -8,23 +8,6 @@
 namespace slank {
 
 
-stcp_udp_sock& stcp_udp_sock::socket()
-{
-    return core::udp.socket(); // TODO fix the way to access socket();
-}
-
-
-
-
-stcp_udp_sock::~stcp_udp_sock()
-{
-    close();
-}
-
-void stcp_udp_sock::close()
-{
-    core::udp.close_socket(*this);
-}
 
 
 mbuf* stcp_udp_sock::recvfrom(stcp_sockaddr_in* src)
@@ -32,14 +15,12 @@ mbuf* stcp_udp_sock::recvfrom(stcp_sockaddr_in* src)
     if (state == unbind)
         throw exception("socket is not binded");
 
-    if (rxq.size() > 0) {
-        stcp_udp_sockdata d = rxq.front();
-        rxq.pop();
-        *src = d.addr;
-        return d.msg;
-    } else {
-        return nullptr;
-    }
+    while (rxq.size() == 0) ;
+
+    stcp_udp_sockdata d = rxq.front();
+    rxq.pop();
+    *src = d.addr;
+    return d.msg;
 }
 
 
@@ -86,12 +67,12 @@ void udp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
     rx_cnt++;
 
     uint16_t dst_port = uh->dport;
-    for (stcp_udp_sock& sock : socks) {
+    for (stcp_udp_sock* sock : socks) {
         src->sin_port = uh->sport;
-        if (sock.get_port() == dst_port) {
+        if (sock->get_port() == dst_port) {
             mbuf_pull(msg, sizeof(stcp_udp_header));
             stcp_udp_sockdata d(msg, *src);
-            sock.rx_data_push(d);
+            sock->rx_data_push(d);
             return ;
         }
     }
@@ -112,32 +93,15 @@ void udp_module::print_stat() const
         s.write("");
         s.write("\tNetStat");
     }
-    for (const stcp_udp_sock& sock : socks) {
+    for (const stcp_udp_sock* sock : socks) {
         s.write("\t%u/udp rxq=%zd",
-                rte::bswap16(sock.get_port()),
-                sock.get_rxq_size());
+                rte::bswap16(sock->get_port()),
+                sock->get_rxq_size());
     }
 }
 
 
-stcp_udp_sock& udp_module::socket()
-{
-    stcp_udp_sock sock;
-    socks.push_back(sock);
-    return socks[socks.size()-1];
-}
 
-
-
-void udp_module::close_socket(stcp_udp_sock& s)
-{
-    for (size_t i=0; i<socks.size(); i++) {
-        if (s == socks[i]) {
-            socks.erase(socks.begin() + i);
-            return;
-        }
-    }
-}
 
 
 } /* namespace slank */

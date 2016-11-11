@@ -73,6 +73,26 @@ void core::destroy_tcp_socket(stcp_tcp_sock* sock)
 }
 
 
+stcp_udp_sock* core::create_udp_socket()
+{
+    stcp_udp_sock* s = new stcp_udp_sock;
+    udp.socks.push_back(s);
+    return s;
+}
+
+void core::destroy_udp_socket(stcp_udp_sock* sock)
+{
+    for (size_t i=0; i<udp.socks.size(); i++) {
+        if (sock == udp.socks[i]) {
+            udp.socks.erase(udp.socks.begin() + i);
+            return;
+        }
+    }
+    throw exception("OKASHIII");
+}
+
+
+
 bool core::is_request_to_me(struct stcp_arphdr* ah, uint8_t port) // TODO ERASE
 {
 	for (ifaddr& ifa : dpdk.devices[port].addrs) {

@@ -34,6 +34,7 @@ enum udp_sock_state {
 using udp_sock_queue = std::queue<stcp_udp_sockdata>;
 
 class stcp_udp_sock {
+    friend class core;
     friend class udp_module;
 private:
     udp_sock_state state;  /* state of the socket   */
@@ -43,30 +44,27 @@ private:
 
 public:
     stcp_udp_sock() : state(unbind) {}
-    ~stcp_udp_sock();
-    void sendto(mbuf* msg, const stcp_sockaddr_in* src) const;
-    mbuf* recvfrom(stcp_sockaddr_in* src);
-    void bind(const stcp_sockaddr_in* a);
+    // ~stcp_udp_sock();
     bool operator==(const stcp_udp_sock& rhs) const { return port==rhs.port; }
     bool operator!=(const stcp_udp_sock& rhs) const { return !(*this==rhs); }
     void rx_data_push(stcp_udp_sockdata d) { rxq.push(d); }
     uint16_t get_port() const { return port; }
     size_t get_rxq_size() const { return rxq.size(); }
 
-    static stcp_udp_sock& socket();
-    void close();
+public: /* for Users Operation */
+    void sendto(mbuf* msg, const stcp_sockaddr_in* src) const;
+    mbuf* recvfrom(stcp_sockaddr_in* src);
+    void bind(const stcp_sockaddr_in* a);
 };
 
 
 class udp_module {
+    friend class core;
     friend class stcp_udp_sock; // TODO ERASE
 private:
     size_t rx_cnt;
     size_t tx_cnt;
-    std::vector<stcp_udp_sock> socks;
-
-    stcp_udp_sock& socket();
-    void close_socket(stcp_udp_sock& s);
+    std::vector<stcp_udp_sock*> socks;
 
 public:
     udp_module() : rx_cnt(0), tx_cnt(0) {}

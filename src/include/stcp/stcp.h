@@ -73,7 +73,9 @@ private:
 
 public:
     static stcp_tcp_sock* create_tcp_socket();
+    static stcp_udp_sock* create_udp_socket();
     static void destroy_tcp_socket(stcp_tcp_sock* sock);
+    static void destroy_udp_socket(stcp_udp_sock* sock);
 
 private:
     static std::vector<stcp_app*> apps; // should private;
