@@ -34,7 +34,7 @@ enum udp_sock_state {
 
 class udp_sock_queue {
     std::queue<stcp_udp_sockdata> queue;
-    std::mutex m;
+    mutable std::mutex m;
 public:
     void push(stcp_udp_sockdata& data)
     {
@@ -50,18 +50,7 @@ public:
     }
     size_t size() const
     {
-        /*
-         * TODO XXX
-         * I can not understand that
-         * this code cause a error.
-         *
-         * include/stcp/udp.h|58 col 40| error:
-         *      binding ‘const std::mutex’ to reference of type
-         *      ‘std::lock_guard<std::mutex>::mutex_type& {aka std::mutex&}’
-         *      discards qualifiers
-         */
-        // std::lock_guard<std::mutex> lg(m);
-
+        std::lock_guard<std::mutex> lg(m);
         return queue.size();
     }
 };
