@@ -10,16 +10,45 @@ size_t tcp_module::mss = 1460;
 
 
 
+stcp_tcp_sock::stcp_tcp_sock() :
+                        accepted(false),
+                        dead(false),
+                        head(nullptr),
+                        num_connected(0),
+                        state(STCP_TCPS_CLOSED), port(0),
+                        snd_una(0), snd_nxt(0), snd_win(0), snd_up (0),
+                        snd_wl1(0), snd_wl2(0), iss    (0),
+                        rcv_nxt(0), rcv_wnd(0), rcv_up (0), irs(0)
+{
+    DEBUG("[%p] alloc sock \n", this);
+}
+
+stcp_tcp_sock::~stcp_tcp_sock()
+{
+    DEBUG("[%p] delete sock \n", this);
+    if (head) {
+        head->num_connected --;
+    }
+}
+
+
+
+/*
+ * This function blocks until alloc connection.
+ */
 stcp_tcp_sock* stcp_tcp_sock::accept(struct stcp_sockaddr_in* addr)
 {
     UNUSED(addr);
-    for (stcp_tcp_sock* sock : core::tcp.socks) {
-        if (sock->head == this && !sock->accepted) {
-            return sock;
-        }
-    }
-    return nullptr;
-    // throw exception("NAAIIIIII\n");
+
+    while (wait_accept.size() == 0) ;
+
+    /*
+     * Dequeue wait_accept and return that.
+     */
+    stcp_tcp_sock* sock = wait_accept.front();
+    wait_accept.pop();
+    DEBUG("[%p] accept. return new socket[%p]\n", this, sock);
+    return sock;
 }
 
 
@@ -172,7 +201,7 @@ void stcp_tcp_sock::do_RST(stcp_tcp_header* th)
 }
 void stcp_tcp_sock::move_state_DEBUG(tcp_socket_state next_state)
 {
-    DEBUG("%s -> %s (MOVE state debug) \n",
+    DEBUG("[%p] %s -> %s (MOVE state debug) \n", this,
             tcp_socket_state2str(state),
             tcp_socket_state2str(next_state) );
     state = next_state;
@@ -196,7 +225,7 @@ void stcp_tcp_sock::listen(size_t backlog)
 
 void stcp_tcp_sock::move_state(tcp_socket_state next_state)
 {
-    DEBUG("%s -> %s \n",
+    DEBUG("[%p] %s -> %s \n", this,
             tcp_socket_state2str(state),
             tcp_socket_state2str(next_state) );
 
@@ -484,12 +513,18 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
                  */
                 stcp_tcp_sock* newsock = core::create_tcp_socket();
                 num_connected ++;
-                newsock->head = this;
                 newsock->port = port;
                 newsock->pair_port = pair_port;
                 newsock->addr = addr;
                 newsock->pair = pair;
                 newsock->state = STCP_TCPS_SYN_RCVD;
+                DEBUG("[%p] connect request. alloc sock [%p]\n", this, newsock);
+
+                /*
+                 * Link Slave-Socket
+                 */
+                newsock->head = this;
+                wait_accept.push(newsock);
 
                 /*
                  * Init stream information
@@ -546,13 +581,13 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
              * check packet is this stream's one.
              */
             if (cseg.seg_seq != rcv_nxt) {
-                DEBUG("invalid sequence number seg=%u(0x%x), sock=%u(0x%x)\n",
+                DEBUG("[%p] invalid sequence number seg=%u(0x%x), sock=%u(0x%x)\n", this,
                         cseg.seg_seq, cseg.seg_seq,
                         rcv_nxt, rcv_nxt);
                 return;
             }
             if (cseg.seg_ack != snd_nxt) {
-                DEBUG("invalid acknouledge number \n");
+                DEBUG("[%p] invalid acknouledge number \n", this);
                 return;
             }
 
@@ -563,7 +598,7 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
                  */
                 move_state(STCP_TCPS_ESTABLISHED);
             } else {
-                DEBUG("Unexpected packet \n");
+                DEBUG("[%p] Unexpected packet \n", this);
             }
             break;
         }
@@ -598,7 +633,7 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
 
             if ((th->tcp_flags&STCP_TCP_FLAG_PSH) != 0x00 &&
                     (th->tcp_flags&STCP_TCP_FLAG_ACK) != 0x00) {
-                DEBUG("ESTABLISHED RCV DATA with PSHACK on this=%p\n", this);
+                DEBUG("[%p] ESTABLISHED RCV DATA with PSHACK\n", this);
 
                 /*
                  * Recved PSHACK+data
@@ -682,7 +717,7 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
                 move_state(STCP_TCPS_CLOSE_WAIT);
 
             } else {
-                DEBUG("independent packet \n");
+                DEBUG("[%p] independent packet \n", this);
             }
 
             break;

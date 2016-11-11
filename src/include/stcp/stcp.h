@@ -27,7 +27,7 @@ using rxcap = log<class rx_packet_log>;
 using txcap = log<class tx_packet_log>;
 using dmsg  = log<class debug_message_log>;
 
-class stcp_app;
+class stcp_app; /// TODO ERASE
 class tcp_module;
 class stcp_tcp_sock;
 
@@ -43,6 +43,11 @@ public:
 
 
 using stcp_usrapp = int (*)(void*);
+struct stcp_usrapp_info {
+    stcp_usrapp func;
+    void* func_arg;
+    uint16_t lcore_id;
+};
 
 
 
@@ -62,6 +67,9 @@ class core {
     friend class icmp_module;
     friend class udp_module;
     friend class tcp_module;
+
+private:
+    static std::vector<stcp_usrapp_info> lapps;
 
 public:
     static stcp_tcp_sock* create_tcp_socket();
@@ -97,7 +105,7 @@ public:
     static void set_default_gw(
             uint8_t o1, uint8_t o2, uint8_t o3,
             uint8_t o4, uint8_t port);
-    // static void set_app(stcp_usrapp func_ptr, stcp_usrapp_arg* func_arg); // TODO #21
+    static void set_app(stcp_usrapp func_ptr, void* func_arg); // TODO #21
 
     /*
      * TODO XXX Not Support Multi Interface

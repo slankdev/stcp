@@ -1,34 +1,37 @@
 
 #include <stcp/stcp.h>
 #include <stcp/api.h>
+#include <unistd.h> // for sleep()
+#define UNUSED(x) (void)(x)
 
 using namespace slank;
 
 
 
-class TcpEchoServer : public stcp_app {
+
+// TODO #21
+int user_main1(void* arg)
+{
+    UNUSED(arg);
     stcp_tcp_sock* sock;
-public:
-    TcpEchoServer() : stcp_app()
-    {
-        sock = core::create_tcp_socket();
+    sock = core::create_tcp_socket();
 
-        stcp_sockaddr_in addr;
-        addr.sin_fam  = STCP_AF_INET;
-        addr.sin_port = rte::bswap16(9999);
-        sock->bind(&addr, sizeof(addr));
-        sock->listen(5);
+    stcp_sockaddr_in addr;
+    addr.sin_fam  = STCP_AF_INET;
+    addr.sin_port = rte::bswap16(8888);
+    sock->bind(&addr, sizeof(addr));
+    sock->listen(5);
 
-    }
-    void proc() override
-    {
-    }
-};
-
-
-// static int user_main(void* arg) { // TODO #21
-//     return 0;
-// }
+    stcp_sockaddr_in caddr;
+    stcp_tcp_sock* csock = sock->accept(&caddr);
+    UNUSED(csock);
+    // while (true) {
+    //     mbuf* msg;
+    //     size_t recvlen = csock->recv(msg);
+    //     rte::pktmbuf_dump(stdout, msg, 0);
+    // }
+    return 0;
+}
 
 
 
@@ -40,12 +43,7 @@ int main(int argc, char** argv)
     core::set_ip_addr(192, 168, 222, 10, 24);
     core::set_default_gw(192, 168, 222, 1, 0);
 
-#if 0 // for test
-    core::add_arp_record(192, 168, 222, 11,
-            0x74, 0x03, 0xbd, 0x3d, 0x78, 0x96);
-#endif
-
-    // core::set_app(user_main, NULL); // TODO #21
-    TcpEchoServer app;
+    core::set_app(user_main1, NULL); // TODO #21
+    // TcpEchoServer app;
     core::run();
 }

@@ -163,7 +163,8 @@ class stcp_tcp_sock {
 private:
     bool accepted;
     bool dead;
-    stcp_tcp_sock* head;
+    stcp_tcp_sock* head; // TODO ERASE?
+    std::queue<stcp_tcp_sock*> wait_accept;
     size_t num_connected;
     size_t max_connect;
 
@@ -215,21 +216,8 @@ private:
     void print_stat() const;
 
 public:
-    stcp_tcp_sock() :
-                            accepted(false),
-                            dead(false),
-                            head(nullptr),
-                            num_connected(0),
-                            state(STCP_TCPS_CLOSED), port(0),
-                            snd_una(0), snd_nxt(0), snd_win(0), snd_up (0),
-                            snd_wl1(0), snd_wl2(0), iss    (0),
-                            rcv_nxt(0), rcv_wnd(0), rcv_up (0), irs(0) {}
-    ~stcp_tcp_sock()
-    {
-        if (head) {
-            head->num_connected --;
-        }
-    }
+    stcp_tcp_sock();
+    ~stcp_tcp_sock();
 
     void move_state(tcp_socket_state next_state);
 

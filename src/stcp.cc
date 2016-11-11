@@ -7,7 +7,7 @@
 
 namespace slank {
 
-
+std::vector<stcp_usrapp_info> core::lapps;
 std::vector<stcp_app*> core::apps;
 std::vector<stcp_cyclic_func*> core::cyclic_funcs;
 tcp_module   core::tcp;
@@ -20,6 +20,37 @@ dpdk_core    core::dpdk;
 
 
 
+static int usrapp_wrap(void* arg)
+{
+    stcp_usrapp_info* app_info = reinterpret_cast<stcp_usrapp_info*>(arg);
+    stcp_usrapp f_ptr = app_info->func;
+    void*       f_arg = app_info->func_arg;
+    try {
+        int ret = f_ptr(f_arg);
+        DEBUG("USRREMOTEAPP returned %d\n", ret);
+
+        return ret;
+    } catch (std::exception& e) {
+        throw exception("User Remote App threw exception!!!");
+    }
+}
+
+
+
+// TODO #21
+void core::set_app(stcp_usrapp func_ptr, void* func_arg)
+{
+    static uint32_t c = 0; // TODO hardcode
+    c++;
+
+    stcp_usrapp_info a;
+    a.lcore_id = c;
+    a.func = func_ptr;
+    a.func_arg  = func_arg;
+
+    core::lapps.push_back(a);
+    DEBUG("SET APP lcore_id=%u\n", a.lcore_id);
+}
 
 
 
@@ -201,7 +232,10 @@ void core::run()
     /*
      * TODO #21 Launch user app.
      */
-    // rte::eal_remote_launch(...);
+    for (stcp_usrapp_info& app : lapps) {
+        rte_eal_remote_launch(
+                usrapp_wrap, reinterpret_cast<void*>(&app), app.lcore_id);
+    }
 
 
     uint64_t hz   = rte::get_tsc_hz();
