@@ -17,8 +17,7 @@ mbuf* stcp_udp_sock::recvfrom(stcp_sockaddr_in* src)
 
     while (rxq.size() == 0) ;
 
-    stcp_udp_sockdata d = rxq.front();
-    rxq.pop();
+    stcp_udp_sockdata d = rxq.pop();
     *src = d.addr;
     return d.msg;
 }
