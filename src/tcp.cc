@@ -8,6 +8,21 @@ namespace slank {
 
 size_t tcp_module::mss = 1460;
 
+inline uint16_t data_length(const stcp_tcp_header* th,
+        const stcp_ip_header* ih)
+{
+    uint16_t iptotlen = rte::bswap16(ih->total_length);
+    uint16_t iphlen = (ih->version_ihl & 0x0f)<<2;
+    uint16_t tcphlen  = ((th->data_off>>4)<<2);
+    return iptotlen - iphlen - tcphlen;
+}
+
+inline void swap_port(stcp_tcp_header* th)
+{
+    uint16_t tmp = th->sport;
+    th->sport    = th->dport;
+    th->dport    = tmp;
+}
 
 
 stcp_tcp_sock::stcp_tcp_sock() :
@@ -32,6 +47,22 @@ stcp_tcp_sock::~stcp_tcp_sock()
 }
 
 
+mbuf* stcp_tcp_sock::read()
+{
+    while (rxq.size() == 0) {
+        if (state == STCP_TCPS_CLOSED) {
+            std::string errstr = "Not Open Port state=";
+            errstr += tcp_socket_state2str(state);
+            throw exception(errstr.c_str());
+        }
+    }
+
+    mbuf* m = rxq.pop();
+    DEBUG("[%p] read. datalen=%zd\n", this, rte::pktmbuf_pkt_len(m));
+    return m;
+}
+
+
 
 /*
  * This function blocks until alloc connection.
@@ -45,8 +76,7 @@ stcp_tcp_sock* stcp_tcp_sock::accept(struct stcp_sockaddr_in* addr)
     /*
      * Dequeue wait_accept and return that.
      */
-    stcp_tcp_sock* sock = wait_accept.front();
-    wait_accept.pop();
+    stcp_tcp_sock* sock = wait_accept.pop();
     DEBUG("[%p] accept. return new socket[%p]\n", this, sock);
     return sock;
 }
@@ -55,6 +85,16 @@ stcp_tcp_sock* stcp_tcp_sock::accept(struct stcp_sockaddr_in* addr)
 
 void stcp_tcp_sock::proc()
 {
+
+    /*
+     * TODO
+     * Proc msgs from txq to tcp_module
+     */
+
+
+    /*
+     * Othre proc;
+     */
     switch (state) {
         case STCP_TCPS_CLOSE_WAIT:
         {
@@ -151,12 +191,6 @@ void stcp_tcp_sock::proc()
 void tcp_module::proc()
 {
     for (size_t i=0; i<socks.size(); i++) {
-        if (socks[i]->state == STCP_TCPS_CLOSED) {
-            stcp_tcp_sock* s = socks[i];
-            delete s;
-            socks.erase(socks.begin() + i);
-            return;
-        }
         socks[i]->proc();
     }
 }
@@ -403,23 +437,8 @@ void stcp_tcp_sock::move_state_from_TIME_WAIT(tcp_socket_state next_state)
 }
 
 
-inline uint16_t data_length(const stcp_tcp_header* th,
-        const stcp_ip_header* ih)
-{
-    uint16_t iptotlen = rte::bswap16(ih->total_length);
-    uint16_t iphlen = (ih->version_ihl & 0x0f)<<2;
-    uint16_t tcphlen  = ((th->data_off>>4)<<2);
-    return iptotlen - iphlen - tcphlen;
-}
 
 
-
-inline void swap_port(stcp_tcp_header* th)
-{
-    uint16_t tmp = th->sport;
-    th->sport    = th->dport;
-    th->dport    = tmp;
-}
 
 
 
@@ -670,6 +689,15 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
                         reinterpret_cast<ipv4_hdr*>(ih), th);
 
                 /*
+                 * Copy mbuf to socket rxq
+                 */
+                mbuf* sock_rxq_msg = rte::pktmbuf_clone(msg, core::dpdk.get_mempool());
+                size_t tcp_hlen = (th->data_off >> 2);
+                size_t ip_hlen  = ((ih->version_ihl&0xf) << 2);
+                rte::pktmbuf_adj(sock_rxq_msg, tcp_hlen+ip_hlen);
+                rxq.push(sock_rxq_msg);
+
+                /*
                  * Update mbuf data length
                  */
                 rte::pktmbuf_trim(msg, tcpdlen);
@@ -753,8 +781,8 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
 void stcp_tcp_sock::print_stat() const
 {
     stat& s = stat::instance();
-    s.write("\t%u/tcp state=%s seq=%u ack=%u [this=%p]", rte::bswap16(get_port()),
-            tcp_socket_state2str(get_state()), snd_nxt, rcv_nxt, this);
+    s.write("\t%u/tcp state=%s seq=%u ack=%u [this=%p]", rte::bswap16(port),
+            tcp_socket_state2str(state), snd_nxt, rcv_nxt, this);
 
 #if 0
     // switch (state) {
@@ -812,7 +840,15 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
     bool find_socket = false;
     uint16_t dst_port = th->dport;
     for (stcp_tcp_sock* sock : socks) {
-        if (sock->get_port() == dst_port) {
+        if (sock->port == dst_port) {
+            tcp_socket_state s = sock->state;
+            if (s==STCP_TCPS_CLOSED
+                    || s==STCP_TCPS_CLOSE_WAIT
+                    || s==STCP_TCPS_TIME_WAIT ) {
+                continue;
+            }
+
+
             mbuf* m = rte::pktmbuf_clone(msg, core::dpdk.get_mempool());
             mbuf_push(m, sizeof(stcp_ip_header));
             sock->rx_push(m, src);

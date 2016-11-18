@@ -101,13 +101,14 @@ struct stcp_tcp_header {
 };
 
 
-
 struct stcp_tcp_sockdata {
+    mbuf* msg;
+    stcp_sockaddr_in addr;
 };
 
 
 
-
+#if 0
 enum tcp_op_number : uint8_t {
     TCP_OP_FIN = 0x00,
     TCP_OP_NOP = 0x01,
@@ -124,6 +125,7 @@ struct tcp_op_mss {
     uint8_t op_len;
     uint16_t seg_siz;
 };
+#endif
 
 
 
@@ -154,17 +156,42 @@ struct currend_seg {
     }
 };
 
+template<class T>
+class queue_TS {
+    std::queue<T> queue;
+    mutable std::mutex m;
+    using auto_lock=std::lock_guard<std::mutex>;
+public:
+    void push(T msg)
+    {
+        auto_lock lg(m);
+        queue.push(msg);
+    }
+    T pop()
+    {
+        auto_lock lg(m);
+        T msg = queue.front();
+        queue.pop();
+        return msg;
+    }
+    size_t size() const
+    {
+        auto_lock lg(m);
+        return queue.size();
+    }
+};
 
-
-using tcp_sock_queue = std::queue<mbuf*>;
 
 class stcp_tcp_sock {
     friend class tcp_module;
 private:
     bool accepted;
     bool dead;
-    stcp_tcp_sock* head; // TODO ERASE?
-    std::queue<stcp_tcp_sock*> wait_accept;
+    stcp_tcp_sock* head;
+    queue_TS<stcp_tcp_sock*> wait_accept;
+    queue_TS<mbuf*> rxq;
+    queue_TS<mbuf*> txq;
+
     size_t num_connected;
     size_t max_connect;
 
@@ -214,35 +241,28 @@ private:
 
     void proc();
     void print_stat() const;
+    void rx_push(mbuf* msg, stcp_sockaddr_in* src);
 
 public:
     stcp_tcp_sock();
     ~stcp_tcp_sock();
-
     void move_state(tcp_socket_state next_state);
-
-public: /* for Getting Status */
     tcp_socket_state get_state() const { return state; }
-    uint16_t   get_port() const { return port; }
 
 public: /* for Users Operation */
 
     void bind(const struct stcp_sockaddr_in* addr, size_t addrlen);
     void listen(size_t backlog);
     stcp_tcp_sock* accept(struct stcp_sockaddr_in* addr);
+    mbuf* read();
 #if 0
     void write(mbuf* msg);
-    void read(mbuf* msg);
 #endif
-
-public:
-    void rx_push(mbuf* msg, stcp_sockaddr_in* src);
 };
 
 
 
 class tcp_module {
-    friend class stcp_tcp_sock;
     friend class core;
 private:
     static size_t mss;
