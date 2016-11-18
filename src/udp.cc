@@ -22,10 +22,18 @@ mbuf* stcp_udp_sock::recvfrom(stcp_sockaddr_in* src)
     return d.msg;
 }
 
-
-void stcp_udp_sock::sendto(mbuf* msg, const stcp_sockaddr_in* dst) const
+void stcp_udp_sock::sendto(mbuf* msg, const stcp_sockaddr_in* dst)
 {
-    core::udp.tx_push(msg, dst, port);
+    stcp_udp_sockdata d(msg, *dst);
+    txq.push(d);
+}
+
+void stcp_udp_sock::proc()
+{
+    while (txq.size() > 0) {
+        stcp_udp_sockdata d = txq.pop();
+        core::udp.tx_push(d.msg, &d.addr, port);
+    }
 }
 
 void stcp_udp_sock::bind(const stcp_sockaddr_in* a)
@@ -55,7 +63,6 @@ void udp_module::tx_push(mbuf* msg,
 
     tx_cnt++;
     core::ip.tx_push(msg, dst, STCP_IPPROTO_UDP);
-
 }
 
 
@@ -68,10 +75,10 @@ void udp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
     uint16_t dst_port = uh->dport;
     for (stcp_udp_sock* sock : socks) {
         src->sin_port = uh->sport;
-        if (sock->get_port() == dst_port) {
+        if (sock->port == dst_port) {
             mbuf_pull(msg, sizeof(stcp_udp_header));
             stcp_udp_sockdata d(msg, *src);
-            sock->rx_data_push(d);
+            sock->rxq.push(d);
             return ;
         }
     }
@@ -93,9 +100,17 @@ void udp_module::print_stat() const
         s.write("\tNetStat");
     }
     for (const stcp_udp_sock* sock : socks) {
-        s.write("\t%u/udp rxq=%zd",
-                rte::bswap16(sock->get_port()),
-                sock->get_rxq_size());
+        s.write("\t%u/udp rxq=%zd txq=%zd",
+                rte::bswap16(sock->port),
+                sock->rxq.size(),
+                sock->txq.size());
+    }
+}
+
+void udp_module::proc()
+{
+    for (stcp_udp_sock* sock : socks) {
+        sock->proc();
     }
 }
 

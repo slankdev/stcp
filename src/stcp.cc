@@ -281,6 +281,8 @@ void core::run()
         ifs_proc();
         ether.proc();
         tcp.proc();
+        udp.proc();
+
         core::stat_all(); // TODO ERASE
     }
 }

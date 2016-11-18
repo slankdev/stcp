@@ -19,6 +19,15 @@ struct stcp_udp_header {
     uint16_t dport;
     uint16_t len;
     uint16_t cksum;
+
+    void print() const
+    {
+        printf("UDP header \n");
+        printf("+ sport    : %u 0x%04x \n", rte::bswap16(sport), rte::bswap16(sport));
+        printf("+ dport    : %u 0x%04x \n", rte::bswap16(dport), rte::bswap16(dport));
+        printf("+ len      : %u 0x%08x \n", rte::bswap16(len  ), rte::bswap16(len  ));
+        printf("+ cksum    : 0x%04x \n"   , rte::bswap16(cksum)  );
+    }
 };
 
 struct stcp_udp_sockdata {
@@ -32,49 +41,49 @@ enum udp_sock_state {
     binded,
 };
 
-class udp_sock_queue {
+
+
+class udp_sock_queue_TS {
     std::queue<stcp_udp_sockdata> queue;
     mutable std::mutex m;
+    using auto_lock=std::lock_guard<std::mutex>;
 public:
     void push(stcp_udp_sockdata& data)
     {
-        std::lock_guard<std::mutex> lg(m);
+        auto_lock lg(m);
         queue.push(data);
     }
     stcp_udp_sockdata pop()
     {
-        std::lock_guard<std::mutex> lg(m);
+        auto_lock lg(m);
         stcp_udp_sockdata d = queue.front();
         queue.pop();
         return d;
     }
     size_t size() const
     {
-        std::lock_guard<std::mutex> lg(m);
+        auto_lock lg(m);
         return queue.size();
     }
 };
 
 class stcp_udp_sock {
-    friend class core;
     friend class udp_module;
 private:
     udp_sock_state state;  /* state of the socket   */
-    udp_sock_queue rxq;    /* receive queue         */
+    udp_sock_queue_TS rxq; /* receive queue         */
+    udp_sock_queue_TS txq; /* transmission queue    */
     uint16_t port;         /* stored as NwByteOrder */
     stcp_in_addr addr;     /* binded address        */
+    void proc();
 
 public:
     stcp_udp_sock() : state(unbind) {}
-    // ~stcp_udp_sock();
     bool operator==(const stcp_udp_sock& rhs) const { return port==rhs.port; }
     bool operator!=(const stcp_udp_sock& rhs) const { return !(*this==rhs); }
-    void rx_data_push(stcp_udp_sockdata d) { rxq.push(d); }
-    uint16_t get_port() const { return port; }
-    size_t get_rxq_size() const { return rxq.size(); }
 
 public: /* for Users Operation */
-    void sendto(mbuf* msg, const stcp_sockaddr_in* src) const;
+    void sendto(mbuf* msg, const stcp_sockaddr_in* src);
     mbuf* recvfrom(stcp_sockaddr_in* src);
     void bind(const stcp_sockaddr_in* a);
 };
@@ -82,7 +91,6 @@ public: /* for Users Operation */
 
 class udp_module {
     friend class core;
-    friend class stcp_udp_sock; // TODO ERASE
 private:
     size_t rx_cnt;
     size_t tx_cnt;
@@ -93,7 +101,7 @@ public:
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
     void tx_push(mbuf* msg, const stcp_sockaddr_in* dst, uint16_t srcp);
     void print_stat() const;
-
+    void proc();
 };
 
 
