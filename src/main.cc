@@ -7,7 +7,7 @@
 using namespace slank;
 
 
-
+#if 0
 int user_main2(void* arg)
 {
     UNUSED(arg);
@@ -25,10 +25,11 @@ int user_main2(void* arg)
     }
     return 0;
 }
+#endif
 
 
 
-#if 0
+#if 1
 // TODO #21
 int user_main1(void* arg)
 {
@@ -44,12 +45,17 @@ int user_main1(void* arg)
 
     stcp_sockaddr_in caddr;
     stcp_tcp_sock* csock = sock->accept(&caddr);
-    UNUSED(csock);
-    // while (true) {
-    //     mbuf* msg;
-    //     size_t recvlen = csock->recv(msg);
-    //     rte::pktmbuf_dump(stdout, msg, 0);
-    // }
+    while (true) {
+        try {
+            mbuf* msg = csock->read();
+            UNUSED(msg);
+            rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
+        } catch (std::exception& e) {
+            // printf("%s\n", e.what());
+            core::destroy_tcp_socket(csock);
+            break;
+        }
+    }
     return 0;
 }
 #endif
@@ -64,7 +70,7 @@ int main(int argc, char** argv)
     core::set_ip_addr(192, 168, 222, 10, 24);
     core::set_default_gw(192, 168, 222, 1, 0);
 
-    // core::set_app(user_main1, NULL); // TODO #21
-    core::set_app(user_main2, NULL); // TODO #21
+    core::set_app(user_main1, NULL); // TODO #21
+    // core::set_app(user_main2, NULL); // TODO #21
     core::run();
 }
