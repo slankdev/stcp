@@ -4,10 +4,6 @@
 
 #include <stcp/rte.h>
 #include <stcp/exception.h>
-#include <slankdev/queue.h>
-#include <slankdev/util.h>
-#include <slankdev/exception.h>
-#include <slankdev/system.h>
 #include <stcp/log.h>
 #include <queue>
 #include <stdio.h>
