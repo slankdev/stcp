@@ -29,7 +29,7 @@ int user_main2(void* arg)
 
 
 
-#if 0
+#if 1
 // TODO #21
 int user_main1(void* arg)
 {
@@ -43,32 +43,59 @@ int user_main1(void* arg)
     sock->bind(&addr, sizeof(addr));
     sock->listen(5);
 
-    std::vector<stcp_pollfd> fds;
-    fds.push_back({sock, 0});
+    std::vector<stcp_tcp_sock*> fds;
+    fds.push_back(sock);
 
-    stcp_tcp_sock* csock;
-    try {
-        while (true) {
-            stcp_sockaddr_in caddr;
-            core::stcp_poll(fds);
-            printf("RETURN DFSDFDSFSDFSDF\n");
-
-            for (stcp_pollfd& pfd : fds) {
-                if (pfd.event & STCP_POLLACCEPT) {
-                    csock = sock->accept(&caddr);
-                    mbuf* msg = csock->read();
-                    rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
-                    csock->write(msg);
-                    printf("korekore\n");
-                } else {
-                    printf("other\n");
-                }
-            }
-
+#if 0
+    while (true) {
+        if (sock->acceptable()) {
+                DEBUG("YES: YEAAAAAAAAh\n");
+        } else {
+                DEBUG("NO: YEAAAAAAAAh\n");
         }
-    } catch (std::exception& e) {
-        core::destroy_tcp_socket(csock);
+
     }
+#else
+    while (true) {
+        // printf("[");
+        for (size_t i=0; i<fds.size(); i++) {
+            // printf("%p, ", fds[i]);
+            if (fds[i]->acceptable()) {
+                stcp_sockaddr_in caddr;
+                stcp_tcp_sock* csock = fds[i]->accept(&caddr);
+                fds.push_back(csock);
+            } else if (fds[i]->readable()) {
+                mbuf* msg = fds[i]->read();
+                rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
+                fds[i]->write(msg);
+            } else if (fds[i]->sockdead()) {
+                core::destroy_tcp_socket(fds[i]);
+                fds.erase(fds.begin() + i);
+            } else {
+            }
+        }
+        // printf("]\n");
+    }
+#endif
+
+#if 0
+        stcp_sockaddr_in caddr;
+        core::stcp_poll(fds);
+        // printf("RETURN DFSDFDSFSDFSDF\n");
+
+        for (stcp_pollfd& pfd : fds) {
+            if (pfd.event & STCP_POLLACCEPT) {
+                csock = sock->accept(&caddr);
+                mbuf* msg = csock->read();
+                rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
+                csock->write(msg);
+                // printf("korekore\n");
+            } else {
+                // printf("other\n");
+            }
+        }
+#endif
+
     return 0;
 }
 #else

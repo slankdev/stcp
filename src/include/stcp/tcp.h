@@ -15,6 +15,10 @@
 
 namespace slank {
 
+enum poll_event : uint32_t {
+    none            = 0,
+    STCP_POLLIN     = 0x01<<0,
+};
 
 enum tcp_flags : uint8_t {
     STCP_TCP_FLAG_FIN  = 0x01<<0, /* 00000001 */
@@ -23,6 +27,7 @@ enum tcp_flags : uint8_t {
     STCP_TCP_FLAG_PSH  = 0x01<<3, /* 00001000 */
     STCP_TCP_FLAG_ACK  = 0x01<<4, /* 00010000 */
     STCP_TCP_FLAG_URG  = 0x01<<5, /* 00100000 */
+
     STCP_TCP_FLAG_SACK = 0x01<<6, /* 01000000 */
     STCP_TCP_FLAG_WACK = 0x01<<7, /* 10000000 */
 };
@@ -153,12 +158,11 @@ struct currend_seg {
 
 class stcp_tcp_sock {
     friend class tcp_module;
-private: /* for polling infos */
-    bool readable_  ;
-    bool acceptable_;
-public:
-    bool readable()   { return readable_  ; }
-    bool acceptable() { return acceptable_; }
+public: /* for pollVng infos */
+    bool readable()   { return !rxq.empty(); }
+    bool acceptable()   { return !wait_accept.empty(); }
+    bool sockdead() { return dead; }
+
 
 private:
     bool accepted;

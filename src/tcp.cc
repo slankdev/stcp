@@ -177,14 +177,11 @@ void stcp_tcp_sock::proc()
             break;
         }
 
-        case STCP_TCPS_LISTEN:
-        case STCP_TCPS_CLOSED:
-        case STCP_TCPS_SYN_SENT:
-        case STCP_TCPS_SYN_RCVD:
         case STCP_TCPS_ESTABLISHED:
         {
             while (!txq.empty()) {
                 mbuf* msg = txq.pop();
+                size_t data_len = rte::pktmbuf_pkt_len(msg);
                 DEBUG("[%p] %s PROC send(txq.pop(), %zd)\n",
                         this, tcp_socket_state2str(state), rte::pktmbuf_pkt_len(msg));
 
@@ -222,9 +219,19 @@ void stcp_tcp_sock::proc()
                  */
                 mbuf_pull(msg, sizeof(stcp_ip_header));
                 core::ip.tx_push(msg, &pair, STCP_IPPROTO_TCP);
+
+                /*
+                 * TODO KOKOJANAKUNE
+                 */
+                snd_nxt += data_len;
+
             }
             break;
         }
+        case STCP_TCPS_LISTEN:
+        case STCP_TCPS_CLOSED:
+        case STCP_TCPS_SYN_SENT:
+        case STCP_TCPS_SYN_RCVD:
         case STCP_TCPS_FIN_WAIT_1:
         case STCP_TCPS_FIN_WAIT_2:
         case STCP_TCPS_CLOSING:
@@ -244,13 +251,6 @@ void stcp_tcp_sock::proc()
             break;
         }
     }
-
-    /*
-     * Update stats for polling
-     */
-    readable_   = (!rxq.size());
-    acceptable_ = (!wait_accept.size());
-
 }
 
 
@@ -543,10 +543,6 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
      * Drop or Reply RSTACK to independent packet.
      */
 
-    /*
-     * TODO
-     * Enqueue packet as TCP-SEG to socket-queue
-     */
 
 
     /*
@@ -704,6 +700,19 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
             // }
 #endif
 
+#if 0
+            /*
+             * TODO
+             * filter packet as TCP-SEG to socket-queue
+             */
+            if (th->seq_num == rcv_nxt) {
+                DEBUG("SLNAKDEVSLANKDV: TIGAU1\n");
+            }
+            if (th->ack_num == snd_nxt) {
+                DEBUG("SLNAKDEVSLANKDV: TIGAU2\n");
+            }
+#endif
+
 
             if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_PSH) &&
                     HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_ACK)) {
@@ -800,8 +809,21 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
                 move_state(STCP_TCPS_CLOSE_WAIT);
 
             } else if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_ACK)) {
-                DEBUG("[%p] PROC send(,%u) success\n", this, rte::bswap32(th->ack_num) - snd_nxt);
-                snd_nxt = rte::bswap32(th->ack_num);
+
+                // #<{(|
+                //  * TODO
+                //  * filter packet as TCP-SEG to socket-queue
+                //  |)}>#
+                // if (th->seq_num == rcv_nxt) {
+                //     DEBUG("SLNAKDEVSLANKDV: TIGAU1\n");
+                // }
+                // if (th->ack_num == snd_nxt) {
+                //     DEBUG("SLNAKDEVSLANKDV: TIGAU2\n");
+                // }
+
+                // TODO
+                // DEBUG("[%p] PROC send(,%u) success\n", this, rte::bswap32(th->ack_num) - snd_nxt);
+                // snd_nxt = rte::bswap32(th->ack_num);
             } else {
                 DEBUG("[%p] independent packet \n", this);
             }
@@ -839,11 +861,14 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
 void stcp_tcp_sock::print_stat() const
 {
     stat& s = stat::instance();
-    s.write("\t%u/tcp state=%s[this=%p] rx/tx=%zd/%zd",
+    s.write("\t%u/tcp state=%s[this=%p] rx/tx=%zd/%zd %u/%u %u",
             rte::bswap16(port),
             tcp_socket_state2str(state), this,
-            rxq.size(), txq.size());
+            rxq.size(), txq.size(),
+            snd_nxt, rcv_nxt,
+            rte::bswap16(pair_port));
 
+#if 0
     switch (state) {
 #if 0
         case STCP_TCPS_LISTEN:
@@ -877,12 +902,11 @@ void stcp_tcp_sock::print_stat() const
                     rte::bswap16(pair_port));
             s.write("\t - addr: %s", addr.c_str());
             s.write("\t - pair: %s", pair.c_str());
-            s.write("\t - acceptable: %s\n" , acceptable_?"yes":"no");
-            s.write("\t - readable  : %s\n" , readable_  ?"yes":"no");
             break;
         default:
             break;
     }
+#endif
 }
 
 
