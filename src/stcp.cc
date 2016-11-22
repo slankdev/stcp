@@ -255,7 +255,7 @@ void core::ifs_proc()
         uint16_t num_rx = dev.io_rx();
         if (unlikely(num_rx == 0)) continue;
 
-        while (dev.rx_size() > 0) {
+        while (!dev.rx_empty()) {
             mbuf* msg = dev.rx_pop();
             ether.rx_push(msg);
         }

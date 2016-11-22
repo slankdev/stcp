@@ -43,36 +43,12 @@ enum udp_sock_state {
 
 
 
-class udp_sock_queue_TS {
-    std::queue<stcp_udp_sockdata> queue;
-    mutable std::mutex m;
-    using auto_lock=std::lock_guard<std::mutex>;
-public:
-    void push(stcp_udp_sockdata& data)
-    {
-        auto_lock lg(m);
-        queue.push(data);
-    }
-    stcp_udp_sockdata pop()
-    {
-        auto_lock lg(m);
-        stcp_udp_sockdata d = queue.front();
-        queue.pop();
-        return d;
-    }
-    size_t size() const
-    {
-        auto_lock lg(m);
-        return queue.size();
-    }
-};
-
 class stcp_udp_sock {
     friend class udp_module;
 private:
     udp_sock_state state;  /* state of the socket   */
-    udp_sock_queue_TS rxq; /* receive queue         */
-    udp_sock_queue_TS txq; /* transmission queue    */
+    queue_TS<stcp_udp_sockdata> rxq; /* receive queue         */
+    queue_TS<stcp_udp_sockdata> txq; /* transmission queue    */
     uint16_t port;         /* stored as NwByteOrder */
     stcp_in_addr addr;     /* binded address        */
     void proc();

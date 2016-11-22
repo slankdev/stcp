@@ -183,7 +183,7 @@ void stcp_tcp_sock::proc()
         case STCP_TCPS_SYN_RCVD:
         case STCP_TCPS_ESTABLISHED:
         {
-            while (txq.size() > 0) {
+            while (!txq.empty()) {
                 mbuf* msg = txq.pop();
                 DEBUG("[%p] %s PROC send(txq.pop(), %zd)\n",
                         this, tcp_socket_state2str(state), rte::pktmbuf_pkt_len(msg));
@@ -248,8 +248,8 @@ void stcp_tcp_sock::proc()
     /*
      * Update stats for polling
      */
-    readable_   = (rxq.size() > 0);
-    acceptable_ = (wait_accept.size() > 0);
+    readable_   = (!rxq.size());
+    acceptable_ = (!wait_accept.size());
 
 }
 
@@ -893,7 +893,7 @@ void tcp_module::print_stat() const
     s.write("\tRX Packets %zd", rx_cnt);
     s.write("\tTX Packets %zd", tx_cnt);
 
-    if (socks.size() > 0) {
+    if (!socks.empty()) {
         s.write("");
         s.write("\tNetStat %zd ports", socks.size());
     }

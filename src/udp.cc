@@ -30,7 +30,7 @@ void stcp_udp_sock::sendto(mbuf* msg, const stcp_sockaddr_in* dst)
 
 void stcp_udp_sock::proc()
 {
-    while (txq.size() > 0) {
+    while (!txq.empty()) {
         stcp_udp_sockdata d = txq.pop();
         core::udp.tx_push(d.msg, &d.addr, port);
     }
@@ -95,7 +95,7 @@ void udp_module::print_stat() const
     s.write("\tRX Packets %zd", rx_cnt);
     s.write("\tTX Packets %zd", tx_cnt);
 
-    if (socks.size() > 0) {
+    if (!socks.empty()) {
         s.write("");
         s.write("\tNetStat");
     }

@@ -11,7 +11,7 @@ namespace slank {
 
 void ether_module::proc()
 {
-    if (core::arp.arpresolv_wait_queue.size() > 0) {
+    if (!core::arp.arpresolv_wait_queue.empty()) {
         wait_ent e = core::arp.arpresolv_wait_queue.front();
 
         stcp_ether_addr ether_dst;

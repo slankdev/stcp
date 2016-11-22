@@ -9,7 +9,6 @@
 #include <stcp/stcp.h>
 
 #include <vector>
-#include <queue>
 
 
 
@@ -101,12 +100,6 @@ struct stcp_tcp_header {
 };
 
 
-struct stcp_tcp_sockdata {
-    mbuf* msg;
-    stcp_sockaddr_in addr;
-};
-
-
 
 #if 0
 enum tcp_op_number : uint8_t {
@@ -156,31 +149,6 @@ struct currend_seg {
     }
 };
 
-template<class T>
-class queue_TS {
-    std::queue<T> queue;
-    mutable std::mutex m;
-    using auto_lock=std::lock_guard<std::mutex>;
-public:
-    void push(T msg)
-    {
-        auto_lock lg(m);
-        queue.push(msg);
-    }
-    T pop()
-    {
-        auto_lock lg(m);
-        T msg = queue.front();
-        queue.pop();
-        return msg;
-    }
-    size_t size() const
-    {
-        auto_lock lg(m);
-        return queue.size();
-    }
-    // bool empty() const // TODO
-};
 
 
 class stcp_tcp_sock {

@@ -58,6 +58,8 @@ public:
     uint16_t io_tx(size_t num_request_to_send);
     size_t rx_size() { return rx.size(); }
     size_t tx_size() { return tx.size(); }
+    bool   rx_empty() { return rx.empty(); }
+    bool   tx_empty() { return tx.empty(); }
     void print_stat() const;
 
     void ioctl(uint64_t request, void* arg);
