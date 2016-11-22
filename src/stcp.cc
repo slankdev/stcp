@@ -53,6 +53,24 @@ void core::set_app(stcp_usrapp func_ptr, void* func_arg)
 }
 
 
+void core::stcp_poll(std::vector<stcp_pollfd>& fds)
+{
+    while (true) {
+        for (stcp_pollfd& fd : fds) {
+            fd.event = none;
+            if (fd.fd->readable  ()) {
+                fd.event |= STCP_POLLIN;
+                return;
+            }
+            if (fd.fd->acceptable()) {
+                fd.event |= STCP_POLLACCEPT;
+                return;
+            }
+        }
+    }
+}
+
+
 
 stcp_tcp_sock* core::create_tcp_socket()
 {
@@ -66,6 +84,7 @@ void core::destroy_tcp_socket(stcp_tcp_sock* sock)
     for (size_t i=0; i<tcp.socks.size(); i++) {
         if (sock == tcp.socks[i]) {
             tcp.socks.erase(tcp.socks.begin() + i);
+            delete sock;
             return;
         }
     }

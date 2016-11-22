@@ -24,6 +24,11 @@ inline void swap_port(stcp_tcp_header* th)
     th->dport    = tmp;
 }
 
+inline bool HAS_FLAG(uint8_t flag, tcp_flags type)
+{
+    return ((flag & type) != 0x00);
+}
+
 
 stcp_tcp_sock::stcp_tcp_sock() :
                         accepted(false),
@@ -47,6 +52,17 @@ stcp_tcp_sock::~stcp_tcp_sock()
 }
 
 
+void stcp_tcp_sock::write(mbuf* msg)
+{
+    if (state != STCP_TCPS_ESTABLISHED) {
+        std::string errstr = "Not Open Port state=";
+        errstr += tcp_socket_state2str(state);
+        throw exception(errstr.c_str());
+    }
+    txq.push(msg);
+}
+
+
 mbuf* stcp_tcp_sock::read()
 {
     while (rxq.size() == 0) {
@@ -58,7 +74,7 @@ mbuf* stcp_tcp_sock::read()
     }
 
     mbuf* m = rxq.pop();
-    DEBUG("[%p] read. datalen=%zd\n", this, rte::pktmbuf_pkt_len(m));
+    DEBUG("[%p] READ datalen=%zd\n", this, rte::pktmbuf_pkt_len(m));
     return m;
 }
 
@@ -166,6 +182,49 @@ void stcp_tcp_sock::proc()
         case STCP_TCPS_SYN_SENT:
         case STCP_TCPS_SYN_RCVD:
         case STCP_TCPS_ESTABLISHED:
+        {
+            while (txq.size() > 0) {
+                mbuf* msg = txq.pop();
+                DEBUG("[%p] %s PROC send(txq.pop(), %zd)\n",
+                        this, tcp_socket_state2str(state), rte::pktmbuf_pkt_len(msg));
+
+                stcp_tcp_header* th = reinterpret_cast<stcp_tcp_header*>(
+                        mbuf_push(msg, sizeof(stcp_tcp_header)));
+                stcp_ip_header*  ih = reinterpret_cast<stcp_ip_header*>(
+                        mbuf_push(msg, sizeof(stcp_ip_header)));
+
+                /*
+                 * Craft IP header for tcp checksum
+                 */
+                ih->total_length  = rte::bswap16(rte::pktmbuf_pkt_len(msg));
+                ih->next_proto_id = STCP_IPPROTO_TCP;
+                ih->src           = addr.sin_addr;
+                ih->dst           = pair.sin_addr;
+
+                /*
+                 * Craft TCP header
+                 */
+                th->sport     = port     ;
+                th->dport     = pair_port;
+                th->seq_num   = rte::bswap32(snd_nxt);
+                th->ack_num   = rte::bswap32(rcv_nxt);
+                th->data_off  = sizeof(stcp_tcp_header) >> 2 << 4;
+                th->tcp_flags = STCP_TCP_FLAG_PSH|STCP_TCP_FLAG_ACK;
+                th->rx_win    = snd_win;
+                th->cksum     = 0x0000;
+                th->tcp_urp   = 0; // TODO hardcode
+
+                th->cksum = rte_ipv4_udptcp_cksum(
+                        reinterpret_cast<ipv4_hdr*>(ih), th);
+
+                /*
+                 * send to ip module
+                 */
+                mbuf_pull(msg, sizeof(stcp_ip_header));
+                core::ip.tx_push(msg, &pair, STCP_IPPROTO_TCP);
+            }
+            break;
+        }
         case STCP_TCPS_FIN_WAIT_1:
         case STCP_TCPS_FIN_WAIT_2:
         case STCP_TCPS_CLOSING:
@@ -185,6 +244,13 @@ void stcp_tcp_sock::proc()
             break;
         }
     }
+
+    /*
+     * Update stats for polling
+     */
+    readable_   = (rxq.size() > 0);
+    acceptable_ = (wait_accept.size() > 0);
+
 }
 
 
@@ -533,9 +599,9 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
                 stcp_tcp_sock* newsock = core::create_tcp_socket();
                 num_connected ++;
                 newsock->port = port;
-                newsock->pair_port = pair_port;
-                newsock->addr = addr;
-                newsock->pair = pair;
+                newsock->pair_port = th->sport;
+                newsock->addr.sin_addr = ih->dst;
+                newsock->pair.sin_addr = ih->src;
                 newsock->state = STCP_TCPS_SYN_RCVD;
                 DEBUG("[%p] connect request. alloc sock [%p]\n", this, newsock);
 
@@ -610,7 +676,7 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
                 return;
             }
 
-            if (th->tcp_flags == STCP_TCP_FLAG_ACK) {
+            if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_ACK)) {
                 /*
                  * when recvd packet is ACK,
                  * move state to ESTABLISHED
@@ -639,19 +705,8 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
 #endif
 
 
-            /*
-             * Check that packet is this stream's packet.
-             */
-            if (!(th->seq_num == rte::bswap32(rcv_nxt) &&
-                    th->ack_num == rte::bswap32(snd_nxt))) {
-                rte::pktmbuf_free(msg);
-                return;
-            }
-
-
-
-            if ((th->tcp_flags&STCP_TCP_FLAG_PSH) != 0x00 &&
-                    (th->tcp_flags&STCP_TCP_FLAG_ACK) != 0x00) {
+            if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_PSH) &&
+                    HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_ACK)) {
                 DEBUG("[%p] ESTABLISHED RCV DATA with PSHACK\n", this);
 
                 /*
@@ -708,7 +763,7 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
                 mbuf_pull(msg, sizeof(stcp_ip_header));
                 core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
 
-            } else if ((th->tcp_flags&STCP_TCP_FLAG_FIN) != 0x00) {
+            } else if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_FIN)) {
 
                 /*
                  * Update Stream infos
@@ -744,6 +799,9 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
                 pair_port = th->dport;
                 move_state(STCP_TCPS_CLOSE_WAIT);
 
+            } else if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_ACK)) {
+                DEBUG("[%p] PROC send(,%u) success\n", this, rte::bswap32(th->ack_num) - snd_nxt);
+                snd_nxt = rte::bswap32(th->ack_num);
             } else {
                 DEBUG("[%p] independent packet \n", this);
             }
@@ -752,7 +810,7 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
         }
         case STCP_TCPS_LAST_ACK:
         {
-            if ((th->tcp_flags&STCP_TCP_FLAG_ACK) != 0x00) {
+            if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_ACK)) {
                 move_state(STCP_TCPS_CLOSED);
             }
             break;
@@ -781,36 +839,50 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
 void stcp_tcp_sock::print_stat() const
 {
     stat& s = stat::instance();
-    s.write("\t%u/tcp state=%s seq=%u ack=%u [this=%p]", rte::bswap16(port),
-            tcp_socket_state2str(state), snd_nxt, rcv_nxt, this);
+    s.write("\t%u/tcp state=%s[this=%p] rx/tx=%zd/%zd",
+            rte::bswap16(port),
+            tcp_socket_state2str(state), this,
+            rxq.size(), txq.size());
 
+    switch (state) {
 #if 0
-    // switch (state) {
-    //     case STCP_TCPS_LISTEN:
-    //         s.write("\t - socket alloced %zd/%zd", num_connected, max_connect);
-    //         s.write("\n\n\n");
-    //         break;
-    //     case STCP_TCPS_ESTABLISHED:
-    //         s.write("\t - iss    : %u", iss    );
-    //         // s.write("\t - snd_una: %u", snd_una);
-    //         s.write("\t - snd_nxt: %u", snd_nxt);
-    //         // s.write("\t - snd_win: %u", snd_win);
-    //         // s.write("\t - snd_up : %u", snd_up );
-    //         // s.write("\t - snd_wl1: %u", snd_wl1);
-    //         // s.write("\t - snd_wl2: %u", snd_wl2);
-    //         s.write("\t - irs    : %u", irs    );
-    //         s.write("\t - rcv_nxt: %u", rcv_nxt);
-    //         // s.write("\t - rcv_wnd: %u", rcv_wnd);
-    //         // s.write("\t - rcv_up : %u", rcv_up );
-    //         break;
-    //     case STCP_TCPS_CLOSED:
-    //         s.write("\n\n\n");
-    //         break;
-    //     default:
-    //         s.write("\n\n\n");
-    //         break;
-    // }
+        case STCP_TCPS_LISTEN:
+            s.write("\t - socket alloced %zd/%zd", num_connected, max_connect);
+            s.write("\n\n\n");
+            break;
+        case STCP_TCPS_CLOSED:
+            s.write("\n\n\n");
+            break;
+        default:
+            s.write("\n\n\n");
+            break;
 #endif
+        case STCP_TCPS_LISTEN:
+            s.write("\t - socket alloced %zd/%zd", num_connected, max_connect);
+            break;
+        case STCP_TCPS_ESTABLISHED:
+            s.write("\t - iss    : %u", iss    );
+            // s.write("\t - snd_una: %u", snd_una);
+            s.write("\t - snd_nxt: %u", snd_nxt);
+            // s.write("\t - snd_win: %u", snd_win);
+            // s.write("\t - snd_up : %u", snd_up );
+            // s.write("\t - snd_wl1: %u", snd_wl1);
+            // s.write("\t - snd_wl2: %u", snd_wl2);
+            s.write("\t - irs    : %u", irs    );
+            s.write("\t - rcv_nxt: %u", rcv_nxt);
+            // s.write("\t - rcv_wnd: %u", rcv_wnd);
+            // s.write("\t - rcv_up : %u", rcv_up );
+            s.write("\t - port/pair_port: %u/%u",
+                    rte::bswap16(port),
+                    rte::bswap16(pair_port));
+            s.write("\t - addr: %s", addr.c_str());
+            s.write("\t - pair: %s", pair.c_str());
+            s.write("\t - acceptable: %s\n" , acceptable_?"yes":"no");
+            s.write("\t - readable  : %s\n" , readable_  ?"yes":"no");
+            break;
+        default:
+            break;
+    }
 }
 
 

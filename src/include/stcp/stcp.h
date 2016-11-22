@@ -32,6 +32,19 @@ class tcp_module;
 class stcp_tcp_sock;
 
 
+enum stcp_event : uint32_t {
+    none            = 0,
+    STCP_POLLIN     = 0x01<<0,
+    STCP_POLLACCEPT = 0x01<<2,
+};
+
+
+struct stcp_pollfd {
+    stcp_tcp_sock* fd;
+    uint32_t       event;
+};
+
+
 
 class stcp_cyclic_func {
 public:
@@ -72,6 +85,7 @@ private:
     static std::vector<stcp_usrapp_info> lapps;
 
 public:
+    static void stcp_poll(std::vector<stcp_pollfd>& fds);
     static stcp_tcp_sock* create_tcp_socket();
     static stcp_udp_sock* create_udp_socket();
     static void destroy_tcp_socket(stcp_tcp_sock* sock);

@@ -17,7 +17,7 @@
 namespace slank {
 
 
-enum tcp_flags {
+enum tcp_flags : uint8_t {
     STCP_TCP_FLAG_FIN  = 0x01<<0, /* 00000001 */
     STCP_TCP_FLAG_SYN  = 0x01<<1, /* 00000010 */
     STCP_TCP_FLAG_RST  = 0x01<<2, /* 00000100 */
@@ -76,15 +76,15 @@ inline const char* tcp_socket_state2str(tcp_socket_state state)
 
 
 struct stcp_tcp_header {
-	uint16_t sport;     /**< TCP source port.            */
-	uint16_t dport;     /**< TCP destination port.       */
-	uint32_t seq_num;   /**< TX data sequence number.    */
-	uint32_t ack_num;   /**< RX data ack number.         */
-	uint8_t  data_off;  /**< Data offset.                */
+	uint16_t sport    ; /**< TCP source port.            */
+	uint16_t dport    ; /**< TCP destination port.       */
+	uint32_t seq_num  ; /**< TX data sequence number.    */
+	uint32_t ack_num  ; /**< RX data ack number.         */
+	uint8_t  data_off ; /**< Data offset.                */
 	uint8_t  tcp_flags; /**< TCP flags                   */
-	uint16_t rx_win;    /**< RX flow control window.     */
-	uint16_t cksum;     /**< TCP checksum.               */
-	uint16_t tcp_urp;   /**< TCP urgent pointer, if any. */
+	uint16_t rx_win   ; /**< RX flow control window.     */
+	uint16_t cksum    ; /**< TCP checksum.               */
+	uint16_t tcp_urp  ; /**< TCP urgent pointer, if any. */
 
     void print() const
     {
@@ -179,11 +179,19 @@ public:
         auto_lock lg(m);
         return queue.size();
     }
+    // bool empty() const // TODO
 };
 
 
 class stcp_tcp_sock {
     friend class tcp_module;
+private: /* for polling infos */
+    bool readable_  ;
+    bool acceptable_;
+public:
+    bool readable()   { return readable_  ; }
+    bool acceptable() { return acceptable_; }
+
 private:
     bool accepted;
     bool dead;
@@ -255,9 +263,7 @@ public: /* for Users Operation */
     void listen(size_t backlog);
     stcp_tcp_sock* accept(struct stcp_sockaddr_in* addr);
     mbuf* read();
-#if 0
     void write(mbuf* msg);
-#endif
 };
 
 
