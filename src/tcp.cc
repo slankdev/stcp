@@ -37,7 +37,6 @@ stcp_tcp_sock::stcp_tcp_sock() :
                         num_connected(0),
                         state(TCPS_CLOSED),
                         port(0),
-                        snd_una(0),
                         snd_nxt(0),
                         snd_win(0),
                         iss    (0),
@@ -664,7 +663,6 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
         /*
          * Init stream information
          */
-        newsock->snd_una = 0;
         newsock->snd_nxt = newsock->iss;
         newsock->snd_win = 512; // TODO hardcode
 

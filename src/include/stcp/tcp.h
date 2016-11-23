@@ -108,6 +108,30 @@ struct tcp_op_mss {
 
 
 
+// // MARKED implement this
+// class tcp_stream_info {
+//     #<{(| HostByteOrder |)}>#
+//     uint32_t iss    ; #<{(| initial send sequence number      |)}>#
+//     uint32_t irs    ; #<{(| initial reseive sequence number   |)}>#
+//
+//     uint32_t snd_nxt; #<{(| next send                         |)}>#
+//     uint16_t snd_win; #<{(| send window size                  |)}>#
+//     uint32_t rcv_nxt; #<{(| next receive                      |)}>#
+//     uint16_t rcv_wnd; #<{(| receive window size               |)}>#
+//
+// #if 0
+//     uint32_t snd_una; #<{(| unconfirmed send                  |)}># //?
+//     uint16_t snd_up ; #<{(| send urgent pointer               |)}>#
+//     uint32_t snd_wl1; #<{(| used sequence num at last send    |)}>#
+//     uint32_t snd_wl2; #<{(| used acknouledge num at last send |)}>#
+//     uint16_t rcv_up ; #<{(| receive urgent pointer            |)}>#
+// #endif
+//
+// public:
+//     void set_snd_nxt(uint32_t);
+//     void set_snd_win(uint32_t);
+// };
+
 
 
 class stcp_tcp_sock {
@@ -142,21 +166,19 @@ private:
      * Variables for TCP connected sequence number
      * All of variables are stored as HostByteOrder
      */
-    uint32_t snd_una; /* unconfirmed send                  */ //?
     uint32_t snd_nxt; /* next send                         */
     uint16_t snd_win; /* send window size                  */
-#if 0
-    uint16_t snd_up ; /* send urgent pointer               */
-    uint32_t snd_wl1; /* used sequence num at last send    */
-    uint32_t snd_wl2; /* used acknouledge num at last send */
-#endif
     uint32_t iss    ; /* initial send sequence number      */
     uint32_t rcv_nxt; /* next receive                      */
     uint16_t rcv_wnd; /* receive window size               */
+    uint32_t irs    ; /* initial reseive sequence number   */
 #if 0
+    uint32_t snd_una; /* unconfirmed send                  */ //?
+    uint16_t snd_up ; /* send urgent pointer               */
+    uint32_t snd_wl1; /* used sequence num at last send    */
+    uint32_t snd_wl2; /* used acknouledge num at last send */
     uint16_t rcv_up ; /* receive urgent pointer            */
 #endif
-    uint32_t irs    ; /* initial reseive sequence number   */
 
 private:
     void proc_RST(mbuf* msg, stcp_tcp_header* th, stcp_sockaddr_in* dst);
