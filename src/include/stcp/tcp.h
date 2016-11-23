@@ -108,33 +108,6 @@ struct tcp_op_mss {
 
 
 
-// MARKED
-/*
- * All of variables are stored HostByteOrder
- */
-struct currend_seg {
-    uint32_t seg_seq; /* segument's sequence number    */
-    uint32_t seg_ack; /* segument's acknouledge number */
-    uint32_t seg_len; /* segument's length             */
-    uint16_t seg_wnd; /* segument's window size        */
-    uint16_t seg_up ; /* segument's urgent pointer     */
-    uint32_t srg_prc; /* segument's priority           */
-
-    currend_seg(const stcp_tcp_header* th, const stcp_ip_header* ih) :
-        seg_seq(rte::bswap32(th->seq_num)),
-        seg_ack(rte::bswap32(th->ack_num)),
-        seg_len(rte::bswap16(ih->total_length) - th->data_off/4),
-        seg_wnd(rte::bswap16(th->rx_win )),
-        seg_up (rte::bswap16(th->tcp_urp)),
-        srg_prc(rte::bswap32(0)) {}
-
-    void print()
-    {
-        printf("Current Segument \n");
-        printf(" - seq : %u(0x%x) \n", seg_seq, seg_seq);
-        printf(" - ack : %u(0x%x) \n", seg_ack, seg_ack);
-    }
-};
 
 
 
@@ -176,8 +149,10 @@ private:
     uint32_t snd_nxt; /* next send                         */ //?
     uint16_t snd_win; /* send window size                  */
     uint16_t snd_up ; /* send urgent pointer               */
+#if 0
     uint32_t snd_wl1; /* used sequence num at last send    */
     uint32_t snd_wl2; /* used acknouledge num at last send */
+#endif
     uint32_t iss    ; /* initial send sequence number      */
     uint32_t rcv_nxt; /* next receive                      */
     uint16_t rcv_wnd; /* receive window size               */

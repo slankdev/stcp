@@ -35,10 +35,21 @@ stcp_tcp_sock::stcp_tcp_sock() :
                         dead(false),
                         head(nullptr),
                         num_connected(0),
-                        state(TCPS_CLOSED), port(0),
-                        snd_una(0), snd_nxt(0), snd_win(0), snd_up (0),
-                        snd_wl1(0), snd_wl2(0), iss    (0),
-                        rcv_nxt(0), rcv_wnd(0), rcv_up (0), irs(0)
+                        state(TCPS_CLOSED),
+                        port(0),
+                        snd_una(0),
+                        snd_nxt(0),
+                        snd_win(0),
+                        snd_up (0),
+#if 0
+                        snd_wl1(0),
+                        snd_wl2(0),
+#endif
+                        iss    (0),
+                        rcv_nxt(0),
+                        rcv_wnd(0),
+                        rcv_up (0),
+                        irs(0)
 {
     DEBUG("[%p] alloc sock \n", this);
 }
@@ -593,10 +604,11 @@ void stcp_tcp_sock::rx_push_CLOSED(mbuf* msg, stcp_sockaddr_in* src,
     mbuf_pull(msg, sizeof(stcp_ip_header));
     core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
 }
+
+
 void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
         stcp_ip_header* ih, stcp_tcp_header* th)
 {
-    currend_seg cseg(th, ih);
 
     if (th->tcp_flags == TCPF_SYN) {
 
@@ -617,6 +629,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
         /*
          * Create new socket
          */
+        // MARKED TODO imple capsuled constructor with state
         stcp_tcp_sock* newsock = core::create_tcp_socket();
         num_connected ++;
         newsock->port = port;
@@ -640,12 +653,14 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
         newsock->snd_nxt = newsock->iss;
         newsock->snd_win = 512; // TODO hardcode
         newsock->snd_up  = 0;
-        newsock->snd_wl1 = cseg.seg_seq;
-        newsock->snd_wl2 = cseg.seg_ack;
+#if 0 // no use
+        newsock->snd_wl1 = rte::bswap32(th->seq_num);
+        newsock->snd_wl2 = rte::bswap32(th->ack_num);
+#endif
 
-        newsock->irs = cseg.seg_seq;
+        newsock->irs = rte::bswap32(th->seq_num);
         newsock->rcv_nxt = newsock->irs + 1;
-        newsock->rcv_wnd = cseg.seg_wnd;
+        newsock->rcv_wnd = rte::bswap32(th->rx_win);
         newsock->rcv_up  = 0;
 
         /*
@@ -685,17 +700,18 @@ void stcp_tcp_sock::rx_push_SYN_RCVD(mbuf* msg, stcp_sockaddr_in* src,
 {
     UNUSED(msg);
     UNUSED(src);
-    currend_seg cseg(th, ih);
+    UNUSED(ih);
+
     /*
      * check packet is this stream's one.
      */
-    if (cseg.seg_seq != rcv_nxt) {
+    if (rte::bswap32(th->seq_num) != rcv_nxt) {
         DEBUG("[%p] invalid sequence number seg=%u(0x%x), sock=%u(0x%x)\n", this,
-                cseg.seg_seq, cseg.seg_seq,
+                rte::bswap32(th->seq_num), rte::bswap32(th->seq_num),
                 rcv_nxt, rcv_nxt);
         return;
     }
-    if (cseg.seg_ack != snd_nxt) {
+    if (rte::bswap32(th->ack_num) != snd_nxt) {
         DEBUG("[%p] invalid acknouledge number \n", this);
         return;
     }
@@ -716,7 +732,7 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
         stcp_ip_header* ih, stcp_tcp_header* th)
 {
     uint16_t tcpdlen = data_length(th, ih);
-    currend_seg cseg(th, ih);
+
     /*
      * TODO ERASE move implementation location
      * The code that checks msg is RST need to
@@ -766,8 +782,8 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
         /*
          * Update Stream infos
          */
-        snd_nxt  = cseg.seg_ack;
-        rcv_nxt  = cseg.seg_seq + tcpdlen;
+        snd_nxt  = rte::bswap32(th->ack_num);
+        rcv_nxt  = rte::bswap32(th->seq_num) + tcpdlen;
 
         /*
          * Craft ACK-packet to reply
@@ -811,8 +827,8 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
         /*
          * Update Stream infos
          */
-        snd_nxt = cseg.seg_ack;
-        rcv_nxt = cseg.seg_seq + tcpdlen;
+        snd_nxt = rte::bswap32(th->ack_num);
+        rcv_nxt = rte::bswap32(th->seq_num) + tcpdlen;
         rcv_nxt ++;
 
         /*
