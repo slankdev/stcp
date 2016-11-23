@@ -53,25 +53,6 @@ void core::set_app(stcp_usrapp func_ptr, void* func_arg)
 }
 
 
-void core::stcp_poll(std::vector<stcp_tcp_sock*>& fds)
-{
-    while (true) {
-        for (stcp_tcp_sock* sock : fds) {
-#if 0
-            if (sock->readable()) return ;
-            fd.event = none;
-            if (fd.fd->readable  ()) {
-                fd.event |= STCP_POLLIN;
-                return;
-            }
-            if (fd.fd->acceptable()) {
-                fd.event |= STCP_POLLACCEPT;
-                return;
-            }
-#endif
-        }
-    }
-}
 
 
 

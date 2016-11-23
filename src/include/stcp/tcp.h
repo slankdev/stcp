@@ -127,6 +127,7 @@ struct tcp_op_mss {
 
 
 
+// MARKED
 /*
  * All of variables are stored HostByteOrder
  */
@@ -158,11 +159,10 @@ struct currend_seg {
 
 class stcp_tcp_sock {
     friend class tcp_module;
-public: /* for pollVng infos */
+public: /* for polling infos */
     bool readable()   { return !rxq.empty(); }
-    bool acceptable()   { return !wait_accept.empty(); }
-    bool sockdead() { return dead; }
-
+    bool acceptable() { return !wait_accept.empty(); }
+    bool sockdead()   { return dead; }
 
 private:
     bool accepted;
@@ -216,12 +216,28 @@ private:
     void move_state_from_LAST_ACK(tcp_socket_state next_state);
     void move_state_from_TIME_WAIT(tcp_socket_state next_state);
 
-    void do_RST(stcp_tcp_header* th);
+private:
+    void proc_RST(mbuf* msg, stcp_tcp_header* th, stcp_sockaddr_in* dst);
     void move_state_DEBUG(tcp_socket_state next_state);
 
     void proc();
     void print_stat() const;
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
+
+private: /* called by proc() */
+    void proc_ESTABLISHED();
+    void proc_CLOSE_WAIT();
+#if 0 // not implement
+    void proc_CLOSED     ();
+    void proc_LISTEN     ();
+    void proc_SYN_SENT   ();
+    void proc_SYN_RCVD   ();
+    void proc_FIN_WAIT_1 ();
+    void proc_FIN_WAIT_2 ();
+    void proc_CLOSING    ();
+    void proc_LAST_ACK   ();
+    void proc_TIME_WAIT  ();
+#endif
 
 private: /* called by rx_push() */
     void rx_push_CLOSED(mbuf* msg, stcp_sockaddr_in* src,
@@ -276,7 +292,6 @@ public:
 
     void proc();
     void print_stat() const;
-
 };
 
 

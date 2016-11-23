@@ -113,121 +113,11 @@ void stcp_tcp_sock::proc()
      */
     switch (state) {
         case STCP_TCPS_CLOSE_WAIT:
-        {
-            /*
-             * TODO
-             * These must be implemented
-             */
-
-            mbuf* msg = rte::pktmbuf_alloc(core::dpdk.get_mempool());
-
-            /*
-             * Init Mbuf
-             */
-
-            msg->pkt_len  = sizeof(stcp_tcp_header) + sizeof(stcp_ip_header);
-            msg->data_len = sizeof(stcp_tcp_header) + sizeof(stcp_ip_header);
-            stcp_ip_header*  ih = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
-            stcp_tcp_header* th = rte::pktmbuf_mtod_offset<stcp_tcp_header*>(msg,
-                    sizeof(stcp_ip_header));
-
-
-            /*
-             * Craft IP hdr for TCP-checksum
-             */
-            ih->src = addr.sin_addr;
-            ih->dst = pair.sin_addr;
-            ih->next_proto_id = 0x06;
-            ih->total_length  = rte::bswap16(
-                    sizeof(stcp_tcp_header) + sizeof(stcp_ip_header));
-
-
-            /*
-             * Craft TCP FIN
-             */
-            th->sport     = port     ;
-            th->dport     = pair_port;
-            th->seq_num   = rte::bswap32(snd_nxt);
-            th->ack_num   = rte::bswap32(rcv_nxt);
-            th->data_off  = sizeof(stcp_tcp_header)>>2 << 4;
-            th->tcp_flags = STCP_TCP_FLAG_FIN|STCP_TCP_FLAG_ACK;
-            th->rx_win    = rte::bswap16(snd_win);
-            th->cksum     = 0x0000;
-            th->tcp_urp   = 0x0000; // TODO hardcode
-
-            th->cksum = rte_ipv4_udptcp_cksum(
-                    reinterpret_cast<ipv4_hdr*>(ih), th);
-
-            /*
-             * Update Stream infos
-             */
-            snd_nxt++;
-
-            /*
-             * Send packet
-             */
-            mbuf_pull(msg, sizeof(stcp_ip_header));
-            core::ip.tx_push(msg, &pair, STCP_IPPROTO_TCP);
-
-
-            /*
-             * Move TCP-State
-             */
-            move_state(STCP_TCPS_LAST_ACK);
+            proc_CLOSE_WAIT();
             break;
-        }
-
         case STCP_TCPS_ESTABLISHED:
-        {
-            while (!txq.empty()) {
-                mbuf* msg = txq.pop();
-                size_t data_len = rte::pktmbuf_pkt_len(msg);
-                DEBUG("[%p] %s PROC send(txq.pop(), %zd)\n",
-                        this, tcp_socket_state2str(state), rte::pktmbuf_pkt_len(msg));
-
-                stcp_tcp_header* th = reinterpret_cast<stcp_tcp_header*>(
-                        mbuf_push(msg, sizeof(stcp_tcp_header)));
-                stcp_ip_header*  ih = reinterpret_cast<stcp_ip_header*>(
-                        mbuf_push(msg, sizeof(stcp_ip_header)));
-
-                /*
-                 * Craft IP header for tcp checksum
-                 */
-                ih->total_length  = rte::bswap16(rte::pktmbuf_pkt_len(msg));
-                ih->next_proto_id = STCP_IPPROTO_TCP;
-                ih->src           = addr.sin_addr;
-                ih->dst           = pair.sin_addr;
-
-                /*
-                 * Craft TCP header
-                 */
-                th->sport     = port     ;
-                th->dport     = pair_port;
-                th->seq_num   = rte::bswap32(snd_nxt);
-                th->ack_num   = rte::bswap32(rcv_nxt);
-                th->data_off  = sizeof(stcp_tcp_header) >> 2 << 4;
-                th->tcp_flags = STCP_TCP_FLAG_PSH|STCP_TCP_FLAG_ACK;
-                th->rx_win    = snd_win;
-                th->cksum     = 0x0000;
-                th->tcp_urp   = 0; // TODO hardcode
-
-                th->cksum = rte_ipv4_udptcp_cksum(
-                        reinterpret_cast<ipv4_hdr*>(ih), th);
-
-                /*
-                 * send to ip module
-                 */
-                mbuf_pull(msg, sizeof(stcp_ip_header));
-                core::ip.tx_push(msg, &pair, STCP_IPPROTO_TCP);
-
-                /*
-                 * TODO KOKOJANAKUNE
-                 */
-                snd_nxt += data_len;
-
-            }
+            proc_ESTABLISHED();
             break;
-        }
         case STCP_TCPS_LISTEN:
         case STCP_TCPS_CLOSED:
         case STCP_TCPS_SYN_SENT:
@@ -237,21 +127,134 @@ void stcp_tcp_sock::proc()
         case STCP_TCPS_CLOSING:
         case STCP_TCPS_LAST_ACK:
         case STCP_TCPS_TIME_WAIT:
-        {
             /*
              * TODO
              * Not Implement yet.
              * No Operation
              */
             break;
-        }
         default:
-        {
             throw exception("UNKNOWN TCP STATE!!!");
             break;
-        }
     }
 }
+
+
+void stcp_tcp_sock::proc_ESTABLISHED()
+{
+    while (!txq.empty()) {
+        mbuf* msg = txq.pop();
+        size_t data_len = rte::pktmbuf_pkt_len(msg);
+        DEBUG("[%p] %s PROC send(txq.pop(), %zd)\n",
+                this, tcp_socket_state2str(state), rte::pktmbuf_pkt_len(msg));
+
+        stcp_tcp_header* th = reinterpret_cast<stcp_tcp_header*>(
+                mbuf_push(msg, sizeof(stcp_tcp_header)));
+        stcp_ip_header*  ih = reinterpret_cast<stcp_ip_header*>(
+                mbuf_push(msg, sizeof(stcp_ip_header)));
+
+        /*
+         * Craft IP header for tcp checksum
+         */
+        ih->total_length  = rte::bswap16(rte::pktmbuf_pkt_len(msg));
+        ih->next_proto_id = STCP_IPPROTO_TCP;
+        ih->src           = addr.sin_addr;
+        ih->dst           = pair.sin_addr;
+
+        /*
+         * Craft TCP header
+         */
+        th->sport     = port     ;
+        th->dport     = pair_port;
+        th->seq_num   = rte::bswap32(snd_nxt);
+        th->ack_num   = rte::bswap32(rcv_nxt);
+        th->data_off  = sizeof(stcp_tcp_header) >> 2 << 4;
+        th->tcp_flags = STCP_TCP_FLAG_PSH|STCP_TCP_FLAG_ACK;
+        th->rx_win    = snd_win;
+        th->cksum     = 0x0000;
+        th->tcp_urp   = 0; // TODO hardcode
+
+        th->cksum = rte_ipv4_udptcp_cksum(
+                reinterpret_cast<ipv4_hdr*>(ih), th);
+
+        /*
+         * send to ip module
+         */
+        mbuf_pull(msg, sizeof(stcp_ip_header));
+        core::ip.tx_push(msg, &pair, STCP_IPPROTO_TCP);
+
+        /*
+         * TODO KOKOJANAKUNE
+         */
+        snd_nxt += data_len;
+
+    }
+}
+
+
+void stcp_tcp_sock::proc_CLOSE_WAIT()
+{
+    /*
+     * TODO
+     * These must be implemented
+     */
+
+    mbuf* msg = rte::pktmbuf_alloc(core::dpdk.get_mempool());
+
+    /*
+     * Init Mbuf
+     */
+    msg->pkt_len  = sizeof(stcp_tcp_header) + sizeof(stcp_ip_header);
+    msg->data_len = sizeof(stcp_tcp_header) + sizeof(stcp_ip_header);
+    stcp_ip_header*  ih = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
+    stcp_tcp_header* th = rte::pktmbuf_mtod_offset<stcp_tcp_header*>(msg,
+            sizeof(stcp_ip_header));
+
+
+    /*
+     * Craft IP hdr for TCP-checksum
+     */
+    ih->src = addr.sin_addr;
+    ih->dst = pair.sin_addr;
+    ih->next_proto_id = 0x06;
+    ih->total_length  = rte::bswap16(
+            sizeof(stcp_tcp_header) + sizeof(stcp_ip_header));
+
+
+    /*
+     * Craft TCP FIN
+     */
+    th->sport     = port     ;
+    th->dport     = pair_port;
+    th->seq_num   = rte::bswap32(snd_nxt);
+    th->ack_num   = rte::bswap32(rcv_nxt);
+    th->data_off  = sizeof(stcp_tcp_header)>>2 << 4;
+    th->tcp_flags = STCP_TCP_FLAG_FIN|STCP_TCP_FLAG_ACK;
+    th->rx_win    = rte::bswap16(snd_win);
+    th->cksum     = 0x0000;
+    th->tcp_urp   = 0x0000; // TODO hardcode
+
+    th->cksum = rte_ipv4_udptcp_cksum(
+            reinterpret_cast<ipv4_hdr*>(ih), th);
+
+    /*
+     * Update Stream infos
+     */
+    snd_nxt++;
+
+    /*
+     * Send packet
+     */
+    mbuf_pull(msg, sizeof(stcp_ip_header));
+    core::ip.tx_push(msg, &pair, STCP_IPPROTO_TCP);
+
+
+    /*
+     * Move TCP-State
+     */
+    move_state(STCP_TCPS_LAST_ACK);
+}
+
 
 
 void tcp_module::proc()
@@ -263,24 +266,18 @@ void tcp_module::proc()
 
 
 
-void stcp_tcp_sock::do_RST(stcp_tcp_header* th)
+void stcp_tcp_sock::proc_RST(mbuf* msg, stcp_tcp_header* th, stcp_sockaddr_in* dst)
 {
-
-#define UNUSED(x) (void)(x)
-    UNUSED(th); // TODO ERASE
+    UNUSED(msg);
+    UNUSED(th);
+    UNUSED(dst);
 
     switch (state) {
-        case STCP_TCPS_ESTABLISHED:
-        {
-            /* nop */
-            break;
-        }
-
-
         /*
          * TODO implement
          * each behaviours
          */
+        case STCP_TCPS_ESTABLISHED:
         case STCP_TCPS_LISTEN:
         case STCP_TCPS_CLOSED:
         case STCP_TCPS_SYN_SENT:
@@ -299,6 +296,8 @@ void stcp_tcp_sock::do_RST(stcp_tcp_header* th)
 
     }
 }
+
+
 void stcp_tcp_sock::move_state_DEBUG(tcp_socket_state next_state)
 {
     DEBUG("[%p] %s -> %s (MOVE state debug) \n", this,
@@ -636,7 +635,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
         /*
          * Init stream information
          */
-        newsock->iss = (rte::rand() % 0xffffffff); // TODO hardcode
+        newsock->iss = (rte::rand() % 0xffffffff); // TODO hot spot!!!
         newsock->snd_una = 0;
         newsock->snd_nxt = newsock->iss;
         newsock->snd_win = 512; // TODO hardcode
@@ -725,13 +724,15 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
      * should implement location.
      */
 
-#if 0
-    // if ((th->tcp_flags & STCP_TCP_FLAG_RST) != 0x00) {
-    //     do_RST(th);
-    //     rte::pktmbuf_free(msg);
-    //     return;
-    // }
-#endif
+
+    /*
+     * Operate RST packet
+     */
+    if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_RST)) {
+        proc_RST(msg, th, src);
+        return;
+    }
+
 
 #if 0
     /*
@@ -1002,7 +1003,6 @@ void tcp_module::send_RSTACK(mbuf* msg, stcp_sockaddr_in* dst)
     ih->dst           = dst->sin_addr;
     ih->next_proto_id = STCP_IPPROTO_TCP;
     ih->total_length  = rte::bswap16(rte::pktmbuf_pkt_len(msg));
-    ih->print();
 
     /*
      * Set TCP header

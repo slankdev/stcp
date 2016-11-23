@@ -46,16 +46,6 @@ int user_main1(void* arg)
     std::vector<stcp_tcp_sock*> fds;
     fds.push_back(sock);
 
-#if 0
-    while (true) {
-        if (sock->acceptable()) {
-                DEBUG("YES: YEAAAAAAAAh\n");
-        } else {
-                DEBUG("NO: YEAAAAAAAAh\n");
-        }
-
-    }
-#else
     while (true) {
         // printf("[");
         for (size_t i=0; i<fds.size(); i++) {
@@ -76,26 +66,6 @@ int user_main1(void* arg)
         }
         // printf("]\n");
     }
-#endif
-
-#if 0
-        stcp_sockaddr_in caddr;
-        core::stcp_poll(fds);
-        // printf("RETURN DFSDFDSFSDFSDF\n");
-
-        for (stcp_pollfd& pfd : fds) {
-            if (pfd.event & STCP_POLLACCEPT) {
-                csock = sock->accept(&caddr);
-                mbuf* msg = csock->read();
-                rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
-                csock->write(msg);
-                // printf("korekore\n");
-            } else {
-                // printf("other\n");
-            }
-        }
-#endif
-
     return 0;
 }
 #else
