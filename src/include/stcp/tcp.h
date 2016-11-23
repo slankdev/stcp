@@ -108,7 +108,6 @@ struct tcp_op_mss {
 
 
 
-// MARKED implement this
 class tcp_stream_info {
     /* HostByteOrder */
     uint32_t iss_    ; /* initial send sequence number      */
@@ -130,19 +129,20 @@ class tcp_stream_info {
 public:
     tcp_stream_info(uint32_t iss, uint32_t irs)
         : iss_(iss), irs_(irs) {}
-    // void reset_stream(uint32_t iss, uint32_t irs)
-    // { iss_ = iss; irs_ = irs; }
     void snd_nxt(uint32_t arg) { snd_nxt_ = arg; }
     void snd_win(uint32_t arg) { snd_win_ = arg; }
     void rcv_nxt(uint32_t arg) { rcv_nxt_ = arg; }
     void rcv_win(uint32_t arg) { rcv_wnd_ = arg; }
 
-    uint32_t iss() { return iss_; }
-    uint32_t irs() { return irs_; }
-    uint32_t snd_nxt() { return snd_nxt_; }
-    uint32_t snd_win() { return snd_win_; }
-    uint32_t rcv_nxt() { return rcv_nxt_; }
-    uint32_t rcv_win() { return rcv_wnd_; }
+    void snd_nxt_inc(int32_t arg) { snd_nxt_ += arg; }
+    void rcv_nxt_inc(int32_t arg) { rcv_nxt_ += arg; }
+
+    uint32_t iss() const { return iss_; }
+    uint32_t irs() const { return irs_; }
+    uint32_t snd_nxt() const { return snd_nxt_; }
+    uint32_t snd_win() const { return snd_win_; }
+    uint32_t rcv_nxt() const { return rcv_nxt_; }
+    uint32_t rcv_win() const { return rcv_wnd_; }
 };
 
 
@@ -176,23 +176,7 @@ private:
     stcp_sockaddr_in pair;
 
 private:
-    /*
-     * Variables for TCP connected sequence number
-     * All of variables are stored as HostByteOrder
-     */
-    uint32_t snd_nxt; /* next send                         */
-    uint16_t snd_win; /* send window size                  */
-    uint32_t iss    ; /* initial send sequence number      */
-    uint32_t rcv_nxt; /* next receive                      */
-    uint16_t rcv_wnd; /* receive window size               */
-    uint32_t irs    ; /* initial reseive sequence number   */
-#if 0
-    uint32_t snd_una; /* unconfirmed send                  */ //?
-    uint16_t snd_up ; /* send urgent pointer               */
-    uint32_t snd_wl1; /* used sequence num at last send    */
-    uint32_t snd_wl2; /* used acknouledge num at last send */
-    uint16_t rcv_up ; /* receive urgent pointer            */
-#endif
+    tcp_stream_info si;
 
 private:
     void proc_RST(mbuf* msg, stcp_tcp_header* th, stcp_sockaddr_in* dst);
