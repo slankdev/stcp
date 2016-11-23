@@ -174,8 +174,6 @@ private:
     uint16_t pair_port; /* NetworkByteOrder */
     stcp_sockaddr_in addr;
     stcp_sockaddr_in pair;
-
-private:
     tcp_stream_info si;
 
 private:

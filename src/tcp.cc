@@ -31,41 +31,39 @@ inline bool HAS_FLAG(uint8_t flag, tcp_flags type)
 
 
 stcp_tcp_sock::stcp_tcp_sock() :
-                        accepted(false),
-                        dead(false),
-                        head(nullptr),
-                        num_connected(0),
-                        state(TCPS_CLOSED),
-                        port(0),
-                        si(0, 0)
-{
-    DEBUG("[%15p] TCP SOCK CONSTRUCTOR \n", this);
-}
-
-/*
- * Constructor for LISTEN socket
- */
-stcp_tcp_sock::stcp_tcp_sock(tcpstate s, uint16_t lp, uint16_t rp,
-                                    uint32_t arg_iss, uint32_t arg_irs,
-                                    stcp_tcp_sock* h) :
     accepted(false),
     dead(false),
     head(nullptr),
     num_connected(0),
     state(TCPS_CLOSED),
     port(0),
+    pair_port(0),
+    si(0, 0)
+{
+    DEBUG("[%15p] SOCK CNSTRCTR \n", this);
+}
+
+/*
+ * Constructor for LISTEN socket
+ */
+stcp_tcp_sock::stcp_tcp_sock(tcpstate s, uint16_t lp, uint16_t rp,
+            uint32_t arg_iss, uint32_t arg_irs, stcp_tcp_sock* h) :
+    accepted(false),
+    dead(false),
+    head(h),
+    num_connected(0),
+    state(s),
+    port(lp),
+    pair_port(rp),
     si(arg_iss, arg_irs)
 {
-    DEBUG("[%15p] TCP SOCK CONSTRUCTOR(state, lp, rp, iss, irs, head) \n", this);
-    state     = s;
-    port      = lp;
-    pair_port = rp;
-    head      = h;
+    DEBUG("[%15p] SOCK CNSTRCTR(%s,%u,%u,%u,%u,%p) \n",
+            this, tcpstate2str(state), port, pair_port, si.iss(), si.irs(), head);
 }
 
 stcp_tcp_sock::~stcp_tcp_sock()
 {
-    DEBUG("[%15p] TCP SOCK DESTRUCTOR \n", this);
+    DEBUG("[%15p] SOCK DESTRUCTOR \n", this);
     if (head) {
         head->num_connected --;
     }
@@ -124,7 +122,7 @@ stcp_tcp_sock* stcp_tcp_sock::accept(struct stcp_sockaddr_in* addr)
      * Dequeue wait_accept and return that.
      */
     stcp_tcp_sock* sock = wait_accept.pop();
-    DEBUG("[%15p] accept. return new socket[%15p]\n", this, sock);
+    DEBUG("[%15p] ACCEPT return new socket [%p]\n", this, sock);
     return sock;
 }
 
@@ -176,8 +174,8 @@ void stcp_tcp_sock::proc_ESTABLISHED()
     while (!txq.empty()) {
         mbuf* msg = txq.pop();
         size_t data_len = rte::pktmbuf_pkt_len(msg);
-        DEBUG("[%15p] %s PROC send(txq.pop(), %zd)\n",
-                this, tcpstate2str(state), rte::pktmbuf_pkt_len(msg));
+        DEBUG("[%15p] proc_ESTABLISHED send(txq.pop(), %zd)\n",
+                this, rte::pktmbuf_pkt_len(msg));
 
         stcp_tcp_header* th = reinterpret_cast<stcp_tcp_header*>(
                 mbuf_push(msg, sizeof(stcp_tcp_header)));
@@ -238,9 +236,8 @@ void stcp_tcp_sock::proc_CLOSE_WAIT()
     msg->pkt_len  = sizeof(stcp_tcp_header) + sizeof(stcp_ip_header);
     msg->data_len = sizeof(stcp_tcp_header) + sizeof(stcp_ip_header);
     stcp_ip_header*  ih = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
-    stcp_tcp_header* th = rte::pktmbuf_mtod_offset<stcp_tcp_header*>(msg,
-            sizeof(stcp_ip_header));
-
+    stcp_tcp_header* th = rte::pktmbuf_mtod_offset<stcp_tcp_header*>(
+                                    msg, sizeof(stcp_ip_header));
 
     /*
      * Craft IP hdr for TCP-checksum
@@ -329,13 +326,6 @@ void stcp_tcp_sock::proc_RST(mbuf* msg, stcp_tcp_header* th, stcp_sockaddr_in* d
 }
 
 
-void stcp_tcp_sock::move_state_DEBUG(tcpstate next_state)
-{
-    DEBUG("[%15p] %s -> %s (MOVE state debug) \n", this,
-            tcpstate2str(state),
-            tcpstate2str(next_state) );
-    state = next_state;
-}
 void stcp_tcp_sock::bind(const struct stcp_sockaddr_in* addr, size_t addrlen)
 {
     if (addrlen < sizeof(sockaddr_in))
@@ -351,13 +341,22 @@ void stcp_tcp_sock::listen(size_t backlog)
 }
 
 
-
+void stcp_tcp_sock::move_state_DEBUG(tcpstate next_state)
+{
+    DEBUG("[%15p] %s -> %s (MOVE state debug) \n", this,
+            tcpstate2str(state),
+            tcpstate2str(next_state) );
+    state = next_state;
+}
 
 void stcp_tcp_sock::move_state(tcpstate next_state)
 {
+// TODO
+#if 0
     DEBUG("[%15p] %s -> %s \n", this,
             tcpstate2str(state),
             tcpstate2str(next_state) );
+#endif
 
     switch (state) {
         case TCPS_CLOSED     :
@@ -657,13 +656,13 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
 
         newsock->addr.sin_addr = ih->dst;
         newsock->pair.sin_addr = ih->src;
-        DEBUG("[%15p] connect request. alloc sock [%15p]\n", this, newsock);
+        // DEBUG("[%15p] connect request. alloc sock [%15p]\n", this, newsock);
 
         /*
          * Init stream information
          */
         newsock->si.snd_nxt(newsock->si.iss());
-        newsock->si.snd_win(512         ); // TODO hardcode
+        newsock->si.snd_win(512); // TODO hardcode
 
         newsock->si.rcv_nxt(newsock->si.irs() + 1);
         newsock->si.rcv_win(rte::bswap32(th->rx_win));
@@ -672,7 +671,6 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
          * craft SYNACK packet to reply.
          */
         swap_port(th);
-
 
         th->seq_num = rte::bswap32(newsock->si.snd_nxt());
         th->ack_num = rte::bswap32(newsock->si.rcv_nxt());
@@ -755,6 +753,20 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
         return;
     }
 
+
+    /*
+     * Filtering packet that is indepenent
+     */
+    // TODO Debug info
+    // if (th->ack_num != rte::bswap32(si.snd_nxt()) ||
+    //         th->seq_num != rte::bswap32(si.rcv_nxt())) {
+        DEBUG("[%15p] SLANKDEV: Faaaaa\n", this);
+        DEBUG("     packet seq: %u\n", rte::bswap32(th->seq_num));
+        DEBUG("     packet ack: %u\n", rte::bswap32(th->ack_num));
+        DEBUG("     stream seq: %u\n", si.snd_nxt());
+        DEBUG("     stream ack: %u\n", si.rcv_nxt());
+    //     return;
+    // }
 
     if (HAS_FLAG(th->tcp_flags, TCPF_PSH) &&
             HAS_FLAG(th->tcp_flags, TCPF_ACK)) {
@@ -852,8 +864,9 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
 
     } else if (HAS_FLAG(th->tcp_flags, TCPF_ACK)) {
         // MARKED
-        DEBUG("[%15p] PROC send(,%u) success\n", this, rte::bswap32(th->ack_num) - si.snd_nxt());
-        si.snd_nxt(rte::bswap32(th->ack_num));
+        DEBUG("[%15p] PROC send(mbuf=%p,%u) success\n",
+                this, msg, rte::bswap32(th->ack_num) - si.snd_nxt());
+        // si.snd_nxt(rte::bswap32(th->ack_num));
     } else {
         std::string errstr;
         errstr.resize(256);
@@ -957,11 +970,31 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
     for (stcp_tcp_sock* sock : socks) {
         if (sock->port == dst_port) {
             tcpstate s = sock->state;
+#if 0
+            switch (s) {
+                case TCPS_CLOSE_WAIT :
+                case TCPS_CLOSING    :
+                case TCPS_TIME_WAIT  :
+                    continue;
+
+                case TCPS_CLOSED     :
+                case TCPS_LISTEN     :
+                case TCPS_SYN_SENT   :
+                case TCPS_SYN_RCVD   :
+                case TCPS_ESTABLISHED:
+                case TCPS_FIN_WAIT_1 :
+                case TCPS_FIN_WAIT_2 :
+                case TCPS_LAST_ACK   :
+                default:
+                    throw exception("NOT IMPLE");
+            }
+#else
             if (s==TCPS_CLOSED
                     || s==TCPS_CLOSE_WAIT
                     || s==TCPS_TIME_WAIT ) {
                 continue;
             }
+#endif
 
 
             mbuf* m = rte::pktmbuf_clone(msg, core::dpdk.get_mempool());
