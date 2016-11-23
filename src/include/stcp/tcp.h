@@ -110,10 +110,12 @@ struct tcp_op_mss {
 
 
 
-
 class stcp_tcp_sock {
     friend class tcp_module;
-public: /* for polling infos */
+public:
+    /*
+     * for polling infos
+     */
     bool readable()   { return !rxq.empty(); }
     bool acceptable() { return !wait_accept.empty(); }
     bool sockdead()   { return dead; }
@@ -131,37 +133,36 @@ private:
 
 private:
     tcpstate state;
-    uint16_t port; /* store as NetworkByteOrder*/
-    uint16_t pair_port; /* store as NetworkByteOrder */
-
-#if 1
+    uint16_t port;      /* NetworkByteOrder */
+    uint16_t pair_port; /* NetworkByteOrder */
     stcp_sockaddr_in addr;
     stcp_sockaddr_in pair;
-#else
-    stcp_ip_header pip; /* TODO This field must be inited when connectin is established*/
-#endif
 
     /*
      * Variables for TCP connected sequence number
      * All of variables are stored as HostByteOrder
      */
     uint32_t snd_una; /* unconfirmed send                  */ //?
-    uint32_t snd_nxt; /* next send                         */ //?
+    uint32_t snd_nxt; /* next send                         */
     uint16_t snd_win; /* send window size                  */
-    uint16_t snd_up ; /* send urgent pointer               */
 #if 0
+    uint16_t snd_up ; /* send urgent pointer               */
     uint32_t snd_wl1; /* used sequence num at last send    */
     uint32_t snd_wl2; /* used acknouledge num at last send */
 #endif
     uint32_t iss    ; /* initial send sequence number      */
     uint32_t rcv_nxt; /* next receive                      */
     uint16_t rcv_wnd; /* receive window size               */
+#if 0
     uint16_t rcv_up ; /* receive urgent pointer            */
+#endif
     uint32_t irs    ; /* initial reseive sequence number   */
 
 private:
     void proc_RST(mbuf* msg, stcp_tcp_header* th, stcp_sockaddr_in* dst);
     void move_state_DEBUG(tcpstate next_state);
+    stcp_tcp_sock* alloc_new_sock_connected(tcpstate st, uint16_t lp, uint16_t rp,
+            uint32_t arg_iss, uint32_t arg_irs, stcp_tcp_sock* head);
 
     void proc();
     void print_stat() const;
@@ -169,6 +170,8 @@ private:
 
 public:
     stcp_tcp_sock();
+    stcp_tcp_sock(tcpstate s, uint16_t lp, uint16_t rp,
+                        uint32_t arg_iss, uint32_t arg_irs, stcp_tcp_sock* h);
     ~stcp_tcp_sock();
     void move_state(tcpstate next_state);
     tcpstate get_state() const { return state; }
@@ -194,10 +197,14 @@ private:
     void move_state_from_LAST_ACK(tcpstate next_state);
     void move_state_from_TIME_WAIT(tcpstate next_state);
 
-private: /* called by proc() */
+private:
+    /*
+     * called by proc()
+     */
     void proc_ESTABLISHED();
     void proc_CLOSE_WAIT();
-#if 0 // not implement
+#if 0
+    // not implement
     void proc_CLOSED     ();
     void proc_LISTEN     ();
     void proc_SYN_SENT   ();
@@ -209,7 +216,10 @@ private: /* called by proc() */
     void proc_TIME_WAIT  ();
 #endif
 
-private: /* called by rx_push() */
+private:
+    /*
+     * called by rx_push()
+     */
     void rx_push_CLOSED(mbuf* msg, stcp_sockaddr_in* src,
                         stcp_ip_header* ih, stcp_tcp_header* th);
     void rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
@@ -220,7 +230,8 @@ private: /* called by rx_push() */
                         stcp_ip_header* ih, stcp_tcp_header* th);
     void rx_push_LAST_ACK(mbuf* msg, stcp_sockaddr_in* src,
                         stcp_ip_header* ih, stcp_tcp_header* th);
-#if 0 // not implement
+#if 0
+    // not implement
     void rx_push_CLOSE_WAIT();
     void rx_push_SYN_SENT  ();
     void rx_push_FIN_WAIT_1();
@@ -234,6 +245,7 @@ private: /* called by rx_push() */
 
 class tcp_module {
     friend class core;
+    friend class stcp_tcp_sock;
 private:
     static size_t mss;
     size_t rx_cnt;

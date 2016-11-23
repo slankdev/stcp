@@ -40,18 +40,29 @@ stcp_tcp_sock::stcp_tcp_sock() :
                         snd_una(0),
                         snd_nxt(0),
                         snd_win(0),
-                        snd_up (0),
-#if 0
-                        snd_wl1(0),
-                        snd_wl2(0),
-#endif
                         iss    (0),
                         rcv_nxt(0),
                         rcv_wnd(0),
-                        rcv_up (0),
                         irs(0)
 {
-    DEBUG("[%p] alloc sock \n", this);
+    DEBUG("[%p] TCP SOCK CONSTRUCTOR \n", this);
+}
+
+/*
+ * Constructor for LISTEN socket
+ */
+stcp_tcp_sock::stcp_tcp_sock(tcpstate s, uint16_t lp, uint16_t rp,
+                                    uint32_t arg_iss, uint32_t arg_irs,
+                                    stcp_tcp_sock* h)
+    : stcp_tcp_sock()
+{
+    DEBUG("[%p] TCP SOCK CONSTRUCTOR(state, lp, rp, iss, irs, head) \n", this);
+    state     = s;
+    port      = lp;
+    pair_port = rp;
+    iss       = arg_iss;
+    irs       = arg_irs;
+    head      = h;
 }
 
 stcp_tcp_sock::~stcp_tcp_sock()
@@ -61,6 +72,17 @@ stcp_tcp_sock::~stcp_tcp_sock()
         head->num_connected --;
     }
 }
+
+stcp_tcp_sock* stcp_tcp_sock::alloc_new_sock_connected(tcpstate st,
+        uint16_t lp, uint16_t rp, uint32_t arg_iss, uint32_t arg_irs,
+        stcp_tcp_sock* head)
+{
+    stcp_tcp_sock* s = new stcp_tcp_sock(st, lp, rp, arg_iss, arg_irs, head);
+    core::tcp.socks.push_back(s);
+    return s;
+}
+
+
 
 
 void stcp_tcp_sock::write(mbuf* msg)
@@ -629,39 +651,25 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
         /*
          * Create new socket
          */
-        // MARKED TODO imple capsuled constructor with state
-        stcp_tcp_sock* newsock = core::create_tcp_socket();
+        stcp_tcp_sock* newsock = alloc_new_sock_connected(
+                TCPS_SYN_RCVD, port, th->sport,
+                rte::rand() % 0xffffffff, rte::bswap32(th->seq_num), this);
         num_connected ++;
-        newsock->port = port;
-        newsock->pair_port = th->sport;
+        wait_accept.push(newsock);
+
         newsock->addr.sin_addr = ih->dst;
         newsock->pair.sin_addr = ih->src;
-        newsock->state = TCPS_SYN_RCVD;
         DEBUG("[%p] connect request. alloc sock [%p]\n", this, newsock);
-
-        /*
-         * Link Slave-Socket
-         */
-        newsock->head = this;
-        wait_accept.push(newsock);
 
         /*
          * Init stream information
          */
-        newsock->iss = (rte::rand() % 0xffffffff); // TODO hot spot!!!
         newsock->snd_una = 0;
         newsock->snd_nxt = newsock->iss;
         newsock->snd_win = 512; // TODO hardcode
-        newsock->snd_up  = 0;
-#if 0 // no use
-        newsock->snd_wl1 = rte::bswap32(th->seq_num);
-        newsock->snd_wl2 = rte::bswap32(th->ack_num);
-#endif
 
-        newsock->irs = rte::bswap32(th->seq_num);
         newsock->rcv_nxt = newsock->irs + 1;
         newsock->rcv_wnd = rte::bswap32(th->rx_win);
-        newsock->rcv_up  = 0;
 
         /*
          * craft SYNACK packet to reply.
@@ -748,20 +756,6 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
         proc_RST(msg, th, src);
         return;
     }
-
-
-#if 0
-    /*
-     * TODO
-     * filter packet as TCP-SEG to socket-queue
-     */
-    if (th->seq_num == rcv_nxt) {
-        DEBUG("SLNAKDEVSLANKDV: TIGAU1\n");
-    }
-    if (th->ack_num == snd_nxt) {
-        DEBUG("SLNAKDEVSLANKDV: TIGAU2\n");
-    }
-#endif
 
 
     if (HAS_FLAG(th->tcp_flags, TCPF_PSH) &&
@@ -859,23 +853,15 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
         move_state(TCPS_CLOSE_WAIT);
 
     } else if (HAS_FLAG(th->tcp_flags, TCPF_ACK)) {
-
-        // #<{(|
-        //  * TODO
-        //  * filter packet as TCP-SEG to socket-queue
-        //  |)}>#
-        // if (th->seq_num == rcv_nxt) {
-        //     DEBUG("SLNAKDEVSLANKDV: TIGAU1\n");
-        // }
-        // if (th->ack_num == snd_nxt) {
-        //     DEBUG("SLNAKDEVSLANKDV: TIGAU2\n");
-        // }
-
-        // TODO
-        // DEBUG("[%p] PROC send(,%u) success\n", this, rte::bswap32(th->ack_num) - snd_nxt);
-        // snd_nxt = rte::bswap32(th->ack_num);
+        // MARKED
+        DEBUG("[%p] PROC send(,%u) success\n", this, rte::bswap32(th->ack_num) - snd_nxt);
+        snd_nxt = rte::bswap32(th->ack_num);
     } else {
-        DEBUG("[%p] independent packet \n", this);
+        std::string errstr;
+        errstr.resize(256);
+        sprintf(&errstr[0], "[%p] independent", this);
+        errstr.resize(strlen(&errstr[0]));
+        throw exception(errstr.c_str());
     }
 
 }
