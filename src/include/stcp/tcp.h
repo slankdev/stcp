@@ -108,29 +108,42 @@ struct tcp_op_mss {
 
 
 
-// // MARKED implement this
-// class tcp_stream_info {
-//     #<{(| HostByteOrder |)}>#
-//     uint32_t iss    ; #<{(| initial send sequence number      |)}>#
-//     uint32_t irs    ; #<{(| initial reseive sequence number   |)}>#
-//
-//     uint32_t snd_nxt; #<{(| next send                         |)}>#
-//     uint16_t snd_win; #<{(| send window size                  |)}>#
-//     uint32_t rcv_nxt; #<{(| next receive                      |)}>#
-//     uint16_t rcv_wnd; #<{(| receive window size               |)}>#
-//
-// #if 0
-//     uint32_t snd_una; #<{(| unconfirmed send                  |)}># //?
-//     uint16_t snd_up ; #<{(| send urgent pointer               |)}>#
-//     uint32_t snd_wl1; #<{(| used sequence num at last send    |)}>#
-//     uint32_t snd_wl2; #<{(| used acknouledge num at last send |)}>#
-//     uint16_t rcv_up ; #<{(| receive urgent pointer            |)}>#
-// #endif
-//
-// public:
-//     void set_snd_nxt(uint32_t);
-//     void set_snd_win(uint32_t);
-// };
+// MARKED implement this
+class tcp_stream_info {
+    /* HostByteOrder */
+    uint32_t iss_    ; /* initial send sequence number      */
+    uint32_t irs_    ; /* initial reseive sequence number   */
+
+    uint32_t snd_nxt_; /* next send                         */
+    uint16_t snd_win_; /* send window size                  */
+    uint32_t rcv_nxt_; /* next receive                      */
+    uint16_t rcv_wnd_; /* receive window size               */
+
+#if 0
+    uint32_t snd_una; /* unconfirmed send                  */ //?
+    uint16_t snd_up ; /* send urgent pointer               */
+    uint32_t snd_wl1; /* used sequence num at last send    */
+    uint32_t snd_wl2; /* used acknouledge num at last send */
+    uint16_t rcv_up ; /* receive urgent pointer            */
+#endif
+
+public:
+    tcp_stream_info(uint32_t iss, uint32_t irs)
+        : iss_(iss), irs_(irs) {}
+    // void reset_stream(uint32_t iss, uint32_t irs)
+    // { iss_ = iss; irs_ = irs; }
+    void snd_nxt(uint32_t arg) { snd_nxt_ = arg; }
+    void snd_win(uint32_t arg) { snd_win_ = arg; }
+    void rcv_nxt(uint32_t arg) { rcv_nxt_ = arg; }
+    void rcv_win(uint32_t arg) { rcv_wnd_ = arg; }
+
+    uint32_t iss() { return iss_; }
+    uint32_t irs() { return irs_; }
+    uint32_t snd_nxt() { return snd_nxt_; }
+    uint32_t snd_win() { return snd_win_; }
+    uint32_t rcv_nxt() { return rcv_nxt_; }
+    uint32_t rcv_win() { return rcv_wnd_; }
+};
 
 
 
@@ -162,6 +175,7 @@ private:
     stcp_sockaddr_in addr;
     stcp_sockaddr_in pair;
 
+private:
     /*
      * Variables for TCP connected sequence number
      * All of variables are stored as HostByteOrder
