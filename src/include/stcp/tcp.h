@@ -223,6 +223,26 @@ private:
     void print_stat() const;
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
 
+private: /* called by rx_push() */
+    void rx_push_CLOSED(mbuf* msg, stcp_sockaddr_in* src,
+                        stcp_ip_header* ih, stcp_tcp_header* th);
+    void rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
+                        stcp_ip_header* ih, stcp_tcp_header* th);
+    void rx_push_SYN_RCVD(mbuf* msg, stcp_sockaddr_in* src,
+                        stcp_ip_header* ih, stcp_tcp_header* th);
+    void rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
+                        stcp_ip_header* ih, stcp_tcp_header* th);
+    void rx_push_LAST_ACK(mbuf* msg, stcp_sockaddr_in* src,
+                        stcp_ip_header* ih, stcp_tcp_header* th);
+#if 0 // not implement
+    void rx_push_CLOSE_WAIT();
+    void rx_push_SYN_SENT  ();
+    void rx_push_FIN_WAIT_1();
+    void rx_push_FIN_WAIT_2();
+    void rx_push_CLOSING   ();
+    void rx_push_TIME_WAIT ();
+#endif
+
 public:
     stcp_tcp_sock();
     ~stcp_tcp_sock();
