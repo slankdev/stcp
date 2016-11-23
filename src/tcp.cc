@@ -982,18 +982,35 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
 
 void tcp_module::send_RSTACK(mbuf* msg, stcp_sockaddr_in* dst)
 {
-
+    stcp_ip_header* ih = reinterpret_cast<stcp_ip_header*>(
+            mbuf_push(msg, sizeof(stcp_ip_header)));
     stcp_tcp_header* th
-        = rte::pktmbuf_mtod<stcp_tcp_header*>(msg);
+        = rte::pktmbuf_mtod_offset<stcp_tcp_header*>(msg, sizeof(stcp_tcp_header));
 
-    // MARKED
-    // TODO very hardcode unsafe....
-    stcp_ip_header* ih =
-        reinterpret_cast<stcp_ip_header*>(((uint8_t*)th) - sizeof(stcp_ip_header));
+    /*
+     * Delete TCP Option field
+     */
+    size_t optionlen =
+        rte::pktmbuf_pkt_len(msg) - sizeof(stcp_ip_header) - sizeof(stcp_tcp_header);
+    rte::pktmbuf_trim(msg, optionlen);
 
+
+    /*
+     * Set IP header for TCP checksum
+     */
+    ih->src           = ih->dst;
+    ih->dst           = dst->sin_addr;
+    ih->next_proto_id = STCP_IPPROTO_TCP;
+    ih->total_length  = rte::bswap16(rte::pktmbuf_pkt_len(msg));
+    ih->print();
+
+    /*
+     * Set TCP header
+     *
+     */
     swap_port(th);
-    th->seq_num  = 0;
     th->ack_num  = th->seq_num + rte::bswap32(1);
+    th->seq_num  = 0;
 
     th->data_off = sizeof(stcp_tcp_header)/4 << 4;
     th->tcp_flags    = STCP_TCP_FLAG_RST|STCP_TCP_FLAG_ACK;
@@ -1004,6 +1021,7 @@ void tcp_module::send_RSTACK(mbuf* msg, stcp_sockaddr_in* dst)
     th->cksum = rte_ipv4_udptcp_cksum(
             reinterpret_cast<ipv4_hdr*>(ih), th);
 
+    mbuf_pull(msg, sizeof(stcp_ip_header));
     core::ip.tx_push(msg, dst, STCP_IPPROTO_TCP);
 }
 
