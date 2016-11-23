@@ -15,66 +15,47 @@
 
 namespace slank {
 
-enum poll_event : uint32_t {
-    none            = 0,
-    STCP_POLLIN     = 0x01<<0,
-};
 
 enum tcp_flags : uint8_t {
-    STCP_TCP_FLAG_FIN  = 0x01<<0, /* 00000001 */
-    STCP_TCP_FLAG_SYN  = 0x01<<1, /* 00000010 */
-    STCP_TCP_FLAG_RST  = 0x01<<2, /* 00000100 */
-    STCP_TCP_FLAG_PSH  = 0x01<<3, /* 00001000 */
-    STCP_TCP_FLAG_ACK  = 0x01<<4, /* 00010000 */
-    STCP_TCP_FLAG_URG  = 0x01<<5, /* 00100000 */
+    TCPF_FIN  = 0x01<<0, /* 00000001 */
+    TCPF_SYN  = 0x01<<1, /* 00000010 */
+    TCPF_RST  = 0x01<<2, /* 00000100 */
+    TCPF_PSH  = 0x01<<3, /* 00001000 */
+    TCPF_ACK  = 0x01<<4, /* 00010000 */
+    TCPF_URG  = 0x01<<5, /* 00100000 */
 
-    STCP_TCP_FLAG_SACK = 0x01<<6, /* 01000000 */
-    STCP_TCP_FLAG_WACK = 0x01<<7, /* 10000000 */
+    TCPF_SACK = 0x01<<6, /* 01000000 */
+    TCPF_WACK = 0x01<<7, /* 10000000 */
+};
+enum tcpstate {
+    TCPS_CLOSED      = 0,
+    TCPS_LISTEN      = 1,
+    TCPS_SYN_SENT    = 2,
+    TCPS_SYN_RCVD    = 3,
+    TCPS_ESTABLISHED = 4,
+    TCPS_FIN_WAIT_1  = 5,
+    TCPS_FIN_WAIT_2  = 6,
+    TCPS_CLOSE_WAIT  = 7,
+    TCPS_CLOSING     = 8,
+    TCPS_LAST_ACK    = 9,
+    TCPS_TIME_WAIT   = 10,
 };
 
-enum tcp_socket_state {
-    STCP_TCPS_CLOSED      = 0,
-    STCP_TCPS_LISTEN      = 1,
-    STCP_TCPS_SYN_SENT    = 2,
-    STCP_TCPS_SYN_RCVD    = 3,
-    STCP_TCPS_ESTABLISHED = 4,
-    STCP_TCPS_FIN_WAIT_1  = 5,
-    STCP_TCPS_FIN_WAIT_2  = 6,
-    STCP_TCPS_CLOSE_WAIT  = 7,
-    STCP_TCPS_CLOSING     = 8,
-    STCP_TCPS_LAST_ACK    = 9,
-    STCP_TCPS_TIME_WAIT   = 10,
-};
-
-
-
-inline const char* tcp_socket_state2str(tcp_socket_state state)
+inline const char* tcpstate2str(tcpstate state)
 {
     switch (state) {
-        case STCP_TCPS_CLOSED:
-            return "CLOSED";
-        case STCP_TCPS_LISTEN:
-            return "LISTEN";
-        case STCP_TCPS_SYN_SENT:
-            return "SYN_SENT";
-        case STCP_TCPS_SYN_RCVD:
-            return "SYN_RCVD";
-        case STCP_TCPS_ESTABLISHED:
-            return "ESTABLISHED";
-        case STCP_TCPS_FIN_WAIT_1:
-            return "FIN_WAIT_1";
-        case STCP_TCPS_FIN_WAIT_2:
-            return "FIN_WAIT_2";
-        case STCP_TCPS_CLOSE_WAIT:
-            return "CLOSE_WAIT";
-        case STCP_TCPS_CLOSING:
-            return "CLOSING";
-        case STCP_TCPS_LAST_ACK:
-            return "LAST_ACK";
-        case STCP_TCPS_TIME_WAIT:
-            return "TIME_WAIT";
-        default:
-            return "UNKNOWN";
+        case TCPS_CLOSED:      return "CLOSED";
+        case TCPS_LISTEN:      return "LISTEN";
+        case TCPS_SYN_SENT:    return "SYN_SENT";
+        case TCPS_SYN_RCVD:    return "SYN_RCVD";
+        case TCPS_ESTABLISHED: return "ESTABLISHED";
+        case TCPS_FIN_WAIT_1:  return "FIN_WAIT_1";
+        case TCPS_FIN_WAIT_2:  return "FIN_WAIT_2";
+        case TCPS_CLOSE_WAIT:  return "CLOSE_WAIT";
+        case TCPS_CLOSING:     return "CLOSING";
+        case TCPS_LAST_ACK:    return "LAST_ACK";
+        case TCPS_TIME_WAIT:   return "TIME_WAIT";
+        default:               return "UNKNOWN";
     }
 }
 
@@ -176,7 +157,7 @@ private:
     size_t max_connect;
 
 private:
-    tcp_socket_state state;
+    tcpstate state;
     uint16_t port; /* store as NetworkByteOrder*/
     uint16_t pair_port; /* store as NetworkByteOrder */
 
@@ -204,25 +185,39 @@ private:
     uint32_t irs    ; /* initial reseive sequence number   */
 
 private:
-    void move_state_from_CLOSED(tcp_socket_state next_state);
-    void move_state_from_LISTEN(tcp_socket_state next_state);
-    void move_state_from_SYN_SENT(tcp_socket_state next_state);
-    void move_state_from_SYN_RCVD(tcp_socket_state next_state);
-    void move_state_from_ESTABLISHED(tcp_socket_state next_state);
-    void move_state_from_FIN_WAIT_1(tcp_socket_state next_state);
-    void move_state_from_FIN_WAIT_2(tcp_socket_state next_state);
-    void move_state_from_CLOSE_WAIT(tcp_socket_state next_state);
-    void move_state_from_CLOSING(tcp_socket_state next_state);
-    void move_state_from_LAST_ACK(tcp_socket_state next_state);
-    void move_state_from_TIME_WAIT(tcp_socket_state next_state);
-
-private:
     void proc_RST(mbuf* msg, stcp_tcp_header* th, stcp_sockaddr_in* dst);
-    void move_state_DEBUG(tcp_socket_state next_state);
+    void move_state_DEBUG(tcpstate next_state);
 
     void proc();
     void print_stat() const;
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
+
+public:
+    stcp_tcp_sock();
+    ~stcp_tcp_sock();
+    void move_state(tcpstate next_state);
+    tcpstate get_state() const { return state; }
+
+public: /* for Users Operation */
+
+    void bind(const struct stcp_sockaddr_in* addr, size_t addrlen);
+    void listen(size_t backlog);
+    stcp_tcp_sock* accept(struct stcp_sockaddr_in* addr);
+    mbuf* read();
+    void write(mbuf* msg);
+
+private:
+    void move_state_from_CLOSED(tcpstate next_state);
+    void move_state_from_LISTEN(tcpstate next_state);
+    void move_state_from_SYN_SENT(tcpstate next_state);
+    void move_state_from_SYN_RCVD(tcpstate next_state);
+    void move_state_from_ESTABLISHED(tcpstate next_state);
+    void move_state_from_FIN_WAIT_1(tcpstate next_state);
+    void move_state_from_FIN_WAIT_2(tcpstate next_state);
+    void move_state_from_CLOSE_WAIT(tcpstate next_state);
+    void move_state_from_CLOSING(tcpstate next_state);
+    void move_state_from_LAST_ACK(tcpstate next_state);
+    void move_state_from_TIME_WAIT(tcpstate next_state);
 
 private: /* called by proc() */
     void proc_ESTABLISHED();
@@ -258,20 +253,6 @@ private: /* called by rx_push() */
     void rx_push_CLOSING   ();
     void rx_push_TIME_WAIT ();
 #endif
-
-public:
-    stcp_tcp_sock();
-    ~stcp_tcp_sock();
-    void move_state(tcp_socket_state next_state);
-    tcp_socket_state get_state() const { return state; }
-
-public: /* for Users Operation */
-
-    void bind(const struct stcp_sockaddr_in* addr, size_t addrlen);
-    void listen(size_t backlog);
-    stcp_tcp_sock* accept(struct stcp_sockaddr_in* addr);
-    mbuf* read();
-    void write(mbuf* msg);
 };
 
 

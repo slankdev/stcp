@@ -35,7 +35,7 @@ stcp_tcp_sock::stcp_tcp_sock() :
                         dead(false),
                         head(nullptr),
                         num_connected(0),
-                        state(STCP_TCPS_CLOSED), port(0),
+                        state(TCPS_CLOSED), port(0),
                         snd_una(0), snd_nxt(0), snd_win(0), snd_up (0),
                         snd_wl1(0), snd_wl2(0), iss    (0),
                         rcv_nxt(0), rcv_wnd(0), rcv_up (0), irs(0)
@@ -54,9 +54,9 @@ stcp_tcp_sock::~stcp_tcp_sock()
 
 void stcp_tcp_sock::write(mbuf* msg)
 {
-    if (state != STCP_TCPS_ESTABLISHED) {
+    if (state != TCPS_ESTABLISHED) {
         std::string errstr = "Not Open Port state=";
-        errstr += tcp_socket_state2str(state);
+        errstr += tcpstate2str(state);
         throw exception(errstr.c_str());
     }
     txq.push(msg);
@@ -66,9 +66,9 @@ void stcp_tcp_sock::write(mbuf* msg)
 mbuf* stcp_tcp_sock::read()
 {
     while (rxq.size() == 0) {
-        if (state == STCP_TCPS_CLOSED) {
+        if (state == TCPS_CLOSED) {
             std::string errstr = "Not Open Port state=";
-            errstr += tcp_socket_state2str(state);
+            errstr += tcpstate2str(state);
             throw exception(errstr.c_str());
         }
     }
@@ -112,21 +112,21 @@ void stcp_tcp_sock::proc()
      * Othre proc;
      */
     switch (state) {
-        case STCP_TCPS_CLOSE_WAIT:
+        case TCPS_CLOSE_WAIT:
             proc_CLOSE_WAIT();
             break;
-        case STCP_TCPS_ESTABLISHED:
+        case TCPS_ESTABLISHED:
             proc_ESTABLISHED();
             break;
-        case STCP_TCPS_LISTEN:
-        case STCP_TCPS_CLOSED:
-        case STCP_TCPS_SYN_SENT:
-        case STCP_TCPS_SYN_RCVD:
-        case STCP_TCPS_FIN_WAIT_1:
-        case STCP_TCPS_FIN_WAIT_2:
-        case STCP_TCPS_CLOSING:
-        case STCP_TCPS_LAST_ACK:
-        case STCP_TCPS_TIME_WAIT:
+        case TCPS_LISTEN:
+        case TCPS_CLOSED:
+        case TCPS_SYN_SENT:
+        case TCPS_SYN_RCVD:
+        case TCPS_FIN_WAIT_1:
+        case TCPS_FIN_WAIT_2:
+        case TCPS_CLOSING:
+        case TCPS_LAST_ACK:
+        case TCPS_TIME_WAIT:
             /*
              * TODO
              * Not Implement yet.
@@ -146,7 +146,7 @@ void stcp_tcp_sock::proc_ESTABLISHED()
         mbuf* msg = txq.pop();
         size_t data_len = rte::pktmbuf_pkt_len(msg);
         DEBUG("[%p] %s PROC send(txq.pop(), %zd)\n",
-                this, tcp_socket_state2str(state), rte::pktmbuf_pkt_len(msg));
+                this, tcpstate2str(state), rte::pktmbuf_pkt_len(msg));
 
         stcp_tcp_header* th = reinterpret_cast<stcp_tcp_header*>(
                 mbuf_push(msg, sizeof(stcp_tcp_header)));
@@ -169,7 +169,7 @@ void stcp_tcp_sock::proc_ESTABLISHED()
         th->seq_num   = rte::bswap32(snd_nxt);
         th->ack_num   = rte::bswap32(rcv_nxt);
         th->data_off  = sizeof(stcp_tcp_header) >> 2 << 4;
-        th->tcp_flags = STCP_TCP_FLAG_PSH|STCP_TCP_FLAG_ACK;
+        th->tcp_flags = TCPF_PSH|TCPF_ACK;
         th->rx_win    = snd_win;
         th->cksum     = 0x0000;
         th->tcp_urp   = 0; // TODO hardcode
@@ -229,7 +229,7 @@ void stcp_tcp_sock::proc_CLOSE_WAIT()
     th->seq_num   = rte::bswap32(snd_nxt);
     th->ack_num   = rte::bswap32(rcv_nxt);
     th->data_off  = sizeof(stcp_tcp_header)>>2 << 4;
-    th->tcp_flags = STCP_TCP_FLAG_FIN|STCP_TCP_FLAG_ACK;
+    th->tcp_flags = TCPF_FIN|TCPF_ACK;
     th->rx_win    = rte::bswap16(snd_win);
     th->cksum     = 0x0000;
     th->tcp_urp   = 0x0000; // TODO hardcode
@@ -252,7 +252,7 @@ void stcp_tcp_sock::proc_CLOSE_WAIT()
     /*
      * Move TCP-State
      */
-    move_state(STCP_TCPS_LAST_ACK);
+    move_state(TCPS_LAST_ACK);
 }
 
 
@@ -277,17 +277,17 @@ void stcp_tcp_sock::proc_RST(mbuf* msg, stcp_tcp_header* th, stcp_sockaddr_in* d
          * TODO implement
          * each behaviours
          */
-        case STCP_TCPS_ESTABLISHED:
-        case STCP_TCPS_LISTEN:
-        case STCP_TCPS_CLOSED:
-        case STCP_TCPS_SYN_SENT:
-        case STCP_TCPS_SYN_RCVD:
-        case STCP_TCPS_FIN_WAIT_1:
-        case STCP_TCPS_FIN_WAIT_2:
-        case STCP_TCPS_CLOSE_WAIT:
-        case STCP_TCPS_CLOSING:
-        case STCP_TCPS_LAST_ACK:
-        case STCP_TCPS_TIME_WAIT:
+        case TCPS_ESTABLISHED:
+        case TCPS_LISTEN:
+        case TCPS_CLOSED:
+        case TCPS_SYN_SENT:
+        case TCPS_SYN_RCVD:
+        case TCPS_FIN_WAIT_1:
+        case TCPS_FIN_WAIT_2:
+        case TCPS_CLOSE_WAIT:
+        case TCPS_CLOSING:
+        case TCPS_LAST_ACK:
+        case TCPS_TIME_WAIT:
         default:
         {
             throw exception("NOT implement");
@@ -298,11 +298,11 @@ void stcp_tcp_sock::proc_RST(mbuf* msg, stcp_tcp_header* th, stcp_sockaddr_in* d
 }
 
 
-void stcp_tcp_sock::move_state_DEBUG(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state_DEBUG(tcpstate next_state)
 {
     DEBUG("[%p] %s -> %s (MOVE state debug) \n", this,
-            tcp_socket_state2str(state),
-            tcp_socket_state2str(next_state) );
+            tcpstate2str(state),
+            tcpstate2str(next_state) );
     state = next_state;
 }
 void stcp_tcp_sock::bind(const struct stcp_sockaddr_in* addr, size_t addrlen)
@@ -316,50 +316,50 @@ void stcp_tcp_sock::listen(size_t backlog)
     if (backlog < 1) throw exception("OKASHII");
     num_connected = 0;
     max_connect   = backlog;
-    move_state(STCP_TCPS_LISTEN);
+    move_state(TCPS_LISTEN);
 }
 
 
 
 
-void stcp_tcp_sock::move_state(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state(tcpstate next_state)
 {
     DEBUG("[%p] %s -> %s \n", this,
-            tcp_socket_state2str(state),
-            tcp_socket_state2str(next_state) );
+            tcpstate2str(state),
+            tcpstate2str(next_state) );
 
     switch (state) {
-        case STCP_TCPS_CLOSED     :
+        case TCPS_CLOSED     :
             move_state_from_CLOSED(next_state);
             break;
-        case STCP_TCPS_LISTEN     :
+        case TCPS_LISTEN     :
             move_state_from_LISTEN(next_state);
             break;
-        case STCP_TCPS_SYN_SENT   :
+        case TCPS_SYN_SENT   :
             move_state_from_SYN_SENT(next_state);
             break;
-        case STCP_TCPS_SYN_RCVD   :
+        case TCPS_SYN_RCVD   :
             move_state_from_SYN_RCVD(next_state);
             break;
-        case STCP_TCPS_ESTABLISHED:
+        case TCPS_ESTABLISHED:
             move_state_from_ESTABLISHED(next_state);
             break;
-        case STCP_TCPS_FIN_WAIT_1 :
+        case TCPS_FIN_WAIT_1 :
             move_state_from_FIN_WAIT_1(next_state);
             break;
-        case STCP_TCPS_FIN_WAIT_2 :
+        case TCPS_FIN_WAIT_2 :
             move_state_from_FIN_WAIT_2(next_state);
             break;
-        case STCP_TCPS_CLOSE_WAIT :
+        case TCPS_CLOSE_WAIT :
             move_state_from_CLOSE_WAIT(next_state);
             break;
-        case STCP_TCPS_CLOSING    :
+        case TCPS_CLOSING    :
             move_state_from_CLOSING(next_state);
             break;
-        case STCP_TCPS_LAST_ACK   :
+        case TCPS_LAST_ACK   :
             move_state_from_LAST_ACK(next_state);
             break;
-        case STCP_TCPS_TIME_WAIT  :
+        case TCPS_TIME_WAIT  :
             move_state_from_TIME_WAIT(next_state);
             break;
         default:
@@ -369,11 +369,11 @@ void stcp_tcp_sock::move_state(tcp_socket_state next_state)
 }
 
 
-void stcp_tcp_sock::move_state_from_CLOSED(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state_from_CLOSED(tcpstate next_state)
 {
     switch (next_state) {
-        case STCP_TCPS_LISTEN:
-        case STCP_TCPS_SYN_SENT:
+        case TCPS_LISTEN:
+        case TCPS_SYN_SENT:
             state = next_state;
             break;
         default:
@@ -381,12 +381,12 @@ void stcp_tcp_sock::move_state_from_CLOSED(tcp_socket_state next_state)
             break;
     }
 }
-void stcp_tcp_sock::move_state_from_LISTEN(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state_from_LISTEN(tcpstate next_state)
 {
     switch (next_state) {
-        case STCP_TCPS_CLOSED:
-        case STCP_TCPS_SYN_SENT:
-        case STCP_TCPS_SYN_RCVD:
+        case TCPS_CLOSED:
+        case TCPS_SYN_SENT:
+        case TCPS_SYN_RCVD:
             state = next_state;
             break;
         default:
@@ -394,12 +394,12 @@ void stcp_tcp_sock::move_state_from_LISTEN(tcp_socket_state next_state)
             break;
     }
 }
-void stcp_tcp_sock::move_state_from_SYN_SENT(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state_from_SYN_SENT(tcpstate next_state)
 {
     switch (next_state) {
-        case STCP_TCPS_CLOSED:
-        case STCP_TCPS_SYN_RCVD:
-        case STCP_TCPS_ESTABLISHED:
+        case TCPS_CLOSED:
+        case TCPS_SYN_RCVD:
+        case TCPS_ESTABLISHED:
             state = next_state;
             break;
         default:
@@ -407,11 +407,11 @@ void stcp_tcp_sock::move_state_from_SYN_SENT(tcp_socket_state next_state)
             break;
     }
 }
-void stcp_tcp_sock::move_state_from_SYN_RCVD(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state_from_SYN_RCVD(tcpstate next_state)
 {
     switch (next_state) {
-        case STCP_TCPS_ESTABLISHED:
-        case STCP_TCPS_FIN_WAIT_1:
+        case TCPS_ESTABLISHED:
+        case TCPS_FIN_WAIT_1:
             state = next_state;
             break;
         default:
@@ -419,11 +419,11 @@ void stcp_tcp_sock::move_state_from_SYN_RCVD(tcp_socket_state next_state)
             break;
     }
 }
-void stcp_tcp_sock::move_state_from_ESTABLISHED(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state_from_ESTABLISHED(tcpstate next_state)
 {
     switch (next_state) {
-        case STCP_TCPS_FIN_WAIT_1:
-        case STCP_TCPS_CLOSE_WAIT:
+        case TCPS_FIN_WAIT_1:
+        case TCPS_CLOSE_WAIT:
             state = next_state;
             break;
         default:
@@ -431,11 +431,11 @@ void stcp_tcp_sock::move_state_from_ESTABLISHED(tcp_socket_state next_state)
             break;
     }
 }
-void stcp_tcp_sock::move_state_from_FIN_WAIT_1(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state_from_FIN_WAIT_1(tcpstate next_state)
 {
     switch (next_state) {
-        case STCP_TCPS_CLOSING:
-        case STCP_TCPS_FIN_WAIT_2:
+        case TCPS_CLOSING:
+        case TCPS_FIN_WAIT_2:
             state = next_state;
             break;
         default:
@@ -443,10 +443,10 @@ void stcp_tcp_sock::move_state_from_FIN_WAIT_1(tcp_socket_state next_state)
             break;
     }
 }
-void stcp_tcp_sock::move_state_from_FIN_WAIT_2(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state_from_FIN_WAIT_2(tcpstate next_state)
 {
     switch (next_state) {
-        case STCP_TCPS_TIME_WAIT:
+        case TCPS_TIME_WAIT:
             state = next_state;
             break;
         default:
@@ -454,10 +454,10 @@ void stcp_tcp_sock::move_state_from_FIN_WAIT_2(tcp_socket_state next_state)
             break;
     }
 }
-void stcp_tcp_sock::move_state_from_CLOSE_WAIT(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state_from_CLOSE_WAIT(tcpstate next_state)
 {
     switch (next_state) {
-        case STCP_TCPS_LAST_ACK:
+        case TCPS_LAST_ACK:
             state = next_state;
             break;
         default:
@@ -465,10 +465,10 @@ void stcp_tcp_sock::move_state_from_CLOSE_WAIT(tcp_socket_state next_state)
             break;
     }
 }
-void stcp_tcp_sock::move_state_from_CLOSING(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state_from_CLOSING(tcpstate next_state)
 {
     switch (next_state) {
-        case STCP_TCPS_TIME_WAIT:
+        case TCPS_TIME_WAIT:
             state = next_state;
             break;
         default:
@@ -476,10 +476,10 @@ void stcp_tcp_sock::move_state_from_CLOSING(tcp_socket_state next_state)
             break;
     }
 }
-void stcp_tcp_sock::move_state_from_LAST_ACK(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state_from_LAST_ACK(tcpstate next_state)
 {
     switch (next_state) {
-        case STCP_TCPS_CLOSED:
+        case TCPS_CLOSED:
             state = next_state;
             dead = true;
             break;
@@ -488,10 +488,10 @@ void stcp_tcp_sock::move_state_from_LAST_ACK(tcp_socket_state next_state)
             break;
     }
 }
-void stcp_tcp_sock::move_state_from_TIME_WAIT(tcp_socket_state next_state)
+void stcp_tcp_sock::move_state_from_TIME_WAIT(tcpstate next_state)
 {
     switch (next_state) {
-        case STCP_TCPS_CLOSED:
+        case TCPS_CLOSED:
             state = next_state;
             dead = true;
             break;
@@ -536,19 +536,19 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
      */
 
     switch (state) {
-        case STCP_TCPS_CLOSED:
+        case TCPS_CLOSED:
             rx_push_CLOSED(msg, src, ih, th);
             break;
-        case STCP_TCPS_LISTEN:
+        case TCPS_LISTEN:
             rx_push_LISTEN(msg, src, ih, th);
             break;
-        case STCP_TCPS_SYN_RCVD:
+        case TCPS_SYN_RCVD:
             rx_push_SYN_RCVD(msg, src, ih, th);
             break;
-        case STCP_TCPS_ESTABLISHED:
+        case TCPS_ESTABLISHED:
             rx_push_ESTABLISHED(msg, src, ih, th);
             break;
-        case STCP_TCPS_LAST_ACK:
+        case TCPS_LAST_ACK:
             rx_push_LAST_ACK(msg, src, ih, th);
             break;
 
@@ -556,12 +556,12 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
         /*
          * TODO add behaviours each state
          */
-        case STCP_TCPS_CLOSE_WAIT:
-        case STCP_TCPS_SYN_SENT:
-        case STCP_TCPS_FIN_WAIT_1:
-        case STCP_TCPS_FIN_WAIT_2:
-        case STCP_TCPS_CLOSING:
-        case STCP_TCPS_TIME_WAIT:
+        case TCPS_CLOSE_WAIT:
+        case TCPS_SYN_SENT:
+        case TCPS_FIN_WAIT_1:
+        case TCPS_FIN_WAIT_2:
+        case TCPS_CLOSING:
+        case TCPS_TIME_WAIT:
             throw exception("NOT IMPLEMENT YET");
             break;
         default:
@@ -582,7 +582,7 @@ void stcp_tcp_sock::rx_push_CLOSED(mbuf* msg, stcp_sockaddr_in* src,
     th->ack_num = th->seq_num + rte::bswap32(1);
     th->seq_num = 0;
 
-    th->tcp_flags = STCP_TCP_FLAG_RST|STCP_TCP_FLAG_ACK;
+    th->tcp_flags = TCPF_RST|TCPF_ACK;
     th->rx_win    = 0;
     th->cksum     = 0x0000;
     th->tcp_urp   = 0x0000;
@@ -598,7 +598,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
 {
     currend_seg cseg(th, ih);
 
-    if (th->tcp_flags == STCP_TCP_FLAG_SYN) {
+    if (th->tcp_flags == TCPF_SYN) {
 
         if (max_connect <= num_connected)
             throw exception("No such space to connect");
@@ -623,7 +623,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
         newsock->pair_port = th->sport;
         newsock->addr.sin_addr = ih->dst;
         newsock->pair.sin_addr = ih->src;
-        newsock->state = STCP_TCPS_SYN_RCVD;
+        newsock->state = TCPS_SYN_RCVD;
         DEBUG("[%p] connect request. alloc sock [%p]\n", this, newsock);
 
         /*
@@ -658,7 +658,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
         th->ack_num = rte::bswap32(newsock->rcv_nxt);
 
         th->rx_win    = rte::bswap16(newsock->snd_win);
-        th->tcp_flags = STCP_TCP_FLAG_SYN | STCP_TCP_FLAG_ACK;
+        th->tcp_flags = TCPF_SYN | TCPF_ACK;
         th->cksum     = 0x0000;
         th->tcp_urp   = 0x0000; // TODO hardcode
 
@@ -700,12 +700,12 @@ void stcp_tcp_sock::rx_push_SYN_RCVD(mbuf* msg, stcp_sockaddr_in* src,
         return;
     }
 
-    if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_ACK)) {
+    if (HAS_FLAG(th->tcp_flags, TCPF_ACK)) {
         /*
          * when recvd packet is ACK,
          * move state to ESTABLISHED
          */
-        move_state(STCP_TCPS_ESTABLISHED);
+        move_state(TCPS_ESTABLISHED);
     } else {
         DEBUG("[%p] Unexpected packet \n", this);
     }
@@ -728,7 +728,7 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
     /*
      * Operate RST packet
      */
-    if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_RST)) {
+    if (HAS_FLAG(th->tcp_flags, TCPF_RST)) {
         proc_RST(msg, th, src);
         return;
     }
@@ -748,8 +748,8 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
 #endif
 
 
-    if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_PSH) &&
-            HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_ACK)) {
+    if (HAS_FLAG(th->tcp_flags, TCPF_PSH) &&
+            HAS_FLAG(th->tcp_flags, TCPF_ACK)) {
         DEBUG("[%p] ESTABLISHED RCV DATA with PSHACK\n", this);
 
         /*
@@ -774,7 +774,7 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
          */
         swap_port(th);
         th->rx_win  = rte::bswap16(snd_win);
-        th->tcp_flags = STCP_TCP_FLAG_ACK;
+        th->tcp_flags = TCPF_ACK;
         th->seq_num = rte::bswap32(snd_nxt);
         th->ack_num = rte::bswap32(rcv_nxt);
         th->cksum     = 0x0000;
@@ -806,7 +806,7 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
         mbuf_pull(msg, sizeof(stcp_ip_header));
         core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
 
-    } else if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_FIN)) {
+    } else if (HAS_FLAG(th->tcp_flags, TCPF_FIN)) {
 
         /*
          * Update Stream infos
@@ -821,7 +821,7 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
          */
 
         swap_port(th);
-        th->tcp_flags = STCP_TCP_FLAG_ACK;
+        th->tcp_flags = TCPF_ACK;
         th->seq_num = rte::bswap32(snd_nxt);
         th->ack_num = rte::bswap32(rcv_nxt);
         th->rx_win  = rte::bswap16(snd_win);
@@ -840,9 +840,9 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
         core::get_myip(&addr.sin_addr, 0); // TODO port number hardcode
         pair = *src;
         pair_port = th->dport;
-        move_state(STCP_TCPS_CLOSE_WAIT);
+        move_state(TCPS_CLOSE_WAIT);
 
-    } else if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_ACK)) {
+    } else if (HAS_FLAG(th->tcp_flags, TCPF_ACK)) {
 
         // #<{(|
         //  * TODO
@@ -870,8 +870,8 @@ void stcp_tcp_sock::rx_push_LAST_ACK(mbuf* msg, stcp_sockaddr_in* src,
     UNUSED(ih);
     UNUSED(src);
     UNUSED(msg);
-    if (HAS_FLAG(th->tcp_flags, STCP_TCP_FLAG_ACK)) {
-        move_state(STCP_TCPS_CLOSED);
+    if (HAS_FLAG(th->tcp_flags, TCPF_ACK)) {
+        move_state(TCPS_CLOSED);
     }
 }
 
@@ -882,7 +882,7 @@ void stcp_tcp_sock::print_stat() const
     stat& s = stat::instance();
     s.write("\t%u/tcp state=%s[this=%p] rx/tx=%zd/%zd %u/%u %u",
             rte::bswap16(port),
-            tcp_socket_state2str(state), this,
+            tcpstate2str(state), this,
             rxq.size(), txq.size(),
             snd_nxt, rcv_nxt,
             rte::bswap16(pair_port));
@@ -890,21 +890,21 @@ void stcp_tcp_sock::print_stat() const
 #if 0
     switch (state) {
 #if 0
-        case STCP_TCPS_LISTEN:
+        case TCPS_LISTEN:
             s.write("\t - socket alloced %zd/%zd", num_connected, max_connect);
             s.write("\n\n\n");
             break;
-        case STCP_TCPS_CLOSED:
+        case TCPS_CLOSED:
             s.write("\n\n\n");
             break;
         default:
             s.write("\n\n\n");
             break;
 #endif
-        case STCP_TCPS_LISTEN:
+        case TCPS_LISTEN:
             s.write("\t - socket alloced %zd/%zd", num_connected, max_connect);
             break;
-        case STCP_TCPS_ESTABLISHED:
+        case TCPS_ESTABLISHED:
             s.write("\t - iss    : %u", iss    );
             // s.write("\t - snd_una: %u", snd_una);
             s.write("\t - snd_nxt: %u", snd_nxt);
@@ -956,10 +956,10 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
     uint16_t dst_port = th->dport;
     for (stcp_tcp_sock* sock : socks) {
         if (sock->port == dst_port) {
-            tcp_socket_state s = sock->state;
-            if (s==STCP_TCPS_CLOSED
-                    || s==STCP_TCPS_CLOSE_WAIT
-                    || s==STCP_TCPS_TIME_WAIT ) {
+            tcpstate s = sock->state;
+            if (s==TCPS_CLOSED
+                    || s==TCPS_CLOSE_WAIT
+                    || s==TCPS_TIME_WAIT ) {
                 continue;
             }
 
@@ -1013,7 +1013,7 @@ void tcp_module::send_RSTACK(mbuf* msg, stcp_sockaddr_in* dst)
     th->seq_num  = 0;
 
     th->data_off = sizeof(stcp_tcp_header)/4 << 4;
-    th->tcp_flags    = STCP_TCP_FLAG_RST|STCP_TCP_FLAG_ACK;
+    th->tcp_flags    = TCPF_RST|TCPF_ACK;
     th->rx_win   = 0;
     th->cksum    = 0x0000;
     th->tcp_urp  = 0x0000;
