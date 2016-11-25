@@ -20,7 +20,23 @@ State state;
 
 void rx_push_CLOSED(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
 {
-
+    if (HAVE(th, RST)) {
+        free(msg);
+    } else {
+        if HAVE(th, ACK) {
+            swap_port(th);
+            th->ack_num = th->seq_num + datalen(th, ih);
+            th->seq_num = 0;
+            th->flag    = RST|ACK;
+        } else {
+            swap_port(th);
+            th->seq_num = th->ack_num;
+            th->flag    = RST;
+        }
+        mbuf_pull(msg, iphlen);
+        core::ip.tx_push(msg, src, 0x06);
+    }
+    return;
 }
 void rx_push_LISTEN(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
 {
