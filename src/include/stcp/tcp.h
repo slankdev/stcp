@@ -2,12 +2,10 @@
 
 #pragma once
 
-
 #include <stcp/config.h>
 #include <stcp/socket.h>
 #include <stcp/dpdk.h>
 #include <stcp/stcp.h>
-
 #include <vector>
 
 
@@ -16,7 +14,7 @@
 namespace slank {
 
 
-enum tcp_flags : uint8_t {
+enum tcpflag : uint8_t {
     TCPF_FIN  = 0x01<<0, /* 00000001 */
     TCPF_SYN  = 0x01<<1, /* 00000010 */
     TCPF_RST  = 0x01<<2, /* 00000100 */
@@ -27,6 +25,8 @@ enum tcp_flags : uint8_t {
     TCPF_SACK = 0x01<<6, /* 01000000 */
     TCPF_WACK = 0x01<<7, /* 10000000 */
 };
+
+
 enum tcpstate {
     TCPS_CLOSED      = 0,
     TCPS_LISTEN      = 1,
@@ -41,50 +41,42 @@ enum tcpstate {
     TCPS_TIME_WAIT   = 10,
 };
 
-inline const char* tcpstate2str(tcpstate state)
-{
-    switch (state) {
-        case TCPS_CLOSED:      return "CLOSED";
-        case TCPS_LISTEN:      return "LISTEN";
-        case TCPS_SYN_SENT:    return "SYN_SENT";
-        case TCPS_SYN_RCVD:    return "SYN_RCVD";
-        case TCPS_ESTABLISHED: return "ESTABLISHED";
-        case TCPS_FIN_WAIT_1:  return "FIN_WAIT_1";
-        case TCPS_FIN_WAIT_2:  return "FIN_WAIT_2";
-        case TCPS_CLOSE_WAIT:  return "CLOSE_WAIT";
-        case TCPS_CLOSING:     return "CLOSING";
-        case TCPS_LAST_ACK:    return "LAST_ACK";
-        case TCPS_TIME_WAIT:   return "TIME_WAIT";
-        default:               return "UNKNOWN";
-    }
-}
-
 
 struct stcp_tcp_header {
-	uint16_t sport    ; /**< TCP source port.            */
-	uint16_t dport    ; /**< TCP destination port.       */
-	uint32_t seq_num  ; /**< TX data sequence number.    */
-	uint32_t ack_num  ; /**< RX data ack number.         */
-	uint8_t  data_off ; /**< Data offset.                */
-	uint8_t  tcp_flags; /**< TCP flags                   */
-	uint16_t rx_win   ; /**< RX flow control window.     */
-	uint16_t cksum    ; /**< TCP checksum.               */
-	uint16_t tcp_urp  ; /**< TCP urgent pointer, if any. */
+	uint16_t sport   ; /* TCP source port.            */
+	uint16_t dport   ; /* TCP destination port.       */
+	uint32_t seq     ; /* TX data sequence number.    */
+	uint32_t ack     ; /* RX data ack number.         */
+	uint8_t  data_off; /* Data offset.                */
+	uint8_t  flags   ; /* TCP flags                   */
+	uint16_t rx_win  ; /* RX flow control window.     */
+	uint16_t cksum   ; /* TCP checksum.               */
+	uint16_t urp     ; /* TCP urgent pointer, if any. */
 
     void print() const
     {
         printf("TCP header \n");
-        printf("+ sport    : %u 0x%04x \n", rte::bswap16(sport), rte::bswap16(sport)   );
-        printf("+ dport    : %u 0x%04x \n", rte::bswap16(dport), rte::bswap16(dport)   );
-        printf("+ seq num  : %u 0x%08x \n", rte::bswap32(seq_num), rte::bswap32(seq_num) );
-        printf("+ ack num  : %u 0x%08x \n", rte::bswap32(ack_num), rte::bswap32(ack_num) );
+        printf("+ sport    : %u 0x%04x \n", rte::bswap16(sport), rte::bswap16(sport));
+        printf("+ dport    : %u 0x%04x \n", rte::bswap16(dport), rte::bswap16(dport));
+        printf("+ seq num  : %u 0x%08x \n", rte::bswap32(seq), rte::bswap32(seq));
+        printf("+ ack num  : %u 0x%08x \n", rte::bswap32(ack), rte::bswap32(ack));
         printf("+ data off : 0x%02x \n", data_off              );
-        printf("+ tcp flags: 0x%02x \n", tcp_flags             );
+        printf("+ tcp flags: 0x%02x \n", flags                 );
         printf("+ rx win   : 0x%04x \n", rte::bswap16(rx_win)  );
         printf("+ cksum    : 0x%04x \n", rte::bswap16(cksum )  );
     }
 };
 
+
+struct tcpip {
+    stcp_ip_header ip;
+    stcp_tcp_header tcp;
+    void print() const
+    {
+        ip.print();
+        tcp.print();
+    }
+};
 
 
 #if 0
@@ -105,7 +97,6 @@ struct tcp_op_mss {
     uint16_t seg_siz;
 };
 #endif
-
 
 
 class tcp_stream_info {
@@ -173,7 +164,6 @@ public:
 };
 
 
-
 class stcp_tcp_sock {
     friend class tcp_module;
 public:
@@ -204,7 +194,6 @@ private:
     tcp_stream_info si;
 
 private:
-    void proc_RST(mbuf* msg, stcp_tcp_header* th, stcp_sockaddr_in* dst);
     void move_state_DEBUG(tcpstate next_state);
     stcp_tcp_sock* alloc_new_sock_connected(tcpstate st, uint16_t lp, uint16_t rp,
             uint32_t arg_iss, uint32_t arg_irs, stcp_tcp_sock* head);
@@ -265,32 +254,10 @@ private:
     /*
      * called by rx_push()
      */
-    void rx_push_CLOSED(mbuf* msg, stcp_sockaddr_in* src,
-                        stcp_ip_header* ih, stcp_tcp_header* th);
-    void rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
-                        stcp_ip_header* ih, stcp_tcp_header* th);
-#if 1
-    void rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src,
-                        stcp_ip_header* ih, stcp_tcp_header* th);
-    void rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src,
-                        stcp_ip_header* ih, stcp_tcp_header* th);
-#else
-    void rx_push_SYN_RCVD(mbuf* msg, stcp_sockaddr_in* src,
-                        stcp_ip_header* ih, stcp_tcp_header* th);
-    void rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
-                        stcp_ip_header* ih, stcp_tcp_header* th);
-    void rx_push_LAST_ACK(mbuf* msg, stcp_sockaddr_in* src,
-                        stcp_ip_header* ih, stcp_tcp_header* th);
-#endif
-#if 0
-    // not implement
-    void rx_push_CLOSE_WAIT();
-    void rx_push_SYN_SENT  ();
-    void rx_push_FIN_WAIT_1();
-    void rx_push_FIN_WAIT_2();
-    void rx_push_CLOSING   ();
-    void rx_push_TIME_WAIT ();
-#endif
+    void rx_push_CLOSED(mbuf* msg, stcp_sockaddr_in* src);
+    void rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src);
+    void rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src);
+    void rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src);
 };
 
 
@@ -308,7 +275,6 @@ public:
     tcp_module() : rx_cnt(0), tx_cnt(0) {}
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
     void tx_push(mbuf* msg, const stcp_sockaddr_in* dst);
-    void send_RSTACK(mbuf* msg, stcp_sockaddr_in* src);
 
     void proc();
     void print_stat() const;
