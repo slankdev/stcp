@@ -2,12 +2,12 @@
 
 prefix = ..
 
-INTERFACE  = eth0
+# INTERFACE  = eth0
 # INTERFACE  = wlp3s0
 # INTERFACE  = enp0s20u2
 # INTERFACE  = eth1
 # INTERFACE  = lo
-# INTERFACE = vboxnet1
+INTERFACE = vboxnet1
 
 TMUXSPLIT  = tmux split-window -v
 TMUXVSPLIT = tmux split-window -h

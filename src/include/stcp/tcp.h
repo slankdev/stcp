@@ -128,7 +128,7 @@ class tcp_stream_info {
 
 public:
     tcp_stream_info(uint32_t iss, uint32_t irs)
-        : iss_(iss), irs_(irs) {}
+        : iss_(iss), irs_(irs), snd_win_(512) {}
 
     void irs_N(uint32_t arg) { irs_ = arg; }
     void irs_H(uint32_t arg) { irs_ = rte::bswap32(arg); }
@@ -307,7 +307,7 @@ private:
 public:
     tcp_module() : rx_cnt(0), tx_cnt(0) {}
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
-    void tx_push(mbuf* msg, const stcp_sockaddr_in* dst, uint16_t srcp);
+    void tx_push(mbuf* msg, const stcp_sockaddr_in* dst);
     void send_RSTACK(mbuf* msg, stcp_sockaddr_in* src);
 
     void proc();
