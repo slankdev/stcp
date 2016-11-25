@@ -630,26 +630,6 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
 void stcp_tcp_sock::rx_push_CLOSED(mbuf* msg, stcp_sockaddr_in* src,
         stcp_ip_header* ih, stcp_tcp_header* th)
 {
-#if 0
-    /*
-     * reply RSTACK
-     */
-
-    swap_port(th);
-    th->ack_num = th->seq_num + rte::bswap32(1);
-    th->seq_num = 0;
-
-    th->tcp_flags = TCPF_RST|TCPF_ACK;
-    th->rx_win    = 0;
-    th->cksum     = 0x0000;
-    th->tcp_urp   = 0x0000;
-
-    th->cksum = rte_ipv4_udptcp_cksum(
-            reinterpret_cast<ipv4_hdr*>(ih), th);
-
-    mbuf_pull(msg, sizeof(stcp_ip_header));
-    core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
-#else
     if (HAVE(th, TCPF_RST)) {
         rte::pktmbuf_free(msg);
     } else {
@@ -673,7 +653,6 @@ void stcp_tcp_sock::rx_push_CLOSED(mbuf* msg, stcp_sockaddr_in* src,
         core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
     }
     return;
-#endif
 }
 
 void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
@@ -772,32 +751,13 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
     if (HAVE(th, TCPF_SYN)) {
         /*
          * Securty Check is not implemented
+         * TODO: not imple yet
          */
-        // if (!security_check(th)) {
-        //     swap_port(th);
-        //     th->seq_num = th->ack_num;
-        //     th->flag    = RST;
-        //     mbuf_pull(msg, istcp_ip_headerphlen);
-        //     core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
-        //     return;
-        // }
 
         /*
          * Priority Check
          * TODO: not imple yet
          */
-        // if (prc(th) > this->prc) {
-        //     if (allow_update_priority) {
-        //         thi->prc = prc(th);
-        //     } else {
-        //         swap_port(th);
-        //         th->seq_num = th->ack_num;
-        //         th->flg = RST;
-        //         mbuf_pull(msg, istcp_ip_headerphlen);
-        //         core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
-        //         return;
-        //     }
-        // }
 
         stcp_tcp_sock* newsock = alloc_new_sock_connected(
                 TCPS_SYN_RCVD, port, th->sport,
@@ -968,10 +928,21 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src,
                 return;
             }
 
+            ih->src = addr.sin_addr;
+            ih->dst = src->sin_addr;
+            ih->next_proto_id = STCP_IPPROTO_TCP;
+            // ih->total_length = rte::bswap16();
+
             swap_port(th);
             th->seq_num = si.snd_nxt_N();
             th->ack_num = si.rcv_nxt_N();
             th->tcp_flags = TCPF_ACK;
+            th->rx_win = si.snd_win_N();
+            th->cksum = 0x0000;
+            th->tcp_urp = 0x0000; // TODO hardcode
+
+            th->cksum = rte_ipv4_udptcp_cksum(
+                    reinterpret_cast<ipv4_hdr*>(ih), th);
 
             mbuf_pull(msg, sizeof(stcp_ip_header));
             core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
