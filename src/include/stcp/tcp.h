@@ -130,6 +130,9 @@ public:
     tcp_stream_info(uint32_t iss, uint32_t irs)
         : iss_(iss), irs_(irs) {}
 
+    void irs_N(uint32_t arg) { irs_ = arg; }
+    void irs_H(uint32_t arg) { irs_ = rte::bswap32(arg); }
+
     void snd_una_N(uint32_t arg)    { snd_una_ =  rte::bswap32(arg); }
     void snd_nxt_N(uint32_t arg)    { snd_nxt_ =  rte::bswap32(arg); }
     void snd_win_N(uint16_t arg)    { snd_win_ =  rte::bswap16(arg); }
@@ -266,12 +269,19 @@ private:
                         stcp_ip_header* ih, stcp_tcp_header* th);
     void rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
                         stcp_ip_header* ih, stcp_tcp_header* th);
+#if 1
+    void rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src,
+                        stcp_ip_header* ih, stcp_tcp_header* th);
+    void rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src,
+                        stcp_ip_header* ih, stcp_tcp_header* th);
+#else
     void rx_push_SYN_RCVD(mbuf* msg, stcp_sockaddr_in* src,
                         stcp_ip_header* ih, stcp_tcp_header* th);
     void rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
                         stcp_ip_header* ih, stcp_tcp_header* th);
     void rx_push_LAST_ACK(mbuf* msg, stcp_sockaddr_in* src,
                         stcp_ip_header* ih, stcp_tcp_header* th);
+#endif
 #if 0
     // not implement
     void rx_push_CLOSE_WAIT();
