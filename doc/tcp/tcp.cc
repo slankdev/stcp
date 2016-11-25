@@ -125,18 +125,77 @@ void rx_push_SYN_SEND(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
     /*
      * 1: ACK Check
      */
+    if (HAVE(th, ACK)) {
+        if (th->ack_num <= iss || th->ack_num > snd_nxt) {
+            if (HAVE(th, RST)) {
+                swap_port(th);
+                th->seq_num = th->ack_num;
+                th->flag    = RST;
+
+                mbuf_pull(msg, iphlen);
+                core::ip.tx_push(msg, src, 0x06);
+            else {
+                free(msg);
+            }
+            printf("SLANKDEVSLANKDEV error: connection reset\n");
+            change_state(CLOSED);
+            return;
+            }
+        }
+    }
+
     /*
      * 2: RST Check
      */
+    if (HAVE(th, RST)) {
+        free(msg);
+        return;
+    }
+
     /*
      * 3: Securty and Priority Check
+     * TODO not implement yet
      */
+
     /*
      * 4: SYN Check
      */
+    assert(!HAVE(th, ACK) && !HAVE(th, RST));
+
+    if (HAVE(th, SYN)) {
+        rcv_nxt = th->seq_num + 1;
+        irs = th->seq_num;
+
+        if (HAVE(th, ACK)) {
+            snd_una = th->ack_num;
+        }
+
+        if (snd_una > iss) {
+            change_state(ESTABLISHED);
+            swap_port(th);
+            th->seq_num = snd_nxt;
+            th->ack_num = rcv_nxt;
+            th->flag = ACK;
+        } else {
+            change_state(SYN_RCVD);
+            swap_port(th);
+            th->seq_num = iss;
+            th->ack_num = rcv_nxt;
+            th->flag = SYNACK;
+        }
+        mbuf_pull(msg, iphlen);
+        core::ip.tx_push(msg, src, 0x06);
+    }
+
     /*
      * 5: (!SYN && !RST) Pattern
      */
+    if (!HAVE(th, SYN) && !HAVE(th, RST)) {
+        free(msg);
+        return;
+    }
+
+    throw exception("OKASHII");
 }
 void rx_push_ELSESTATE(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
 {
