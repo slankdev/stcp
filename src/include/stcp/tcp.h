@@ -115,34 +115,58 @@ class tcp_stream_info {
 
     uint32_t snd_nxt_; /* next send                         */
     uint16_t snd_win_; /* send window size                  */
+    uint32_t snd_una_; /* unconfirmed send                  */
+    uint32_t snd_wl1_; /* used sequence num at last send    */
+    uint32_t snd_wl2_; /* used acknouledge num at last send */
     uint32_t rcv_nxt_; /* next receive                      */
     uint16_t rcv_wnd_; /* receive window size               */
 
 #if 0
-    uint32_t snd_una; /* unconfirmed send                  */ //?
     uint16_t snd_up ; /* send urgent pointer               */
-    uint32_t snd_wl1; /* used sequence num at last send    */
-    uint32_t snd_wl2; /* used acknouledge num at last send */
     uint16_t rcv_up ; /* receive urgent pointer            */
 #endif
 
 public:
     tcp_stream_info(uint32_t iss, uint32_t irs)
         : iss_(iss), irs_(irs) {}
-    void snd_nxt(uint32_t arg) { snd_nxt_ = arg; }
-    void snd_win(uint32_t arg) { snd_win_ = arg; }
-    void rcv_nxt(uint32_t arg) { rcv_nxt_ = arg; }
-    void rcv_win(uint32_t arg) { rcv_wnd_ = arg; }
 
-    void snd_nxt_inc(int32_t arg) { snd_nxt_ += arg; }
-    void rcv_nxt_inc(int32_t arg) { rcv_nxt_ += arg; }
+    void snd_una_N(uint32_t arg)    { snd_una_ =  rte::bswap32(arg); }
+    void snd_nxt_N(uint32_t arg)    { snd_nxt_ =  rte::bswap32(arg); }
+    void snd_win_N(uint16_t arg)    { snd_win_ =  rte::bswap16(arg); }
+    void snd_wl1_N(uint32_t arg)    { snd_wl1_ =  rte::bswap32(arg); }
+    void snd_wl2_N(uint32_t arg)    { snd_wl2_ =  rte::bswap32(arg); }
+    void rcv_nxt_N(uint32_t arg)    { rcv_nxt_ =  rte::bswap32(arg); }
+    void rcv_win_N(uint16_t arg)    { rcv_wnd_ =  rte::bswap16(arg); }
+    void snd_nxt_inc_N(int32_t arg) { snd_nxt_ += rte::bswap32(arg); }
+    void rcv_nxt_inc_N(int32_t arg) { rcv_nxt_ += rte::bswap32(arg); }
+    uint32_t iss_N() const     { return rte::bswap32(iss_    ); }
+    uint32_t irs_N() const     { return rte::bswap32(irs_    ); }
+    uint32_t snd_una_N() const { return rte::bswap32(snd_una_); }
+    uint32_t snd_nxt_N() const { return rte::bswap32(snd_nxt_); }
+    uint16_t snd_win_N() const { return rte::bswap16(snd_win_); }
+    uint32_t snd_wl1_N() const { return rte::bswap32(snd_wl1_); }
+    uint32_t snd_wl2_N() const { return rte::bswap32(snd_wl2_); }
+    uint32_t rcv_nxt_N() const { return rte::bswap32(rcv_nxt_); }
+    uint16_t rcv_win_N() const { return rte::bswap16(rcv_wnd_); }
 
-    uint32_t iss() const { return iss_; }
-    uint32_t irs() const { return irs_; }
-    uint32_t snd_nxt() const { return snd_nxt_; }
-    uint32_t snd_win() const { return snd_win_; }
-    uint32_t rcv_nxt() const { return rcv_nxt_; }
-    uint32_t rcv_win() const { return rcv_wnd_; }
+    void snd_una_H(uint32_t arg)    { snd_una_ =  arg; }
+    void snd_nxt_H(uint32_t arg)    { snd_nxt_ =  arg; }
+    void snd_win_H(uint16_t arg)    { snd_win_ =  arg; }
+    void snd_wl1_H(uint32_t arg)    { snd_wl1_ =  arg; }
+    void snd_wl2_H(uint32_t arg)    { snd_wl2_ =  arg; }
+    void rcv_nxt_H(uint32_t arg)    { rcv_nxt_ =  arg; }
+    void rcv_win_H(uint16_t arg)    { rcv_wnd_ =  arg; }
+    void snd_nxt_inc_H(int32_t arg) { snd_nxt_ += arg; }
+    void rcv_nxt_inc_H(int32_t arg) { rcv_nxt_ += arg; }
+    uint32_t iss_H() const     { return (iss_    ); }
+    uint32_t irs_H() const     { return (irs_    ); }
+    uint32_t snd_una_H() const { return (snd_una_); }
+    uint32_t snd_nxt_H() const { return (snd_nxt_); }
+    uint16_t snd_win_H() const { return (snd_win_); }
+    uint32_t snd_wl1_H() const { return (snd_wl1_); }
+    uint32_t snd_wl2_H() const { return (snd_wl2_); }
+    uint32_t rcv_nxt_H() const { return (rcv_nxt_); }
+    uint16_t rcv_win_H() const { return (rcv_wnd_); }
 };
 
 

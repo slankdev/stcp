@@ -24,9 +24,9 @@ inline void swap_port(stcp_tcp_header* th)
     th->dport    = tmp;
 }
 
-inline bool HAS_FLAG(uint8_t flag, tcp_flags type)
+inline bool HAVE(stcp_tcp_header* th, tcp_flags type)
 {
-    return ((flag & type) != 0x00);
+    return ((th->tcp_flags & type) != 0x00);
 }
 
 
@@ -58,7 +58,7 @@ stcp_tcp_sock::stcp_tcp_sock(tcpstate s, uint16_t lp, uint16_t rp,
     si(arg_iss, arg_irs)
 {
     DEBUG("[%15p] SOCK CNSTRCTR(%s,%u,%u,%u,%u,%p) \n",
-            this, tcpstate2str(state), port, pair_port, si.iss(), si.irs(), head);
+            this, tcpstate2str(state), port, pair_port, si.iss_H(), si.irs_H(), head);
 }
 
 stcp_tcp_sock::~stcp_tcp_sock()
@@ -195,11 +195,11 @@ void stcp_tcp_sock::proc_ESTABLISHED()
          */
         th->sport     = port     ;
         th->dport     = pair_port;
-        th->seq_num   = rte::bswap32(si.snd_nxt());
-        th->ack_num   = rte::bswap32(si.rcv_nxt());
+        th->seq_num   = si.snd_nxt_N();
+        th->ack_num   = si.rcv_nxt_N();
         th->data_off  = sizeof(stcp_tcp_header) >> 2 << 4;
         th->tcp_flags = TCPF_PSH|TCPF_ACK;
-        th->rx_win    = si.snd_win();
+        th->rx_win    = si.snd_win_N();
         th->cksum     = 0x0000;
         th->tcp_urp   = 0; // TODO hardcode
 
@@ -215,7 +215,7 @@ void stcp_tcp_sock::proc_ESTABLISHED()
         /*
          * TODO KOKOJANAKUNE
          */
-        si.snd_nxt(si.snd_nxt() + data_len);
+        si.snd_nxt_H(si.snd_nxt_H() + data_len);
 
     }
 }
@@ -254,11 +254,11 @@ void stcp_tcp_sock::proc_CLOSE_WAIT()
      */
     th->sport     = port     ;
     th->dport     = pair_port;
-    th->seq_num   = rte::bswap32(si.snd_nxt());
-    th->ack_num   = rte::bswap32(si.rcv_nxt());
+    th->seq_num   = si.snd_nxt_N();
+    th->ack_num   = si.rcv_nxt_N();
     th->data_off  = sizeof(stcp_tcp_header)>>2 << 4;
     th->tcp_flags = TCPF_FIN|TCPF_ACK;
-    th->rx_win    = rte::bswap16(si.snd_win());
+    th->rx_win    = si.snd_win_N();
     th->cksum     = 0x0000;
     th->tcp_urp   = 0x0000; // TODO hardcode
 
@@ -268,7 +268,7 @@ void stcp_tcp_sock::proc_CLOSE_WAIT()
     /*
      * Update Stream infos
      */
-    si.snd_nxt_inc(1);
+    si.snd_nxt_inc_H(1);
 
     /*
      * Send packet
@@ -661,21 +661,21 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
         /*
          * Init stream information
          */
-        newsock->si.snd_nxt(newsock->si.iss());
-        newsock->si.snd_win(512); // TODO hardcode
+        newsock->si.snd_nxt_H(newsock->si.iss_H());
+        newsock->si.snd_win_H(512); // TODO hardcode
 
-        newsock->si.rcv_nxt(newsock->si.irs() + 1);
-        newsock->si.rcv_win(rte::bswap32(th->rx_win));
+        newsock->si.rcv_nxt_H(newsock->si.irs_H() + 1);
+        newsock->si.rcv_win_N(th->rx_win);
 
         /*
          * craft SYNACK packet to reply.
          */
         swap_port(th);
 
-        th->seq_num = rte::bswap32(newsock->si.snd_nxt());
-        th->ack_num = rte::bswap32(newsock->si.rcv_nxt());
+        th->seq_num   = newsock->si.snd_nxt_N();
+        th->ack_num   = newsock->si.rcv_nxt_N();
 
-        th->rx_win    = rte::bswap16(newsock->si.snd_win());
+        th->rx_win    = newsock->si.snd_win_N();
         th->tcp_flags = TCPF_SYN | TCPF_ACK;
         th->cksum     = 0x0000;
         th->tcp_urp   = 0x0000; // TODO hardcode
@@ -694,7 +694,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src,
         /*
          * Update stream information.
          */
-        newsock->si.snd_nxt_inc(1);
+        newsock->si.snd_nxt_inc_H(1);
         return ;
     }
 }
@@ -708,19 +708,19 @@ void stcp_tcp_sock::rx_push_SYN_RCVD(mbuf* msg, stcp_sockaddr_in* src,
     /*
      * check packet is this stream's one.
      */
-    if (rte::bswap32(th->seq_num) != si.rcv_nxt()) {
+    if (th->seq_num != si.rcv_nxt_N()) {
         DEBUG("[%15p] invalid sequence number seg=%u(0x%x), sock=%u(0x%x)\n", this,
                 rte::bswap32(th->seq_num), rte::bswap32(th->seq_num),
-                si.rcv_nxt(),
-                si.rcv_nxt());
+                si.rcv_nxt_H(),
+                si.rcv_nxt_H());
         return;
     }
-    if (rte::bswap32(th->ack_num) != si.snd_nxt()) {
+    if (th->ack_num != si.snd_nxt_N()) {
         DEBUG("[%15p] invalid acknouledge number \n", this);
         return;
     }
 
-    if (HAS_FLAG(th->tcp_flags, TCPF_ACK)) {
+    if (HAVE(th, TCPF_ACK)) {
         /*
          * when recvd packet is ACK,
          * move state to ESTABLISHED
@@ -748,7 +748,7 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
     /*
      * Operate RST packet
      */
-    if (HAS_FLAG(th->tcp_flags, TCPF_RST)) {
+    if (HAVE(th, TCPF_RST)) {
         proc_RST(msg, th, src);
         return;
     }
@@ -763,13 +763,12 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
         DEBUG("[%15p] SLANKDEV: Faaaaa\n", this);
         DEBUG("     packet seq: %u\n", rte::bswap32(th->seq_num));
         DEBUG("     packet ack: %u\n", rte::bswap32(th->ack_num));
-        DEBUG("     stream seq: %u\n", si.snd_nxt());
-        DEBUG("     stream ack: %u\n", si.rcv_nxt());
+        DEBUG("     stream seq: %u\n", si.snd_nxt_H());
+        DEBUG("     stream ack: %u\n", si.rcv_nxt_H());
     //     return;
     // }
 
-    if (HAS_FLAG(th->tcp_flags, TCPF_PSH) &&
-            HAS_FLAG(th->tcp_flags, TCPF_ACK)) {
+    if (HAVE(th, TCPF_PSH) && HAVE(th, TCPF_ACK)) {
         DEBUG("[%15p] ESTABLISHED RCV DATA with PSHACK\n", this);
 
         /*
@@ -786,17 +785,17 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
         /*
          * Update Stream infos
          */
-        si.snd_nxt(rte::bswap32(th->ack_num));
-        si.rcv_nxt(rte::bswap32(th->seq_num) + tcpdlen);
+        si.snd_nxt_N(th->ack_num);
+        si.rcv_nxt_H(rte::bswap32(th->seq_num) + tcpdlen);
 
         /*
          * Craft ACK-packet to reply
          */
         swap_port(th);
-        th->rx_win  = rte::bswap16(si.snd_win());
+        th->rx_win  = si.snd_win_N();
         th->tcp_flags = TCPF_ACK;
-        th->seq_num = rte::bswap32(si.snd_nxt());
-        th->ack_num = rte::bswap32(si.rcv_nxt());
+        th->seq_num = si.snd_nxt_N();
+        th->ack_num = si.rcv_nxt_N();
         th->cksum     = 0x0000;
         th->tcp_urp   = 0x0000; // TODO hardcode
 
@@ -826,14 +825,14 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
         mbuf_pull(msg, sizeof(stcp_ip_header));
         core::ip.tx_push(msg, src, STCP_IPPROTO_TCP);
 
-    } else if (HAS_FLAG(th->tcp_flags, TCPF_FIN)) {
+    } else if (HAVE(th, TCPF_FIN)) {
 
         /*
          * Update Stream infos
          */
-        si.snd_nxt(rte::bswap32(th->ack_num));
-        si.rcv_nxt(rte::bswap32(th->seq_num) + tcpdlen);
-        si.rcv_nxt_inc(1);
+        si.snd_nxt_N(th->ack_num);
+        si.rcv_nxt_H(rte::bswap32(th->seq_num) + tcpdlen);
+        si.rcv_nxt_inc_H(1);
 
         /*
          * Recv FIN
@@ -842,9 +841,9 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
 
         swap_port(th);
         th->tcp_flags = TCPF_ACK;
-        th->seq_num = rte::bswap32(si.snd_nxt());
-        th->ack_num = rte::bswap32(si.rcv_nxt());
-        th->rx_win  = rte::bswap16(si.snd_win());
+        th->seq_num = si.snd_nxt_N();
+        th->ack_num = si.rcv_nxt_N();
+        th->rx_win  = si.snd_win_N();
         th->cksum   = 0x0000;
         th->tcp_urp = 0x0000; // TODO hardcode
 
@@ -862,10 +861,10 @@ void stcp_tcp_sock::rx_push_ESTABLISHED(mbuf* msg, stcp_sockaddr_in* src,
         pair_port = th->dport;
         move_state(TCPS_CLOSE_WAIT);
 
-    } else if (HAS_FLAG(th->tcp_flags, TCPF_ACK)) {
+    } else if (HAVE(th, TCPF_ACK)) {
         // MARKED
         DEBUG("[%15p] PROC send(mbuf=%p,%u) success\n",
-                this, msg, rte::bswap32(th->ack_num) - si.snd_nxt());
+                this, msg, rte::bswap32(th->ack_num) - si.snd_nxt_H());
         // si.snd_nxt(rte::bswap32(th->ack_num));
     } else {
         std::string errstr;
@@ -883,7 +882,7 @@ void stcp_tcp_sock::rx_push_LAST_ACK(mbuf* msg, stcp_sockaddr_in* src,
     UNUSED(ih);
     UNUSED(src);
     UNUSED(msg);
-    if (HAS_FLAG(th->tcp_flags, TCPF_ACK)) {
+    if (HAVE(th, TCPF_ACK)) {
         move_state(TCPS_CLOSED);
     }
 }
@@ -897,7 +896,7 @@ void stcp_tcp_sock::print_stat() const
             rte::bswap16(port),
             tcpstate2str(state), this,
             rxq.size(), txq.size(),
-            si.snd_nxt(), si.rcv_nxt(),
+            si.snd_nxt_H(), si.rcv_nxt_H(),
             rte::bswap16(pair_port));
 
 #if 0
