@@ -43,15 +43,82 @@ void rx_push_LISTEN(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
     /*
      * 1: RST Check
      */
+    if (HAVE(th, RST)) {
+        free(msg);
+        return;
+    }
+
     /*
      * 2: ACK Check
      */
+    if (HAVE(th, ACK)) {
+#if 0
+        // in RFC
+        swap_port(th);
+        th->seq_num = th->ack_num;
+        th->flag    = RST;
+        mbuf_pull(msg, iphlen);
+        core::ip.tx_push(msg);
+#else
+        free(msg);
+        return;
+#endif
+    }
+
     /*
      * 3: SYN Check
      */
+    if (HAVE(th, SYN)) {
+        if (!security_check(th)) {
+            swap_port(th);
+            th->seq_num = th->ack_num;
+            th->flag    = RST;
+            mbuf_pull(msg, iphlen);
+            core::ip.tx_push(msg, src, 0x06);
+            return;
+        }
+
+        /*
+         * Priority Check
+         */
+        if (prc(th) > this->prc) {
+            if (allow_update_priority) {
+                thi->prc = prc(th);
+            } else {
+                swap_port(th);
+                th->seq_num = th->ack_num;
+                th->flg = RST;
+                mbuf_pull(msg, iphlen);
+                core::ip.tx_push(msg, src, 0x06);
+                return;
+            }
+        }
+
+        rcv_nxt = th->seq_num + 1;
+        irs     = th->seq_num;
+        iss     = rand();
+
+        th->seq_num = iss;
+        th->ack_num = rcv_nxt;
+        th->flag    = SYN|ACK;
+
+        mbuf_pull(msg, iphlen);
+        core::ip.tx_push(msg, src, 0x06);
+
+        snd_nxt = iss + 1;
+        snd_una = iss;
+        change_state(SYN_RCVD);
+        return;
+
+    }
+
     /*
      * 4: Else Text Control
      */
+    free(msg);
+    throw exception("OKASHII");
+
+
 }
 void rx_push_SYN_SEND(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
 {
