@@ -202,28 +202,320 @@ void rx_push_ELSESTATE(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
     /*
      * 1: Sequence Number Check
      */
+    switch (state) {
+
+        case SYN_RCVD:
+        case ESTABLISHED:
+        case FIN_WAIT_1:
+        case FIN_WAIT_2:
+        case CLOSE_WAIT:
+        case CLOSING:
+        case LAST_ACK:
+        case TIME_WAIT:
+        {
+            bool pass = false;
+            if (datalen(th, ih) == 0) {
+                if (th->win == 0) {
+                    if (th->seq_num == rcv_nxt)
+                        pass = true;
+                } else { /* win > 0 */
+                    if (rcv_nxt<=th->seq_num && th->seq_num<=rcv_nxt+rcv_win)
+                        pass = true;
+                }
+            } else { /* datalen > 0 */
+                if (th->win > 0) {
+                    if ((rcv_nxt <= th->seq_num && th->seq_num < rcv_nxt+rcv_win)
+                        || (rcv_nxt <= th->seq_num + datalen(th, ih) - 1 < rcv_nxt + rcv_win)) {
+                        pass = true;
+                    }
+                }
+            }
+
+            if (!pass) {
+                free(msg);
+                return;
+            }
+
+            if (HAVE(th, RST)) {
+                free(msg);
+                return;
+            }
+
+            swap_port(th);
+            th->seq_num = snd_nxt;
+            th->ack_num = rcv_nxt;
+            th->flag = ACK;
+
+            mbuf_pull(msg, iphlen);
+            core::ip.tx_push(msg, src, 0x06);
+            break;
+        }
+
+        case CLOSED:
+        case LISTEN:
+        case SYN_SENT:
+            throw exception("OKASHII");
+        default:
+            throw exception("OKASHII: unknown state");
+    }
+
     /*
      * 2: RST Check
      */
+    switch (state) {
+        case SYN_RCVD:
+        {
+            if (HAVE(th, RST)) {
+                printf("SLANKDEVSLANKDEV conection reset\n");
+                free(msg);
+                change_state(CLOSED);
+                return;
+            }
+            break;
+        }
+
+        case ESTABLISHED:
+        case FIN_WAIT_1:
+        case FIN_WAIT_2:
+        case CLOSE_WAIT:
+        {
+            if (HAVE(th, RST)) {
+                printf("SLANKDEVSLANKDEV conection reset\n");
+                free(msg);
+                change_state(CLOSED);
+                return;
+            }
+            break;
+        }
+
+        case CLOSING:
+        case LAST_ACK:
+        case TIME_WAIT:
+        {
+            if (HAVE(th, RST)) {
+                free(msg);
+                change_state(CLOSED);
+                return;
+            }
+            break;
+        }
+
+        case CLOSED:
+        case LISTEN:
+        case SYN_SENT:
+            throw exception("OKASHII");
+        default:
+            throw exception("OKASHII: unknown state");
+    }
+
     /*
      * 3: Securty and Priority Check
+     * TODO: not implement yet
      */
+
     /*
      * 4: SYN Check
      */
+    switch (state) {
+        case SYN_RCVD:
+        case ESTABLISHED:
+        case FIN_WAIT_1:
+        case FIN_WAIT_2:
+        case CLOSE_WAIT:
+        case CLOSING:
+        case LAST_ACK:
+        case TIME_WAIT:
+        {
+            if (HAVE(th, SYN)) {
+                printf("SLANKDEVSLANKDEV conection reset\n");
+                free(msg);
+                change_state(CLOSED);
+                return;
+            }
+            break;
+        }
+
+        case CLOSED:
+        case LISTEN:
+        case SYN_SENT:
+            throw exception("OKASHII");
+        default:
+            throw exception("OKASHII: unknown state");
+    }
+
     /*
      * 5: ACK Check
      */
+    if (HAVE(th, ACK)) {
+        switch (state) {
+            case SYN_RCVD:
+            {
+                if (snd_una <= th->ack_num && th->ack_num <= snd_nxt) {
+                    change_state(ESTABLISHED);
+                } else {
+                    swap_port(th);
+                    th->seq_num = th->ack_num;
+                    th->flag = RST;
+
+                    mbuf_pull(msg, iphlen);
+                    core::ip.tx_push(msg, src, 0x06);
+                    return;
+                }
+                break;
+            }
+
+            case ESTABLISHED:
+            case CLOSE_WAIT:
+            case CLOSING:
+            {
+                if (snd_una < th->ack_num && th->ack_num <= snd_nxt) {
+                    snd_una = th->ack_num;
+                }
+
+                if (th->ack_num < snd_una) {
+                    swap_port(th);
+                    th->seq_num = th->ack_num;
+                    th->flag = RST;
+
+                    mbuf_pull(msg, iphlen);
+                    core::ip.tx_push(msg, src, 0x06);
+                    return;
+                }
+
+                if (snd_una < th->ack_num && th->ack_num <= snd_nxt) {
+                    if ((snd_wl1 < th->seq_num)
+                            || (snd_wl1 == th->seq_num)
+                            || (snd_wl2 == th->ack_num)) {
+                        snd_win = th->win;
+                        snd_wl1 = th->seq_num;
+                        snd_wl2 = th->ack_num;
+                    }
+                }
+
+                if (state == CLOSING) {
+                    if (snd_nxt <= th->ack_num) {
+                        change_state(TIME_WAIT);
+                    }
+                    free(msg);
+                }
+                break;
+            }
+
+            case FIN_WAIT_1:
+            {
+                change_state(FIN_WAIT_2);
+                break;
+            }
+            case FIN_WAIT_2:
+            {
+                printf("OK\n");
+                break;
+            }
+            case LAST_ACK:
+            {
+                if (snd_nxt <= th->ack_num) {
+                    change_state(CLOSED);
+                    return;
+                }
+                break;
+            }
+            case TIME_WAIT:
+            {
+                throw exception("TODO: NOT IMPEL YET");
+                break;
+            }
+
+            case CLOSED:
+            case LISTEN:
+            case SYN_SENT:
+                throw exception("OKASHII");
+            default:
+                throw exception("OKASHII: unknown state");
+        }
+
+    } else {
+        free(msg);
+        return;
+    }
+
     /*
      * 6: URG Check
+     * TODO: not implement yet
      */
     /*
      * 4: Text Segment Control
      */
+    switch (state) {
+        case ESTABLISHED:
+        case FIN_WAIT_1:
+        case FIN_WAIT_2:
+        {
+            rcv_nxt += datalen(th, ih);
+
+            swap_port(th);
+            th->seq_num = snd_nxt;
+            th->ack_num = rcv_nxt;
+            th->flag = ACK;
+
+            mbuf_pull(msg, iphlen);
+            core::ip.tx_push(msg, src, 0x06);
+            return;
+            break;
+        }
+
+        case CLOSE_WAIT:
+        case CLOSING:
+        case LAST_ACK:
+        case TIME_WAIT:
+
+        case CLOSED:
+        case LISTEN:
+        case SYN_SENT:
+            throw exception("OKASHII");
+
+        case SYN_RCVD:
+            throw exception("RFC MITEIGIIIII");
+
+        default:
+            throw exception("OKASHII: unknown state");
+    }
+
     /*
      * 6: FIN Check
      */
+    if (HAVE(th, FIN)) {
+        printf("SLANKDEVSLANKDEV connection closing\n");
+        switch (state) {
+            case CLOSED:
+            case LISTEN:
+            case SYN_SENT:
+                free(msg);
+                return;
+                break;
+            case SYN_RCVD:
+            case ESTABLISHED:
+                change_state(CLOSE_WAIT);
+                break;
+            case FIN_WAIT_1:
+                change_state(CLOSING);
+                break;
+            case FIN_WAIT_2:
+                change_state(TIME_WAIT);
+                break;
+            case CLOSE_WAIT:
+                break;
+            case CLOSING:
+                break;
+            case LAST_ACK:
+                break;
+            case TIME_WAIT:
+                break;
 
+            default:
+                throw exception("OKASHII: unknown state");
+        }
+        return;
+    }
 }
 
 void rx_push(mbuf* msg, sockaddr_in src)
