@@ -4,34 +4,34 @@
 
 
 enum State {
-    CLOSED     ,
-    LISTEN     ,
-    SYN_SENT   ,
-    SYN_RCVD   ,
-    ESTABLISHED,
-    FIN_WAIT_1 ,
-    FIN_WAIT_2 ,
-    CLOSE_WAIT ,
-    CLOSING    ,
-    LAST_ACK   ,
-    TIME_WAIT  ,
+    TCPS_CLOSED     ,
+    TCPS_LISTEN     ,
+    TCPS_SYN_SENT   ,
+    TCPS_SYN_RCVD   ,
+    TCPS_ESTABLISHED,
+    TCPS_FIN_WAIT_1 ,
+    TCPS_FIN_WAIT_2 ,
+    TCPS_CLOSE_WAIT ,
+    TCPS_CLOSING    ,
+    TCPS_LAST_ACK   ,
+    TCPS_TIME_WAIT  ,
 };
 State state;
 
 void rx_push_CLOSED(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
 {
-    if (HAVE(th, RST)) {
-        free(msg);
+    if (HAVE(th, TCPF_RST)) {
+        rte::pktmbuf_free(msg);
     } else {
-        if HAVE(th, ACK) {
+        if HAVE(th, TCPF_ACK) {
             swap_port(th);
             th->ack_num = th->seq_num + datalen(th, ih);
             th->seq_num = 0;
-            th->flag    = RST|ACK;
+            th->tcp_flags    = TCPF_RST|TCPF_ACK;
         } else {
             swap_port(th);
             th->seq_num = th->ack_num;
-            th->flag    = RST;
+            th->tcp_flags    = TCPF_RST;
         }
         mbuf_pull(msg, iphlen);
         core::ip.tx_push(msg, src, 0x06);
@@ -41,38 +41,38 @@ void rx_push_CLOSED(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
 void rx_push_LISTEN(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
 {
     /*
-     * 1: RST Check
+     * 1: TCPF_RST Check
      */
-    if (HAVE(th, RST)) {
-        free(msg);
+    if (HAVE(th, TCPF_RST)) {
+        rte::pktmbuf_free(msg);
         return;
     }
 
     /*
-     * 2: ACK Check
+     * 2: TCPF_ACK Check
      */
-    if (HAVE(th, ACK)) {
+    if (HAVE(th, TCPF_ACK)) {
 #if 0
         // in RFC
         swap_port(th);
         th->seq_num = th->ack_num;
-        th->flag    = RST;
+        th->tcp_flags    = TCPF_RST;
         mbuf_pull(msg, iphlen);
         core::ip.tx_push(msg);
 #else
-        free(msg);
+        rte::pktmbuf_free(msg);
         return;
 #endif
     }
 
     /*
-     * 3: SYN Check
+     * 3: TCPF_SYN Check
      */
-    if (HAVE(th, SYN)) {
+    if (HAVE(th, TCPF_SYN)) {
         if (!security_check(th)) {
             swap_port(th);
             th->seq_num = th->ack_num;
-            th->flag    = RST;
+            th->tcp_flags    = TCPF_RST;
             mbuf_pull(msg, iphlen);
             core::ip.tx_push(msg, src, 0x06);
             return;
@@ -87,7 +87,7 @@ void rx_push_LISTEN(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
             } else {
                 swap_port(th);
                 th->seq_num = th->ack_num;
-                th->flg = RST;
+                th->flg = TCPF_RST;
                 mbuf_pull(msg, iphlen);
                 core::ip.tx_push(msg, src, 0x06);
                 return;
@@ -100,14 +100,14 @@ void rx_push_LISTEN(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
 
         th->seq_num = iss;
         th->ack_num = rcv_nxt;
-        th->flag    = SYN|ACK;
+        th->tcp_flags    = TCPF_SYN|TCPF_ACK;
 
         mbuf_pull(msg, iphlen);
         core::ip.tx_push(msg, src, 0x06);
 
         snd_nxt = iss + 1;
         snd_una = iss;
-        change_state(SYN_RCVD);
+        move_state(TCPF_SYN_RCVD);
         return;
 
     }
@@ -115,7 +115,7 @@ void rx_push_LISTEN(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
     /*
      * 4: Else Text Control
      */
-    free(msg);
+    rte::pktmbuf_free(msg);
     throw exception("OKASHII");
 
 
@@ -123,32 +123,32 @@ void rx_push_LISTEN(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
 void rx_push_SYN_SEND(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
 {
     /*
-     * 1: ACK Check
+     * 1: TCPF_ACK Check
      */
-    if (HAVE(th, ACK)) {
+    if (HAVE(th, TCPF_ACK)) {
         if (th->ack_num <= iss || th->ack_num > snd_nxt) {
-            if (HAVE(th, RST)) {
+            if (HAVE(th, TCPF_RST)) {
                 swap_port(th);
                 th->seq_num = th->ack_num;
-                th->flag    = RST;
+                th->tcp_flags    = TCPF_RST;
 
                 mbuf_pull(msg, iphlen);
                 core::ip.tx_push(msg, src, 0x06);
             else {
-                free(msg);
+                rte::pktmbuf_free(msg);
             }
             printf("SLANKDEVSLANKDEV error: connection reset\n");
-            change_state(CLOSED);
+            move_state(CLOSED);
             return;
             }
         }
     }
 
     /*
-     * 2: RST Check
+     * 2: TCPF_RST Check
      */
-    if (HAVE(th, RST)) {
-        free(msg);
+    if (HAVE(th, TCPF_RST)) {
+        rte::pktmbuf_free(msg);
         return;
     }
 
@@ -158,40 +158,40 @@ void rx_push_SYN_SEND(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
      */
 
     /*
-     * 4: SYN Check
+     * 4: TCPF_SYN Check
      */
-    assert(!HAVE(th, ACK) && !HAVE(th, RST));
+    assert(!HAVE(th, TCPF_ACK) && !HAVE(th, TCPF_RST));
 
-    if (HAVE(th, SYN)) {
+    if (HAVE(th, TCPF_SYN)) {
         rcv_nxt = th->seq_num + 1;
         irs = th->seq_num;
 
-        if (HAVE(th, ACK)) {
+        if (HAVE(th, TCPF_ACK)) {
             snd_una = th->ack_num;
         }
 
         if (snd_una > iss) {
-            change_state(ESTABLISHED);
+            move_state(ESTABLISHED);
             swap_port(th);
             th->seq_num = snd_nxt;
             th->ack_num = rcv_nxt;
-            th->flag = ACK;
+            th->tcp_flags = TCPF_ACK;
         } else {
-            change_state(SYN_RCVD);
+            move_state(TCPF_SYN_RCVD);
             swap_port(th);
             th->seq_num = iss;
             th->ack_num = rcv_nxt;
-            th->flag = SYNACK;
+            th->tcp_flags = TCPF_SYNTCPF_ACK;
         }
         mbuf_pull(msg, iphlen);
         core::ip.tx_push(msg, src, 0x06);
     }
 
     /*
-     * 5: (!SYN && !RST) Pattern
+     * 5: (!TCPF_SYN && !TCPF_RST) Pattern
      */
-    if (!HAVE(th, SYN) && !HAVE(th, RST)) {
-        free(msg);
+    if (!HAVE(th, TCPF_SYN) && !HAVE(th, TCPF_RST)) {
+        rte::pktmbuf_free(msg);
         return;
     }
 
@@ -204,14 +204,14 @@ void rx_push_ELSESTATE(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
      */
     switch (state) {
 
-        case SYN_RCVD:
-        case ESTABLISHED:
-        case FIN_WAIT_1:
-        case FIN_WAIT_2:
-        case CLOSE_WAIT:
-        case CLOSING:
-        case LAST_ACK:
-        case TIME_WAIT:
+        case TCPS_SYN_RCVD:
+        case TCPS_ESTABLISHED:
+        case TCPS_FIN_WAIT_1:
+        case TCPS_FIN_WAIT_2:
+        case TCPS_CLOSE_WAIT:
+        case TCPS_CLOSING:
+        case TCPS_LAST_ACK:
+        case TCPS_TIME_WAIT:
         {
             bool pass = false;
             if (datalen(th, ih) == 0) {
@@ -232,77 +232,77 @@ void rx_push_ELSESTATE(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
             }
 
             if (!pass) {
-                free(msg);
+                rte::pktmbuf_free(msg);
                 return;
             }
 
-            if (HAVE(th, RST)) {
-                free(msg);
+            if (HAVE(th, TCPF_RST)) {
+                rte::pktmbuf_free(msg);
                 return;
             }
 
             swap_port(th);
             th->seq_num = snd_nxt;
             th->ack_num = rcv_nxt;
-            th->flag = ACK;
+            th->tcp_flags = TCPF_ACK;
 
             mbuf_pull(msg, iphlen);
             core::ip.tx_push(msg, src, 0x06);
             break;
         }
 
-        case CLOSED:
-        case LISTEN:
-        case SYN_SENT:
+        case TCPS_CLOSED:
+        case TCPS_LISTEN:
+        case TCPS_SYN_SENT:
             throw exception("OKASHII");
         default:
             throw exception("OKASHII: unknown state");
     }
 
     /*
-     * 2: RST Check
+     * 2: TCPF_RST Check
      */
     switch (state) {
-        case SYN_RCVD:
+        case TCPS_SYN_RCVD:
         {
-            if (HAVE(th, RST)) {
+            if (HAVE(th, TCPF_RST)) {
                 printf("SLANKDEVSLANKDEV conection reset\n");
-                free(msg);
-                change_state(CLOSED);
+                rte::pktmbuf_free(msg);
+                move_state(CLOSED);
                 return;
             }
             break;
         }
 
-        case ESTABLISHED:
-        case FIN_WAIT_1:
-        case FIN_WAIT_2:
-        case CLOSE_WAIT:
+        case TCPS_ESTABLISHED:
+        case TCPS_FIN_WAIT_1:
+        case TCPS_FIN_WAIT_2:
+        case TCPS_CLOSE_WAIT:
         {
-            if (HAVE(th, RST)) {
+            if (HAVE(th, TCPF_RST)) {
                 printf("SLANKDEVSLANKDEV conection reset\n");
-                free(msg);
-                change_state(CLOSED);
+                rte::pktmbuf_free(msg);
+                move_state(CLOSED);
                 return;
             }
             break;
         }
 
-        case CLOSING:
-        case LAST_ACK:
-        case TIME_WAIT:
+        case TCPS_CLOSING:
+        case TCPS_LAST_ACK:
+        case TCPS_TIME_WAIT:
         {
-            if (HAVE(th, RST)) {
-                free(msg);
-                change_state(CLOSED);
+            if (HAVE(th, TCPF_RST)) {
+                rte::pktmbuf_free(msg);
+                move_state(CLOSED);
                 return;
             }
             break;
         }
 
-        case CLOSED:
-        case LISTEN:
-        case SYN_SENT:
+        case TCPS_CLOSED:
+        case TCPS_LISTEN:
+        case TCPS_SYN_SENT:
             throw exception("OKASHII");
         default:
             throw exception("OKASHII: unknown state");
@@ -314,48 +314,48 @@ void rx_push_ELSESTATE(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
      */
 
     /*
-     * 4: SYN Check
+     * 4: TCPF_SYN Check
      */
     switch (state) {
-        case SYN_RCVD:
-        case ESTABLISHED:
-        case FIN_WAIT_1:
-        case FIN_WAIT_2:
-        case CLOSE_WAIT:
-        case CLOSING:
-        case LAST_ACK:
-        case TIME_WAIT:
+        case TCPS_SYN_RCVD:
+        case TCPS_ESTABLISHED:
+        case TCPS_FIN_WAIT_1:
+        case TCPS_FIN_WAIT_2:
+        case TCPS_CLOSE_WAIT:
+        case TCPS_CLOSING:
+        case TCPS_LAST_ACK:
+        case TCPS_TIME_WAIT:
         {
-            if (HAVE(th, SYN)) {
+            if (HAVE(th, TCPF_SYN)) {
                 printf("SLANKDEVSLANKDEV conection reset\n");
-                free(msg);
-                change_state(CLOSED);
+                rte::pktmbuf_free(msg);
+                move_state(CLOSED);
                 return;
             }
             break;
         }
 
-        case CLOSED:
-        case LISTEN:
-        case SYN_SENT:
+        case TCPS_CLOSED:
+        case TCPS_LISTEN:
+        case TCPS_SYN_SENT:
             throw exception("OKASHII");
         default:
             throw exception("OKASHII: unknown state");
     }
 
     /*
-     * 5: ACK Check
+     * 5: TCPF_ACK Check
      */
-    if (HAVE(th, ACK)) {
+    if (HAVE(th, TCPF_ACK)) {
         switch (state) {
-            case SYN_RCVD:
+            case TCPS_SYN_RCVD:
             {
                 if (snd_una <= th->ack_num && th->ack_num <= snd_nxt) {
-                    change_state(ESTABLISHED);
+                    move_state(ESTABLISHED);
                 } else {
                     swap_port(th);
                     th->seq_num = th->ack_num;
-                    th->flag = RST;
+                    th->tcp_flags = TCPF_RST;
 
                     mbuf_pull(msg, iphlen);
                     core::ip.tx_push(msg, src, 0x06);
@@ -364,9 +364,9 @@ void rx_push_ELSESTATE(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
                 break;
             }
 
-            case ESTABLISHED:
-            case CLOSE_WAIT:
-            case CLOSING:
+            case TCPS_ESTABLISHED:
+            case TCPS_CLOSE_WAIT:
+            case TCPS_CLOSING:
             {
                 if (snd_una < th->ack_num && th->ack_num <= snd_nxt) {
                     snd_una = th->ack_num;
@@ -375,7 +375,7 @@ void rx_push_ELSESTATE(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
                 if (th->ack_num < snd_una) {
                     swap_port(th);
                     th->seq_num = th->ack_num;
-                    th->flag = RST;
+                    th->tcp_flags = TCPF_RST;
 
                     mbuf_pull(msg, iphlen);
                     core::ip.tx_push(msg, src, 0x06);
@@ -394,47 +394,47 @@ void rx_push_ELSESTATE(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
 
                 if (state == CLOSING) {
                     if (snd_nxt <= th->ack_num) {
-                        change_state(TIME_WAIT);
+                        move_state(TIME_WAIT);
                     }
-                    free(msg);
+                    rte::pktmbuf_free(msg);
                 }
                 break;
             }
 
-            case FIN_WAIT_1:
+            case TCPS_FIN_WAIT_1:
             {
-                change_state(FIN_WAIT_2);
+                move_state(TCPF_FIN_WAIT_2);
                 break;
             }
-            case FIN_WAIT_2:
+            case TCPS_FIN_WAIT_2:
             {
                 printf("OK\n");
                 break;
             }
-            case LAST_ACK:
+            case TCPS_LAST_ACK:
             {
                 if (snd_nxt <= th->ack_num) {
-                    change_state(CLOSED);
+                    move_state(CLOSED);
                     return;
                 }
                 break;
             }
-            case TIME_WAIT:
+            case TCPS_TIME_WAIT:
             {
                 throw exception("TODO: NOT IMPEL YET");
                 break;
             }
 
-            case CLOSED:
-            case LISTEN:
-            case SYN_SENT:
+            case TCPS_CLOSED:
+            case TCPS_LISTEN:
+            case TCPS_SYN_SENT:
                 throw exception("OKASHII");
             default:
                 throw exception("OKASHII: unknown state");
         }
 
     } else {
-        free(msg);
+        rte::pktmbuf_free(msg);
         return;
     }
 
@@ -446,16 +446,16 @@ void rx_push_ELSESTATE(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
      * 4: Text Segment Control
      */
     switch (state) {
-        case ESTABLISHED:
-        case FIN_WAIT_1:
-        case FIN_WAIT_2:
+        case TCPS_ESTABLISHED:
+        case TCPS_FIN_WAIT_1:
+        case TCPS_FIN_WAIT_2:
         {
             rcv_nxt += datalen(th, ih);
 
             swap_port(th);
             th->seq_num = snd_nxt;
             th->ack_num = rcv_nxt;
-            th->flag = ACK;
+            th->tcp_flags = TCPF_ACK;
 
             mbuf_pull(msg, iphlen);
             core::ip.tx_push(msg, src, 0x06);
@@ -463,17 +463,17 @@ void rx_push_ELSESTATE(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
             break;
         }
 
-        case CLOSE_WAIT:
-        case CLOSING:
-        case LAST_ACK:
-        case TIME_WAIT:
+        case TCPS_CLOSE_WAIT:
+        case TCPS_CLOSING:
+        case TCPS_LAST_ACK:
+        case TCPS_TIME_WAIT:
 
-        case CLOSED:
-        case LISTEN:
-        case SYN_SENT:
+        case TCPS_CLOSED:
+        case TCPS_LISTEN:
+        case TCPS_SYN_SENT:
             throw exception("OKASHII");
 
-        case SYN_RCVD:
+        case TCPS_SYN_RCVD:
             throw exception("RFC MITEIGIIIII");
 
         default:
@@ -481,34 +481,34 @@ void rx_push_ELSESTATE(mbuf* msg, sockaddr_in src, iph* ih, tcph* th)
     }
 
     /*
-     * 6: FIN Check
+     * 6: TCPF_FIN Check
      */
-    if (HAVE(th, FIN)) {
+    if (HAVE(th, TCPF_FIN)) {
         printf("SLANKDEVSLANKDEV connection closing\n");
         switch (state) {
-            case CLOSED:
-            case LISTEN:
-            case SYN_SENT:
-                free(msg);
+            case TCPS_CLOSED:
+            case TCPS_LISTEN:
+            case TCPS_SYN_SENT:
+                rte::pktmbuf_free(msg);
                 return;
                 break;
-            case SYN_RCVD:
-            case ESTABLISHED:
-                change_state(CLOSE_WAIT);
+            case TCPS_SYN_RCVD:
+            case TCPS_ESTABLISHED:
+                move_state(CLOSE_WAIT);
                 break;
-            case FIN_WAIT_1:
-                change_state(CLOSING);
+            case TCPS_FIN_WAIT_1:
+                move_state(CLOSING);
                 break;
-            case FIN_WAIT_2:
-                change_state(TIME_WAIT);
+            case TCPS_FIN_WAIT_2:
+                move_state(TIME_WAIT);
                 break;
-            case CLOSE_WAIT:
+            case TCPS_CLOSE_WAIT:
                 break;
-            case CLOSING:
+            case TCPS_CLOSING:
                 break;
-            case LAST_ACK:
+            case TCPS_LAST_ACK:
                 break;
-            case TIME_WAIT:
+            case TCPS_TIME_WAIT:
                 break;
 
             default:
@@ -524,23 +524,23 @@ void rx_push(mbuf* msg, sockaddr_in src)
     tcph* th = mtod_offset(msg);
 
     switch (state) {
-        case CLOSED:
+        case TCPS_CLOSED:
             rx_push_CLOSED(msg, src, ih, th);
             break;
-        case LISTEN:
+        case TCPS_LISTEN:
             rx_push_LISTEN(msg, src, ih, th);
             break;
-        case SYN_SENT:
+        case TCPS_SYN_SENT:
             rx_push_SYN_SEND(msg, src, ih, th);
             break;
-        case SYN_RCVD:
-        case ESTABLISHED:
-        case FIN_WAIT_1:
-        case FIN_WAIT_2:
-        case CLOSE_WAIT:
-        case CLOSING:
-        case LAST_ACK:
-        case TIME_WAIT:
+        case TCPS_SYN_RCVD:
+        case TCPS_ESTABLISHED:
+        case TCPS_FIN_WAIT_1:
+        case TCPS_FIN_WAIT_2:
+        case TCPS_CLOSE_WAIT:
+        case TCPS_CLOSING:
+        case TCPS_LAST_ACK:
+        case TCPS_TIME_WAIT:
             rx_push_ELSESTATE(msg, src, ih, th);
             break;
         default:
