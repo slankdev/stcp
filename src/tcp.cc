@@ -24,7 +24,7 @@ inline uint16_t cksum_tih(tcpip* h)
 inline uint16_t data_len(const stcp_tcp_header* th,
         const stcp_ip_header* ih)
 {
-    uint16_t iptotlen = rte::bswap16(ih->total_length);
+    uint16_t iptotlen = ntoh16(ih->total_length);
     uint16_t iphlen = (ih->version_ihl & 0x0f)<<2;
     uint16_t tcphlen  = ((th->data_off>>4)<<2);
     return iptotlen - iphlen - tcphlen;
@@ -238,7 +238,7 @@ void stcp_tcp_sock::proc_ESTABLISHED()
         /*
          * Craft IP header for tcp checksum
          */
-        tih->ip.total_length  = rte::bswap16(rte::pktmbuf_pkt_len(msg));
+        tih->ip.total_length  = hton16(rte::pktmbuf_pkt_len(msg));
         tih->ip.next_proto_id = STCP_IPPROTO_TCP;
         tih->ip.src           = addr.sin_addr;
         tih->ip.dst           = pair.sin_addr;
@@ -296,7 +296,7 @@ void stcp_tcp_sock::proc_CLOSE_WAIT()
     ih->src = addr.sin_addr;
     ih->dst = pair.sin_addr;
     ih->next_proto_id = STCP_IPPROTO_TCP;
-    ih->total_length  = rte::bswap16(
+    ih->total_length  = hton16(
             sizeof(stcp_tcp_header) + sizeof(stcp_ip_header));
 
 
@@ -609,7 +609,7 @@ void stcp_tcp_sock::rx_push_CLOSED(mbuf* msg, stcp_sockaddr_in* src)
     } else {
         if (HAVE(tih, TCPF_ACK)) {
             swap_port(&tih->tcp);
-            tih->tcp.ack = tih->tcp.seq + rte::bswap32(data_len(tih));
+            tih->tcp.ack = tih->tcp.seq + hton32(data_len(tih));
             tih->tcp.seq = 0;
             tih->tcp.flags   = TCPF_RST|TCPF_ACK;
         } else {
@@ -666,7 +666,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
                 TCPS_SYN_RCVD,
                 port, tih->tcp.sport,
                 rte::rand() % 0xffffffff,
-                rte::bswap32(tih->tcp.seq),
+                hton32(tih->tcp.seq),
                 this);
         num_connected ++;
         wait_accept.push(newsock);
@@ -674,7 +674,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
         newsock->addr.sin_addr = tih->ip.dst;
         newsock->pair.sin_addr = tih->ip.src;
 
-        newsock->si.rcv_nxt_H(rte::bswap32(tih->tcp.seq) + 1);
+        newsock->si.rcv_nxt_H(ntoh32(tih->tcp.seq) + 1);
 
         swap_port(&tih->tcp);
         tih->tcp.seq     = newsock->si.iss_N();
@@ -708,8 +708,8 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
      * 1: ACK Check
      */
     if (HAVE(tih, TCPF_ACK)) {
-        if (rte::bswap32(tih->tcp.ack) <= si.iss_H() ||
-                rte::bswap32(tih->tcp.ack) > si.snd_nxt_H()) {
+        if (ntoh32(tih->tcp.ack) <= si.iss_H() ||
+                ntoh32(tih->tcp.ack) > si.snd_nxt_H()) {
             if (HAVE(tih, TCPF_RST)) {
                 swap_port(&tih->tcp);
                 tih->tcp.seq   = tih->tcp.ack;
@@ -744,7 +744,7 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
     assert(!HAVE(tih, TCPF_ACK) && !HAVE(tih, TCPF_RST));
 
     if (HAVE(tih, TCPF_SYN)) {
-        si.rcv_nxt_H(rte::bswap32(tih->tcp.seq) + 1);
+        si.rcv_nxt_H(ntoh32(tih->tcp.seq) + 1);
         si.irs_N(tih->tcp.seq);
 
         if (HAVE(tih, TCPF_ACK)) {
@@ -816,18 +816,18 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
                         pass = true;
                     }
                 } else { /* win > 0 */
-                    if (si.rcv_nxt_H() <= rte::bswap32(tih->tcp.seq)
-                        && rte::bswap32(tih->tcp.seq) <= si.rcv_nxt_H()+si.rcv_win_H()) {
+                    if (si.rcv_nxt_H() <= ntoh32(tih->tcp.seq)
+                        && ntoh32(tih->tcp.seq) <= si.rcv_nxt_H()+si.rcv_win_H()) {
                         pass = true;
                     }
                 }
             } else { /* data_len > 0 */
                 if (tih->tcp.rx_win > 0) {
-                    bool cond1 = si.rcv_nxt_H() <= rte::bswap32(tih->tcp.seq) &&
-                        rte::bswap32(tih->tcp.seq) < si.rcv_nxt_H() + si.rcv_win_H();
+                    bool cond1 = si.rcv_nxt_H() <= ntoh32(tih->tcp.seq) &&
+                        ntoh32(tih->tcp.seq) < si.rcv_nxt_H() + si.rcv_win_H();
                     bool cond2 = si.rcv_nxt_H() <=
-                        rte::bswap32(tih->tcp.seq)+data_len(tih)-1 &&
-                        rte::bswap32(tih->tcp.seq)+data_len(tih)-1 <
+                        ntoh32(tih->tcp.seq)+data_len(tih)-1 &&
+                        ntoh32(tih->tcp.seq)+data_len(tih)-1 <
                             si.rcv_nxt_H() + si.rcv_win_H();
                     if (cond1 || cond2) {
                         pass = true;
@@ -848,7 +848,7 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
             tih->ip.src = addr.sin_addr;
             tih->ip.dst = src->sin_addr;
             tih->ip.next_proto_id = STCP_IPPROTO_TCP;
-            tih->ip.total_length = rte::bswap16(rte::pktmbuf_pkt_len(msg));
+            tih->ip.total_length = hton16(rte::pktmbuf_pkt_len(msg));
 
             swap_port(tih);
             tih->tcp.seq     = si.snd_nxt_N();
@@ -965,11 +965,11 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
             case TCPS_SYN_RCVD:
             {
                 DEBUG("AADD: snd_una: %u 0x%04x\n", si.snd_una_H(), si.snd_una_H());
-                DEBUG("AADD: acknum : %u 0x%04x\n", rte::bswap32(tih->tcp.ack),
-                                                    rte::bswap32(tih->tcp.ack));
+                DEBUG("AADD: acknum : %u 0x%04x\n", ntoh32(tih->tcp.ack),
+                                                    ntoh32(tih->tcp.ack));
                 DEBUG("AADD: snd_nxt: %u 0x%04x\n", si.snd_nxt_H(), si.snd_nxt_H());
-                if (si.snd_una_H() <= rte::bswap32(tih->tcp.ack) &&
-                        rte::bswap32(tih->tcp.ack) <= si.snd_nxt_H()) {
+                if (si.snd_una_H() <= ntoh32(tih->tcp.ack) &&
+                        ntoh32(tih->tcp.ack) <= si.snd_nxt_H()) {
                     DEBUG("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
                     move_state(TCPS_ESTABLISHED);
                 } else {
@@ -992,7 +992,7 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
                     si.snd_una_N(tih->tcp.ack);
                 }
 
-                if (rte::bswap32(tih->tcp.ack) < si.snd_una_H()) {
+                if (ntoh32(tih->tcp.ack) < si.snd_una_H()) {
                     swap_port(tih);
                     tih->tcp.seq   = tih->tcp.ack;
                     tih->tcp.flags = TCPF_RST;
@@ -1001,9 +1001,9 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
                     return;
                 }
 
-                if (si.snd_una_H() < rte::bswap32(tih->tcp.ack) &&
-                        rte::bswap32(tih->tcp.ack) <= si.snd_nxt_H()) {
-                    if ((si.snd_wl1_H() < rte::bswap32(tih->tcp.seq))
+                if (si.snd_una_H() < ntoh32(tih->tcp.ack) &&
+                        ntoh32(tih->tcp.ack) <= si.snd_nxt_H()) {
+                    if ((si.snd_wl1_H() < ntoh32(tih->tcp.seq))
                             || (si.snd_wl1_N() == tih->tcp.seq)
                             || (si.snd_wl2_N() == tih->tcp.ack)) {
                         si.snd_win_N(tih->tcp.rx_win );
@@ -1013,7 +1013,7 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
                 }
 
                 if (state == TCPS_CLOSING) {
-                    if (si.snd_nxt_H() <= rte::bswap32(tih->tcp.ack)) {
+                    if (si.snd_nxt_H() <= ntoh32(tih->tcp.ack)) {
                         move_state(TCPS_TIME_WAIT);
                     }
                     rte::pktmbuf_free(msg);
@@ -1033,7 +1033,7 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
             }
             case TCPS_LAST_ACK:
             {
-                if (si.snd_nxt_H() <= rte::bswap32(tih->tcp.ack)) {
+                if (si.snd_nxt_H() <= ntoh32(tih->tcp.ack)) {
                     move_state(TCPS_CLOSED);
                     return;
                 }
@@ -1143,11 +1143,11 @@ void stcp_tcp_sock::print_stat() const
 {
     stat& s = stat::instance();
     s.write("\t%u/tcp state=%s[this=%p] rx/tx=%zd/%zd %u/%u %u",
-            rte::bswap16(port),
+            ntoh16(port),
             tcpstate2str(state), this,
             rxq.size(), txq.size(),
             si.snd_nxt_H(), si.rcv_nxt_H(),
-            rte::bswap16(pair_port));
+            ntoh16(pair_port));
 
 #if 0
     switch (state) {
@@ -1179,8 +1179,8 @@ void stcp_tcp_sock::print_stat() const
             // s.write("\t - rcv_wnd: %u", rcv_wnd);
             // s.write("\t - rcv_up : %u", rcv_up );
             s.write("\t - port/pair_port: %u/%u",
-                    rte::bswap16(port),
-                    rte::bswap16(pair_port));
+                    ntoh16(port),
+                    ntoh16(pair_port));
             s.write("\t - addr: %s", addr.c_str());
             s.write("\t - pair: %s", pair.c_str());
             break;
@@ -1241,9 +1241,9 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
         tih->ip.src           = tih->ip.dst;
         tih->ip.dst           = src->sin_addr;
         tih->ip.next_proto_id = STCP_IPPROTO_TCP;
-        tih->ip.total_length  = rte::bswap16(rte::pktmbuf_pkt_len(msg));
+        tih->ip.total_length  = hton16(rte::pktmbuf_pkt_len(msg));
         swap_port(tih);
-        tih->tcp.ack      = tih->tcp.seq + rte::bswap32(1);
+        tih->tcp.ack      = tih->tcp.seq + hton32(1);
         tih->tcp.seq      = 0;
         tih->tcp.data_off = sizeof(stcp_tcp_header)/4 << 4;
         tih->tcp.flags    = TCPF_RST|TCPF_ACK;

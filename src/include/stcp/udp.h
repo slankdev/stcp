@@ -4,6 +4,7 @@
 #include <stcp/config.h>
 #include <stcp/socket.h>
 #include <stcp/dpdk.h>
+#include <stcp/util.h>
 
 #include <vector>
 #include <queue>
@@ -23,10 +24,10 @@ struct stcp_udp_header {
     void print() const
     {
         printf("UDP header \n");
-        printf("+ sport    : %u 0x%04x \n", rte::bswap16(sport), rte::bswap16(sport));
-        printf("+ dport    : %u 0x%04x \n", rte::bswap16(dport), rte::bswap16(dport));
-        printf("+ len      : %u 0x%08x \n", rte::bswap16(len  ), rte::bswap16(len  ));
-        printf("+ cksum    : 0x%04x \n"   , rte::bswap16(cksum)  );
+        printf("+ sport    : %u 0x%04x \n", ntoh16(sport), ntoh16(sport));
+        printf("+ dport    : %u 0x%04x \n", ntoh16(dport), ntoh16(dport));
+        printf("+ len      : %u 0x%08x \n", ntoh16(len  ), ntoh16(len  ));
+        printf("+ cksum    : 0x%04x \n"   , ntoh16(cksum)  );
     }
 };
 

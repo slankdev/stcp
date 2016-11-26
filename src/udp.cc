@@ -58,7 +58,7 @@ void udp_module::tx_push(mbuf* msg,
         reinterpret_cast<stcp_udp_header*>(mbuf_push(msg, sizeof(stcp_udp_header)));
     uh->sport = srcp;
     uh->dport = dst->sin_port;
-    uh->len   = rte::bswap16(sizeof(stcp_udp_header) + udplen);
+    uh->len   = hton16(sizeof(stcp_udp_header) + udplen);
     uh->cksum = 0x0000;
 
     tx_cnt++;
@@ -101,7 +101,7 @@ void udp_module::print_stat() const
     }
     for (const stcp_udp_sock* sock : socks) {
         s.write("\t%u/udp rxq=%zd txq=%zd",
-                rte::bswap16(sock->port),
+                hton16(sock->port),
                 sock->rxq.size(),
                 sock->txq.size());
     }

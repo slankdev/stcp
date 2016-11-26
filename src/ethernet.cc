@@ -3,6 +3,7 @@
 #include <stcp/rte.h>
 #include <stcp/stcp.h>
 #include <stcp/ethernet.h>
+#include <stcp/util.h>
 #include <string>
 
 namespace slank {
@@ -34,7 +35,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
     switch (dst->sa_fam) {
         case STCP_AF_INET:
         {
-            ether_type = rte::bswap16(STCP_ETHERTYPE_IP);
+            ether_type = ntoh16(STCP_ETHERTYPE_IP);
 
             bool  ret = core::arp.arp_resolv(port, dst, &ether_dst);
             if (!ret) {
@@ -48,18 +49,18 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
         case STCP_AF_ARP:
         {
             stcp_arphdr* ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
-            switch(rte::bswap16(ah->operation)) {
+            switch(ntoh16(ah->operation)) {
                 case STCP_ARPOP_REQUEST:
                 case STCP_ARPOP_REPLY:
-                    ether_type = rte::bswap16(STCP_ETHERTYPE_ARP);
+                    ether_type = hton16(STCP_ETHERTYPE_ARP);
                     break;
                 case STCP_ARPOP_REVREQUEST:
                 case STCP_ARPOP_REVREPLY:
-                    ether_type = rte::bswap16(STCP_ETHERTYPE_REVARP);
+                    ether_type = hton16(STCP_ETHERTYPE_REVARP);
                     break;
                 default:
                     std::string errstr = "not support arp operation ";
-                    errstr += std::to_string(rte::bswap16(ah->operation));
+                    errstr += std::to_string(hton16(ah->operation));
                     throw exception(errstr.c_str());
                     break;
             }
@@ -109,7 +110,7 @@ void ether_module::rx_push(mbuf* msg)
 {
     rx_cnt++;
     stcp_ether_header* eh = rte::pktmbuf_mtod<stcp_ether_header*>(msg);
-    uint16_t etype = rte::bswap16(eh->type);
+    uint16_t etype = ntoh16(eh->type);
     mbuf_pull(msg, sizeof(stcp_ether_header));
 
     switch (etype) {

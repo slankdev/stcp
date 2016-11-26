@@ -1,6 +1,7 @@
 
 #include <stcp/stcp.h>
 #include <stcp/api.h>
+#include <stcp/util.h>
 #include <unistd.h> // for sleep()
 #define UNUSED(x) (void)(x)
 
@@ -14,7 +15,7 @@ int user_main2(void* arg)
 
     stcp_sockaddr_in addr;
     addr.sin_fam  = STCP_AF_INET;
-    addr.sin_port = rte::bswap16(9999);
+    addr.sin_port = hton16(9999);
     stcp_udp_sock* sock = core::create_udp_socket();
     sock->bind(&addr);
 
@@ -39,7 +40,7 @@ int user_main1(void* arg)
 
     stcp_sockaddr_in addr;
     addr.sin_fam  = STCP_AF_INET;
-    addr.sin_port = rte::bswap16(8888);
+    addr.sin_port = hton16(8888);
     sock->bind(&addr, sizeof(addr));
     sock->listen(5);
 
@@ -76,7 +77,7 @@ int user_main1(void* arg)
 
     stcp_sockaddr_in addr;
     addr.sin_fam  = STCP_AF_INET;
-    addr.sin_port = rte::bswap16(8888);
+    addr.sin_port = hton16(8888);
     sock->bind(&addr, sizeof(addr));
     sock->listen(5);
 

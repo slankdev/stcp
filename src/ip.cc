@@ -6,6 +6,7 @@
 #include <stcp/ip.h>
 #include <stcp/ethernet.h>
 #include <stcp/socket.h>
+#include <stcp/util.h>
 #include <stcp/stcp.h>
 #include <stcp/icmp.h>
 
@@ -48,7 +49,7 @@ void ip_module::rx_push(mbuf* msg)
     stcp_ip_header* ih
         = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
 
-    size_t trailer_len = rte::pktmbuf_data_len(msg) - rte::bswap16(ih->total_length);
+    size_t trailer_len = rte::pktmbuf_data_len(msg) - ntoh16(ih->total_length);
     rte::pktmbuf_trim(msg, trailer_len);
 
     if (myip != ih->dst && stcp_in_addr::broadcast != ih->dst) {
@@ -261,13 +262,13 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
 
     ih->version_ihl       = 0x45;
     ih->type_of_service   = 0x00;
-    ih->total_length      = rte::bswap16(rte::pktmbuf_pkt_len(msg));
-    ih->packet_id         = rte::bswap16(rte::rand() % 0xffff);
+    ih->total_length      = hton16(rte::pktmbuf_pkt_len(msg));
+    ih->packet_id         = hton16(rte::rand() % 0xffff);
 
     if (rte::pktmbuf_pkt_len(msg) > core::dpdk.ipv4_mtu_default) {
-        ih->fragment_offset = rte::bswap16(0x0000);
+        ih->fragment_offset = hton16(0x0000);
     } else {
-        ih->fragment_offset   = rte::bswap16(0x4000);
+        ih->fragment_offset   = hton16(0x4000);
     }
 
     ih->time_to_live      = ip_module::ttl_default;

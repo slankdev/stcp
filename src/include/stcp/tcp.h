@@ -6,6 +6,7 @@
 #include <stcp/socket.h>
 #include <stcp/dpdk.h>
 #include <stcp/stcp.h>
+#include <stcp/util.h>
 #include <vector>
 
 
@@ -21,9 +22,11 @@ enum tcpflag : uint8_t {
     TCPF_PSH  = 0x01<<3, /* 00001000 */
     TCPF_ACK  = 0x01<<4, /* 00010000 */
     TCPF_URG  = 0x01<<5, /* 00100000 */
-
+#if 0
+    // nouse
     TCPF_SACK = 0x01<<6, /* 01000000 */
     TCPF_WACK = 0x01<<7, /* 10000000 */
+#endif
 };
 
 
@@ -56,14 +59,14 @@ struct stcp_tcp_header {
     void print() const
     {
         printf("TCP header \n");
-        printf("+ sport    : %u 0x%04x \n", rte::bswap16(sport), rte::bswap16(sport));
-        printf("+ dport    : %u 0x%04x \n", rte::bswap16(dport), rte::bswap16(dport));
-        printf("+ seq num  : %u 0x%08x \n", rte::bswap32(seq), rte::bswap32(seq));
-        printf("+ ack num  : %u 0x%08x \n", rte::bswap32(ack), rte::bswap32(ack));
-        printf("+ data off : 0x%02x \n", data_off              );
-        printf("+ tcp flags: 0x%02x \n", flags                 );
-        printf("+ rx win   : 0x%04x \n", rte::bswap16(rx_win)  );
-        printf("+ cksum    : 0x%04x \n", rte::bswap16(cksum )  );
+        printf("+ sport    : %u 0x%04x \n", ntoh16(sport), ntoh16(sport));
+        printf("+ dport    : %u 0x%04x \n", ntoh16(dport), ntoh16(dport));
+        printf("+ seq num  : %u 0x%08x \n", ntoh32(seq  ), ntoh32(seq  ));
+        printf("+ ack num  : %u 0x%08x \n", ntoh32(ack  ), ntoh32(ack  ));
+        printf("+ data off : 0x%02x \n"   , data_off      );
+        printf("+ tcp flags: 0x%02x \n"   , flags         );
+        printf("+ rx win   : 0x%04x \n"   , ntoh16(rx_win)  );
+        printf("+ cksum    : 0x%04x \n"   , ntoh16(cksum )  );
     }
 };
 
@@ -122,26 +125,26 @@ public:
         : iss_(iss), irs_(irs), snd_win_(512) {}
 
     void irs_N(uint32_t arg) { irs_ = arg; }
-    void irs_H(uint32_t arg) { irs_ = rte::bswap32(arg); }
+    void irs_H(uint32_t arg) { irs_ = hton32(arg); }
 
-    void snd_una_N(uint32_t arg)    { snd_una_ =  rte::bswap32(arg); }
-    void snd_nxt_N(uint32_t arg)    { snd_nxt_ =  rte::bswap32(arg); }
-    void snd_win_N(uint16_t arg)    { snd_win_ =  rte::bswap16(arg); }
-    void snd_wl1_N(uint32_t arg)    { snd_wl1_ =  rte::bswap32(arg); }
-    void snd_wl2_N(uint32_t arg)    { snd_wl2_ =  rte::bswap32(arg); }
-    void rcv_nxt_N(uint32_t arg)    { rcv_nxt_ =  rte::bswap32(arg); }
-    void rcv_win_N(uint16_t arg)    { rcv_wnd_ =  rte::bswap16(arg); }
-    void snd_nxt_inc_N(int32_t arg) { snd_nxt_ += rte::bswap32(arg); }
-    void rcv_nxt_inc_N(int32_t arg) { rcv_nxt_ += rte::bswap32(arg); }
-    uint32_t iss_N() const     { return rte::bswap32(iss_    ); }
-    uint32_t irs_N() const     { return rte::bswap32(irs_    ); }
-    uint32_t snd_una_N() const { return rte::bswap32(snd_una_); }
-    uint32_t snd_nxt_N() const { return rte::bswap32(snd_nxt_); }
-    uint16_t snd_win_N() const { return rte::bswap16(snd_win_); }
-    uint32_t snd_wl1_N() const { return rte::bswap32(snd_wl1_); }
-    uint32_t snd_wl2_N() const { return rte::bswap32(snd_wl2_); }
-    uint32_t rcv_nxt_N() const { return rte::bswap32(rcv_nxt_); }
-    uint16_t rcv_win_N() const { return rte::bswap16(rcv_wnd_); }
+    void snd_una_N(uint32_t arg)    { snd_una_ =  ntoh32(arg); }
+    void snd_nxt_N(uint32_t arg)    { snd_nxt_ =  ntoh32(arg); }
+    void snd_win_N(uint16_t arg)    { snd_win_ =  ntoh16(arg); }
+    void snd_wl1_N(uint32_t arg)    { snd_wl1_ =  ntoh32(arg); }
+    void snd_wl2_N(uint32_t arg)    { snd_wl2_ =  ntoh32(arg); }
+    void rcv_nxt_N(uint32_t arg)    { rcv_nxt_ =  ntoh32(arg); }
+    void rcv_win_N(uint16_t arg)    { rcv_wnd_ =  ntoh16(arg); }
+    void snd_nxt_inc_N(int32_t arg) { snd_nxt_ += ntoh32(arg); }
+    void rcv_nxt_inc_N(int32_t arg) { rcv_nxt_ += ntoh32(arg); }
+    uint32_t iss_N() const     { return ntoh32(iss_    ); }
+    uint32_t irs_N() const     { return ntoh32(irs_    ); }
+    uint32_t snd_una_N() const { return ntoh32(snd_una_); }
+    uint32_t snd_nxt_N() const { return ntoh32(snd_nxt_); }
+    uint16_t snd_win_N() const { return ntoh16(snd_win_); }
+    uint32_t snd_wl1_N() const { return ntoh32(snd_wl1_); }
+    uint32_t snd_wl2_N() const { return ntoh32(snd_wl2_); }
+    uint32_t rcv_nxt_N() const { return ntoh32(rcv_nxt_); }
+    uint16_t rcv_win_N() const { return ntoh16(rcv_wnd_); }
 
     void snd_una_H(uint32_t arg)    { snd_una_ =  arg; }
     void snd_nxt_H(uint32_t arg)    { snd_nxt_ =  arg; }
