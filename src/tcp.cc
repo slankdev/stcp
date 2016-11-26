@@ -844,24 +844,6 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
                 rte::pktmbuf_free(msg);
                 return;
             }
-
-            tih->ip.src = addr.sin_addr;
-            tih->ip.dst = src->sin_addr;
-            tih->ip.next_proto_id = STCP_IPPROTO_TCP;
-            tih->ip.total_length = hton16(rte::pktmbuf_pkt_len(msg));
-
-            swap_port(tih);
-            tih->tcp.seq     = si.snd_nxt_N();
-            tih->tcp.ack     = si.rcv_nxt_N();
-            tih->tcp.flags   = TCPF_ACK;
-            tih->tcp.rx_win  = si.snd_win_N();
-            tih->tcp.cksum   = 0x0000;
-            tih->tcp.urp     = 0x0000; // TODO hardcode
-
-            tih->tcp.cksum = cksum_tih(tih);
-
-            mbuf* nmsg = rte::pktmbuf_clone(msg, core::dpdk.get_mempool());
-            core::tcp.tx_push(nmsg, src);
             break;
         }
 
@@ -970,17 +952,14 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
                 DEBUG("AADD: snd_nxt: %u 0x%04x\n", si.snd_nxt_H(), si.snd_nxt_H());
                 if (si.snd_una_H() <= ntoh32(tih->tcp.ack) &&
                         ntoh32(tih->tcp.ack) <= si.snd_nxt_H()) {
-                    DEBUG("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
                     move_state(TCPS_ESTABLISHED);
                 } else {
-                    DEBUG("asdfasdfasdfasdfasdfsaadfsdfsdfasdfasdfasd\n");
                     swap_port(tih);
                     tih->tcp.seq   = tih->tcp.ack;
                     tih->tcp.flags = TCPF_RST;
-
                     core::tcp.tx_push(msg, src);
-                    return;
                 }
+                return;
                 break;
             }
 
