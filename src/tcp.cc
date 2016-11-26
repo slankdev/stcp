@@ -198,7 +198,6 @@ void stcp_tcp_sock::proc()
      */
     switch (state) {
         case TCPS_CLOSE_WAIT:
-            proc_CLOSE_WAIT();
             break;
         case TCPS_ESTABLISHED:
             proc_ESTABLISHED();
@@ -272,68 +271,6 @@ void stcp_tcp_sock::proc_ESTABLISHED()
 }
 
 
-void stcp_tcp_sock::proc_CLOSE_WAIT()
-{
-    /*
-     * TODO
-     * These must be implemented
-     */
-
-    mbuf* msg = rte::pktmbuf_alloc(core::dpdk.get_mempool());
-
-    /*
-     * Init Mbuf
-     */
-    msg->pkt_len  = sizeof(stcp_tcp_header) + sizeof(stcp_ip_header);
-    msg->data_len = sizeof(stcp_tcp_header) + sizeof(stcp_ip_header);
-    stcp_ip_header*  ih = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
-    stcp_tcp_header* th = rte::pktmbuf_mtod_offset<stcp_tcp_header*>(
-                                    msg, sizeof(stcp_ip_header));
-
-    /*
-     * Craft IP hdr for TCP-checksum
-     */
-    ih->src = addr.sin_addr;
-    ih->dst = pair.sin_addr;
-    ih->next_proto_id = STCP_IPPROTO_TCP;
-    ih->total_length  = hton16(
-            sizeof(stcp_tcp_header) + sizeof(stcp_ip_header));
-
-
-    /*
-     * Craft TCP FIN
-     */
-    th->sport    = port     ;
-    th->dport    = pair_port;
-    th->seq      = si.snd_nxt_N();
-    th->ack      = si.rcv_nxt_N();
-    th->data_off = sizeof(stcp_tcp_header)>>2 << 4;
-    th->flags    = TCPF_FIN|TCPF_ACK;
-    th->rx_win   = si.snd_win_N();
-    th->cksum    = 0x0000;
-    th->urp      = 0x0000; // TODO hardcode
-
-    th->cksum = rte_ipv4_udptcp_cksum(
-            reinterpret_cast<ipv4_hdr*>(ih), th);
-
-    /*
-     * Update Stream infos
-     */
-    si.snd_nxt_inc_H(1);
-
-    /*
-     * Send packet
-     */
-    core::tcp.tx_push(msg, &pair);
-
-    /*
-     * Move TCP-State
-     */
-    move_state(TCPS_LAST_ACK);
-}
-
-
-
 void tcp_module::proc()
 {
     for (size_t i=0; i<socks.size(); i++) {
@@ -349,7 +286,7 @@ void stcp_tcp_sock::bind(const struct stcp_sockaddr_in* addr, size_t addrlen)
 }
 void stcp_tcp_sock::listen(size_t backlog)
 {
-    if (backlog < 1) throw exception("OKASHII");
+    if (backlog < 1) throw exception("OKASHII1944");
     num_connected = 0;
     max_connect   = backlog;
     move_state(TCPS_LISTEN);
@@ -367,7 +304,7 @@ void stcp_tcp_sock::move_state_DEBUG(tcpstate next_state)
 void stcp_tcp_sock::move_state(tcpstate next_state)
 {
 // TODO
-#if 0
+#if 1
     DEBUG("[%15p] %s -> %s \n", this,
             tcpstate2str(state),
             tcpstate2str(next_state) );
@@ -594,7 +531,7 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
             rx_push_ELSESTATE(msg, src);
             break;
         default:
-            throw exception("OKASHII");
+            throw exception("OKASHII91934");
     }
 }
 
@@ -696,7 +633,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
     /*
      * 4: Else Text Control
      */
-    throw exception("OKASHII");
+    throw exception("OKASHII93931");
 }
 
 
@@ -775,7 +712,7 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
         return;
     }
 
-    throw exception("OKASHII");
+    throw exception("OKASHII12222223");
 }
 
 
@@ -793,11 +730,34 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
  */
 void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
 {
-    tcpip* tih = mtod_tih(msg);
+    if (!rx_push_ES_seqchk(msg, src))  return;
+    if (!rx_push_ES_rstchk(msg, src))  return;
 
     /*
-     * 1: Sequence Number Check
+     * 3: Securty and Priority Check
+     * TODO: not implement yet
      */
+
+    if (!rx_push_ES_synchk(msg, src))  return;
+    if (!rx_push_ES_ackchk(msg, src))  return;
+
+    /*
+     * 6: URG Check
+     * TODO: not implement yet
+     */
+
+    if (!rx_push_ES_textseg(msg, src)) return;
+    if (!rx_push_ES_finchk(msg, src))  return;
+}
+
+
+/*
+ * 1: Sequence Number Check
+ */
+bool stcp_tcp_sock::rx_push_ES_seqchk(mbuf* msg, stcp_sockaddr_in* src)
+{
+    UNUSED(src);
+    tcpip* tih = mtod_tih(msg);
     switch (state) {
 
         case TCPS_SYN_RCVD:
@@ -837,12 +797,12 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
 
             if (!pass) {
                 rte::pktmbuf_free(msg);
-                return;
+                return false;
             }
 
             if (HAVE(tih, TCPF_RST)) {
                 rte::pktmbuf_free(msg);
-                return;
+                return false;
             }
             break;
         }
@@ -850,14 +810,21 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_CLOSED:
         case TCPS_LISTEN:
         case TCPS_SYN_SENT:
-            throw exception("OKASHII");
+            throw exception("OKASHII3343");
         default:
-            throw exception("OKASHII: unknown state");
+            throw exception("OKASHII334: unknown state");
     }
+    return true;
+}
 
-    /*
-     * 2: TCPF_RST Check
-     */
+
+/*
+ * 2: TCPF_RST Check
+ */
+bool stcp_tcp_sock::rx_push_ES_rstchk(mbuf* msg, stcp_sockaddr_in* src)
+{
+    UNUSED(src);
+    tcpip* tih = mtod_tih(msg);
     switch (state) {
         case TCPS_SYN_RCVD:
         {
@@ -865,7 +832,7 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
                 printf("SLANKDEVSLANKDEV conection reset\n");
                 rte::pktmbuf_free(msg);
                 move_state(TCPS_CLOSED);
-                return;
+                return false;
             }
             break;
         }
@@ -879,7 +846,7 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
                 printf("SLANKDEVSLANKDEV conection reset\n");
                 rte::pktmbuf_free(msg);
                 move_state(TCPS_CLOSED);
-                return;
+                return false;
             }
             break;
         }
@@ -891,7 +858,7 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
             if (HAVE(tih, TCPF_RST)) {
                 rte::pktmbuf_free(msg);
                 move_state(TCPS_CLOSED);
-                return;
+                return false;
             }
             break;
         }
@@ -899,19 +866,21 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_CLOSED:
         case TCPS_LISTEN:
         case TCPS_SYN_SENT:
-            throw exception("OKASHII");
+            throw exception("OKASHII3900");
         default:
-            throw exception("OKASHII: unknown state");
+            throw exception("OKASHII883: unknown state");
     }
+    return true;
+}
 
-    /*
-     * 3: Securty and Priority Check
-     * TODO: not implement yet
-     */
 
-    /*
-     * 4: TCPF_SYN Check
-     */
+/*
+ * 4: TCPF_SYN Check
+ */
+bool stcp_tcp_sock::rx_push_ES_synchk(mbuf* msg, stcp_sockaddr_in* src)
+{
+    UNUSED(src);
+    tcpip* tih = mtod_tih(msg);
     switch (state) {
         case TCPS_SYN_RCVD:
         case TCPS_ESTABLISHED:
@@ -926,7 +895,7 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
                 printf("SLANKDEVSLANKDEV conection reset\n");
                 rte::pktmbuf_free(msg);
                 move_state(TCPS_CLOSED);
-                return;
+                return false;
             }
             break;
         }
@@ -934,22 +903,24 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_CLOSED:
         case TCPS_LISTEN:
         case TCPS_SYN_SENT:
-            throw exception("OKASHII");
+            throw exception("OKASHII416");
         default:
-            throw exception("OKASHII: unknown state");
+            throw exception("OKASHII199: unknown state");
     }
+    return true;
+}
 
-    /*
-     * 5: TCPF_ACK Check
-     */
+
+/*
+ * 5: TCPF_ACK Check
+ */
+bool stcp_tcp_sock::rx_push_ES_ackchk(mbuf* msg, stcp_sockaddr_in* src)
+{
+    tcpip* tih = mtod_tih(msg);
     if (HAVE(tih, TCPF_ACK)) {
         switch (state) {
             case TCPS_SYN_RCVD:
             {
-                DEBUG("AADD: snd_una: %u 0x%04x\n", si.snd_una_H(), si.snd_una_H());
-                DEBUG("AADD: acknum : %u 0x%04x\n", ntoh32(tih->tcp.ack),
-                                                    ntoh32(tih->tcp.ack));
-                DEBUG("AADD: snd_nxt: %u 0x%04x\n", si.snd_nxt_H(), si.snd_nxt_H());
                 if (si.snd_una_H() <= ntoh32(tih->tcp.ack) &&
                         ntoh32(tih->tcp.ack) <= si.snd_nxt_H()) {
                     move_state(TCPS_ESTABLISHED);
@@ -959,7 +930,7 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
                     tih->tcp.flags = TCPF_RST;
                     core::tcp.tx_push(msg, src);
                 }
-                return;
+                return false;
                 break;
             }
 
@@ -977,7 +948,7 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
                     tih->tcp.flags = TCPF_RST;
 
                     core::tcp.tx_push(msg, src);
-                    return;
+                    return false;
                 }
 
                 if (si.snd_una_H() < ntoh32(tih->tcp.ack) &&
@@ -1014,7 +985,7 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
             {
                 if (si.snd_nxt_H() <= ntoh32(tih->tcp.ack)) {
                     move_state(TCPS_CLOSED);
-                    return;
+                    return false;
                 }
                 break;
             }
@@ -1027,68 +998,78 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
             case TCPS_CLOSED:
             case TCPS_LISTEN:
             case TCPS_SYN_SENT:
-                throw exception("OKASHII");
+                throw exception("OKASHII1941");
             default:
-                throw exception("OKASHII: unknown state");
+                throw exception("OKASHII14001: unknown state");
         }
 
     } else {
         rte::pktmbuf_free(msg);
-        return;
+        return false;
     }
+    return true;
+}
 
-    /*
-     * 6: URG Check
-     * TODO: not implement yet
-     */
-    /*
-     * 4: Text Segment Control
-     */
-    switch (state) {
-        case TCPS_ESTABLISHED:
-        case TCPS_FIN_WAIT_1:
-        case TCPS_FIN_WAIT_2:
-        {
-            si.rcv_nxt_inc_H(data_len(tih));
 
-            swap_port(tih);
-            tih->tcp.seq   = si.snd_nxt_N();
-            tih->tcp.ack   = si.rcv_nxt_N();
-            tih->tcp.flags = TCPF_ACK;
+/*
+ * 7: Text Segment Control
+ */
+bool stcp_tcp_sock::rx_push_ES_textseg(mbuf* msg, stcp_sockaddr_in* src)
+{
+    UNUSED(src);
+    tcpip* tih = mtod_tih(msg);
 
-            core::tcp.tx_push(msg, src);
-            return;
-            break;
+    if (data_len(tih) > 0) {
+        switch (state) {
+            case TCPS_ESTABLISHED:
+            case TCPS_FIN_WAIT_1:
+            case TCPS_FIN_WAIT_2:
+            {
+                si.rcv_nxt_inc_H(data_len(tih));
+                swap_port(tih);
+                tih->tcp.seq   = si.snd_nxt_N();
+                tih->tcp.ack   = si.rcv_nxt_N();
+                tih->tcp.flags = TCPF_ACK;
+
+                core::tcp.tx_push(msg, src);
+                break;
+            }
+
+            case TCPS_CLOSE_WAIT:
+            case TCPS_CLOSING:
+            case TCPS_LAST_ACK:
+            case TCPS_TIME_WAIT:
+
+            case TCPS_CLOSED:
+            case TCPS_LISTEN:
+            case TCPS_SYN_SENT:
+                throw exception("OKASHII94010");
+
+            case TCPS_SYN_RCVD:
+                throw exception("RFC MITEIGIIIII");
+
+            default:
+                throw exception("OKASHII19491: unknown state");
         }
-
-        case TCPS_CLOSE_WAIT:
-        case TCPS_CLOSING:
-        case TCPS_LAST_ACK:
-        case TCPS_TIME_WAIT:
-
-        case TCPS_CLOSED:
-        case TCPS_LISTEN:
-        case TCPS_SYN_SENT:
-            throw exception("OKASHII");
-
-        case TCPS_SYN_RCVD:
-            throw exception("RFC MITEIGIIIII");
-
-        default:
-            throw exception("OKASHII: unknown state");
     }
+    return true;
+}
 
-    /*
-     * 6: TCPF_FIN Check
-     */
+
+/*
+ * 8: TCPF_FIN Check
+ */
+bool stcp_tcp_sock::rx_push_ES_finchk(mbuf* msg, stcp_sockaddr_in* src)
+{
+    UNUSED(src);
+    tcpip* tih = mtod_tih(msg);
     if (HAVE(tih, TCPF_FIN)) {
-        printf("SLANKDEVSLANKDEV connection closing\n");
         switch (state) {
             case TCPS_CLOSED:
             case TCPS_LISTEN:
             case TCPS_SYN_SENT:
                 rte::pktmbuf_free(msg);
-                return;
+                return false;
                 break;
             case TCPS_SYN_RCVD:
             case TCPS_ESTABLISHED:
@@ -1110,10 +1091,30 @@ void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
                 break;
 
             default:
-                throw exception("OKASHII: unknown state");
+                throw exception("OKASHII939201: unknown state");
         }
-        return;
+        DEBUG("[%15p] connection closing\n", this);
+        si.rcv_nxt_H(ntoh32(tih->tcp.seq) + 1);
+
+        swap_port(tih);
+        tih->tcp.seq = si.snd_nxt_N();
+        tih->tcp.ack = si.rcv_nxt_N();
+
+        if (state == TCPS_CLOSE_WAIT) {
+            tih->tcp.flags = TCPF_ACK|TCPF_FIN;
+            move_state(TCPS_LAST_ACK);
+        } else {
+            tih->tcp.flags = TCPF_ACK;
+        }
+
+        tih->tcp.cksum    = 0x0000;
+        tih->tcp.urp      = 0x0000;
+
+        tih->tcp.cksum = cksum_tih(tih);
+        core::tcp.tx_push(msg, src);
+
     }
+    return true;
 }
 
 

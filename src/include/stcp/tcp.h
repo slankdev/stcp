@@ -239,9 +239,9 @@ private:
      * called by proc()
      */
     void proc_ESTABLISHED();
-    void proc_CLOSE_WAIT();
 #if 0
-    // not implement
+    // no neeed
+    void proc_CLOSE_WAIT();
     void proc_CLOSED     ();
     void proc_LISTEN     ();
     void proc_SYN_SENT   ();
@@ -261,6 +261,17 @@ private:
     void rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src);
     void rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src);
     void rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src);
+
+    bool rx_push_ES_seqchk(mbuf* msg, stcp_sockaddr_in* src);
+    bool rx_push_ES_rstchk(mbuf* msg, stcp_sockaddr_in* src);
+    bool rx_push_ES_synchk(mbuf* msg, stcp_sockaddr_in* src);
+    bool rx_push_ES_ackchk(mbuf* msg, stcp_sockaddr_in* src);
+    bool rx_push_ES_textseg(mbuf* msg, stcp_sockaddr_in* src);
+    bool rx_push_ES_finchk(mbuf* msg, stcp_sockaddr_in* src);
+#if 0
+    bool rx_push_ES_secprcchk(mbuf* msg, stcp_sockaddr_in* src);
+    bool rx_push_ES_urgchk(mbuf* msg, stcp_sockaddr_in* src);
+#endif
 };
 
 
