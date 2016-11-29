@@ -67,6 +67,7 @@ class core {
     friend class icmp_module;
     friend class udp_module;
     friend class tcp_module;
+    friend mbuf* clone(mbuf* m);
 
 private:
     static std::vector<stcp_usrapp_info> lapps;
