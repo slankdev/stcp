@@ -784,17 +784,17 @@ bool stcp_tcp_sock::rx_push_ES_seqchk(mbuf* msg, stcp_sockaddr_in* src)
                 }
             } else { /* data_len > 0 */
                 if (tih->tcp.rx_win > 0) {
-#if 1
+#if 0
                     bool cond1 = true;
                     bool cond2 = true;
 #else
+                    bool cond1_1 = si.rcv_nxt_H() <= ntoh32(tih->tcp.seq);
+                    bool cond1_2 = ntoh32(tih->tcp.seq) < si.rcv_nxt_H() + si.rcv_win_H();
+                    bool cond1 = cond1_1 && cond1_2;
 
-                    bool cond1 = si.rcv_nxt_H() <= ntoh32(tih->tcp.seq) &&
-                        ntoh32(tih->tcp.seq) < si.rcv_nxt_H() + si.rcv_win_H();
-                    bool cond2 = si.rcv_nxt_H() <=
-                        ntoh32(tih->tcp.seq)+data_len(tih)-1 &&
-                        ntoh32(tih->tcp.seq)+data_len(tih)-1 <
-                            si.rcv_nxt_H() + si.rcv_win_H();
+                    bool cond2_1 = si.rcv_nxt_H() <= ntoh32(tih->tcp.seq)+data_len(tih)-1;
+                    bool cond2_2 = ntoh32(tih->tcp.seq)+data_len(tih)-1 < si.rcv_nxt_H() + si.rcv_win_H();
+                    bool cond2 = cond2_1 && cond2_2;
 #endif
                     pass = cond1 || cond2;
                     if (cond1 || cond2) DEBUG("cond1||cond2\n");
