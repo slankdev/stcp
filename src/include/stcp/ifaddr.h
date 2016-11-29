@@ -2,6 +2,7 @@
 #pragma once
 
 #include <stcp/config.h>
+#include <stcp/exception.h>
 #include <stcp/socket.h>
 
 #include <stdint.h>

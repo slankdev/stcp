@@ -236,25 +236,6 @@ private:
 
 private:
     /*
-     * called by proc()
-     */
-    void proc_ESTABLISHED();
-#if 0
-    // no neeed
-    void proc_CLOSE_WAIT();
-    void proc_CLOSED     ();
-    void proc_LISTEN     ();
-    void proc_SYN_SENT   ();
-    void proc_SYN_RCVD   ();
-    void proc_FIN_WAIT_1 ();
-    void proc_FIN_WAIT_2 ();
-    void proc_CLOSING    ();
-    void proc_LAST_ACK   ();
-    void proc_TIME_WAIT  ();
-#endif
-
-private:
-    /*
      * called by rx_push()
      */
     void rx_push_CLOSED(mbuf* msg, stcp_sockaddr_in* src);

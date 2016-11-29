@@ -76,26 +76,8 @@ private:
 public:
     void rx_push(mbuf* msg) { rx.push(msg); rx_packets++; }
     void tx_push(mbuf* msg) { tx.push(msg); tx_packets++; }
-
-    /*
-     * TODO This implementation should be capseled in pkt_queue class.
-     */
-    mbuf* rx_pop()
-    {
-        mbuf* m = rx.front();
-        rx.pop();
-        return m;
-    }
-
-    /*
-     * TODO This implementation should be capseled in pkt_queue class.
-     */
-    mbuf* tx_pop()
-    {
-        mbuf* m = tx.front();
-        tx.pop();
-        return m;
-    }
+    mbuf* rx_pop() { return rx.pop(); }
+    mbuf* tx_pop() { return tx.pop(); }
 };
 
 

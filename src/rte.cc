@@ -25,13 +25,13 @@
 
 
 namespace slank {
-    
+
 
 } /* namespace */
 
 
 namespace rte {
-    
+
 
 
 void eth_dev_init(int argc, char** argv)
@@ -51,22 +51,22 @@ void eth_dev_configure(uint8_t port_id, uint16_t nb_rx_queue,
     }
 }
 
-void eth_rx_queue_setup(uint8_t port_id, uint16_t rx_queue_id, 
-        uint16_t nb_rx_desc, uint32_t socket_id, 
+void eth_rx_queue_setup(uint8_t port_id, uint16_t rx_queue_id,
+        uint16_t nb_rx_desc, uint32_t socket_id,
         const struct rte_eth_rxconf* rx_conf, struct rte_mempool* mbuf_pool)
 {
-    int ret = rte_eth_rx_queue_setup(port_id, rx_queue_id, 
+    int ret = rte_eth_rx_queue_setup(port_id, rx_queue_id,
             nb_rx_desc, socket_id, rx_conf, mbuf_pool);
     if (ret < 0) {
         throw rte::exception("rx_queue_setup");
     }
 }
 
-void eth_tx_queue_setup(uint8_t port_id, uint16_t tx_queue_id, 
-        uint16_t nb_tx_desc, uint32_t socket_id, 
+void eth_tx_queue_setup(uint8_t port_id, uint16_t tx_queue_id,
+        uint16_t nb_tx_desc, uint32_t socket_id,
         const struct rte_eth_txconf* tx_conf)
 {
-    int ret = rte_eth_tx_queue_setup(port_id, tx_queue_id, 
+    int ret = rte_eth_tx_queue_setup(port_id, tx_queue_id,
             nb_tx_desc, socket_id, tx_conf);
     if (ret < 0) {
         throw rte::exception("tx_queue_setup");
@@ -96,8 +96,8 @@ int eth_promiscuous_get(uint8_t port_id)
     return rte_eth_promiscuous_get(port_id);
 }
 
-struct rte_mempool* pktmbuf_pool_create(const char* name, uint32_t n, 
-        uint32_t cache_size, uint16_t priv_size, 
+struct rte_mempool* pktmbuf_pool_create(const char* name, uint32_t n,
+        uint32_t cache_size, uint16_t priv_size,
         uint16_t data_room_size, int socket_id)
 {
     rte_mempool* mbuf_pool = rte_pktmbuf_pool_create(
@@ -122,36 +122,24 @@ void eth_macaddr_get(uint8_t port_id, struct ether_addr* mac_addr)
     rte_eth_macaddr_get(port_id, mac_addr);
 }
 
-uint16_t eth_rx_burst(uint8_t port_id, uint16_t queue_id, 
+uint16_t eth_rx_burst(uint8_t port_id, uint16_t queue_id,
         rte_mbuf** rx_pkts, const uint16_t nb_pkts)
 {
     static uint64_t cnt = 1;
     uint16_t num_rx = rte_eth_rx_burst(port_id, queue_id, rx_pkts, nb_pkts);
     for (uint16_t i=0; i<num_rx; i++) {
-        slank::rxcap::instance().write("%lu: recv", cnt);
         cnt++;
-        rte::pktmbuf_dump(slank::rxcap::instance().stream()
-                , rx_pkts[i], rte::pktmbuf_pkt_len(rx_pkts[i]));
-        slank::rxcap::instance().write("");
-        slank::rxcap::instance().write("");
     }
-    slank::rxcap::instance().flush();
     return num_rx;
 }
 
-uint16_t eth_tx_burst(uint8_t port_id, uint16_t queue_id, 
+uint16_t eth_tx_burst(uint8_t port_id, uint16_t queue_id,
         rte_mbuf** tx_pkts, uint16_t nb_pkts)
 {
     static uint64_t cnt = 1;
     for (uint16_t i=0; i<nb_pkts; i++) {
-        slank::txcap::instance().write("%lu: send", cnt);
         cnt++;
-        rte::pktmbuf_dump(slank::txcap::instance().stream()
-                , tx_pkts[i], rte::pktmbuf_pkt_len(tx_pkts[i]));
-        slank::txcap::instance().write("");
-        slank::txcap::instance().write("");
     }
-    slank::txcap::instance().flush();
     uint16_t num_tx = rte_eth_tx_burst(port_id, queue_id, tx_pkts, nb_pkts);
     return num_tx;
 }
@@ -260,10 +248,10 @@ uint64_t bswap64(uint64_t x)
     return rte_bswap64(x);
 }
 
-uint32_t ipv4_fragment_packet(rte_mbuf* pkt_in, rte_mbuf** pkts_out, uint16_t nb_pkts_out, 
+uint32_t ipv4_fragment_packet(rte_mbuf* pkt_in, rte_mbuf** pkts_out, uint16_t nb_pkts_out,
         uint16_t mtu_size, struct rte_mempool* pool_direct, struct rte_mempool* pool_indirect) noexcept
 {
-    int32_t res = rte_ipv4_fragment_packet(pkt_in, pkts_out, 
+    int32_t res = rte_ipv4_fragment_packet(pkt_in, pkts_out,
             nb_pkts_out, mtu_size, pool_direct, pool_indirect);
     if (res < 0) {
         return 1;

@@ -35,7 +35,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
     switch (dst->sa_fam) {
         case STCP_AF_INET:
         {
-            ether_type = ntoh16(STCP_ETHERTYPE_IP);
+            ether_type = ntoh16(ETHERTYPE_IP);
 
             bool  ret = core::arp.arp_resolv(port, dst, &ether_dst);
             if (!ret) {
@@ -50,13 +50,13 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
         {
             stcp_arphdr* ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
             switch(ntoh16(ah->operation)) {
-                case STCP_ARPOP_REQUEST:
-                case STCP_ARPOP_REPLY:
-                    ether_type = hton16(STCP_ETHERTYPE_ARP);
+                case ARPOP_REQUEST:
+                case ARPOP_REPLY:
+                    ether_type = hton16(ETHERTYPE_ARP);
                     break;
-                case STCP_ARPOP_REVREQUEST:
-                case STCP_ARPOP_REVREPLY:
-                    ether_type = hton16(STCP_ETHERTYPE_REVARP);
+                case ARPOP_REVREQUEST:
+                case ARPOP_REVREPLY:
+                    ether_type = hton16(ETHERTYPE_REVARP);
                     break;
                 default:
                     std::string errstr = "not support arp operation ";
@@ -114,12 +114,12 @@ void ether_module::rx_push(mbuf* msg)
     mbuf_pull(msg, sizeof(stcp_ether_header));
 
     switch (etype) {
-        case STCP_ETHERTYPE_IP:
+        case ETHERTYPE_IP:
         {
             core::ip.rx_push(msg);
             break;
         }
-        case STCP_ETHERTYPE_ARP:
+        case ETHERTYPE_ARP:
         {
             core::arp.rx_push(msg);
             break;

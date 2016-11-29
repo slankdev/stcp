@@ -17,11 +17,11 @@ namespace slank {
 
 
 
-enum stcp_arpop : uint16_t {
-    STCP_ARPOP_REQUEST    = 1,
-    STCP_ARPOP_REPLY      = 2,
-    STCP_ARPOP_REVREQUEST = 3,
-    STCP_ARPOP_REVREPLY   = 4,
+enum arpop : uint16_t {
+    ARPOP_REQUEST    = 1,
+    ARPOP_REPLY      = 2,
+    ARPOP_REVREQUEST = 3,
+    ARPOP_REVREPLY   = 4,
 };
 
 

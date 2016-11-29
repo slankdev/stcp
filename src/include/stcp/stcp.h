@@ -7,6 +7,7 @@
 #include <stcp/dpdk.h>
 #include <stcp/config.h>
 #include <stcp/mbuf.h>
+#include <stcp/log.h>
 
 #include <stcp/ethernet.h>
 #include <stcp/arp.h>
@@ -14,7 +15,6 @@
 #include <stcp/icmp.h>
 #include <stcp/udp.h>
 #include <stcp/tcp.h>
-#include <stcp/app.h>
 
 #include <vector>
 
@@ -23,11 +23,7 @@ namespace slank {
 
 
 using stat  = log<class status_infos>;
-using rxcap = log<class rx_packet_log>;
-using txcap = log<class tx_packet_log>;
-using dmsg  = log<class debug_message_log>;
 
-class stcp_app; /// TODO ERASE
 class tcp_module;
 class stcp_tcp_sock;
 
@@ -55,7 +51,6 @@ class core {
     /*
      * TODO XXX delete friend code
      */
-    friend class stcp_app;
 
     friend class stcp_udp_sock;
     friend class stcp_tcp_sock;
@@ -67,7 +62,6 @@ class core {
     friend class icmp_module;
     friend class udp_module;
     friend class tcp_module;
-    friend mbuf* clone(mbuf* m);
 
 private:
     static std::vector<stcp_usrapp_info> lapps;
@@ -77,10 +71,7 @@ public:
     static stcp_udp_sock* create_udp_socket();
     static void destroy_tcp_socket(stcp_tcp_sock* sock);
     static void destroy_udp_socket(stcp_udp_sock* sock);
-
-private:
-    static std::vector<stcp_app*> apps; // should private;
-    static std::vector<stcp_cyclic_func*> cyclic_funcs;
+    static rte_mempool* get_mempool() { return dpdk.get_mempool(); }
 
 private:
     static tcp_module    tcp;

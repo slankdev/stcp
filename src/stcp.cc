@@ -8,8 +8,6 @@
 namespace slank {
 
 std::vector<stcp_usrapp_info> core::lapps;
-std::vector<stcp_app*> core::apps;
-std::vector<stcp_cyclic_func*> core::cyclic_funcs;
 tcp_module   core::tcp;
 udp_module   core::udp;
 icmp_module  core::icmp;
@@ -208,18 +206,9 @@ void core::set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o
 }
 
 
-void core::add_cyclic(stcp_cyclic_func* f)
-{
-    cyclic_funcs.push_back(f);
-}
-
-
 void core::init(int argc, char** argv)
 {
     stat::instance().open_new("stcp.stat.log");
-    rxcap::instance().open_new("stcp.rx.log");
-    txcap::instance().open_new("stcp.tx.log");
-    dmsg::instance().open_new("stcp.dmsg.log");
 
     dpdk.init(argc, argv);
     ip.init();
@@ -232,8 +221,7 @@ void core::ifs_proc()
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
 
         if (num_tx != num_reqest_to_send) {
-            dmsg::instance().write(
-                "core::ifs_proc(): num_tx!=num_reqest_to_send, Oh yeah!");
+            DEBUG("core::ifs_proc(): num_tx!=num_reqest_to_send, Oh yeah!");
         }
 
         uint16_t num_rx = dev.io_rx();
@@ -260,27 +248,9 @@ void core::run()
                 usrapp_wrap, reinterpret_cast<void*>(&app), app.lcore_id);
     }
 
-
-    uint64_t hz   = rte::get_tsc_hz();
-    for (auto cf : cyclic_funcs) {
-        cf->prev = rte::get_tsc_cycles();
-    }
-
     core::stat_all(); // TODO ERASE
 
     while (true) {
-        uint64_t now = rte::get_tsc_cycles();
-        for (auto cf : cyclic_funcs) {
-            if (now - cf->prev > cf->interval_ms / 1000.0 * hz) {
-                cf->prev = now;
-                cf->exec();
-            }
-        }
-
-        for (auto& app : apps) {
-            app->proc();
-        }
-
         ifs_proc();
         ether.proc();
         tcp.proc();

@@ -26,9 +26,7 @@ SRCS   = \
 		icmp.cc \
 		udp.cc \
 		tcp.cc \
-		app.cc \
 		stcp.cc \
-		api.cc \
 		main.cc
 
 

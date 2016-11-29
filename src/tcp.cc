@@ -9,60 +9,42 @@ namespace slank {
 
 size_t tcp_module::mss = 1460;
 
-inline mbuf* clone(mbuf* m)
-{
-    return rte::pktmbuf_clone(m, core::dpdk.get_mempool());
-}
-
 /*
  * msg: must point iphdr
  */
-inline tcpip* mtod_tih(mbuf* msg)
+static tcpip* mtod_tih(mbuf* msg)
 {
-    return rte::pktmbuf_mtod<tcpip*>(msg);
+    return mbuf_mtod<tcpip*>(msg);
 }
-inline uint16_t cksum_tih(tcpip* h)
+static uint16_t cksum_tih(tcpip* tih)
 {
     return rte_ipv4_udptcp_cksum(
-        reinterpret_cast<ipv4_hdr*>(&h->ip), &h->tcp);
+        reinterpret_cast<ipv4_hdr*>(&tih->ip), &tih->tcp);
 }
-inline uint16_t data_len(const stcp_tcp_header* th,
-        const stcp_ip_header* ih)
+static uint16_t data_len(const tcpip* tih)
 {
-    uint16_t iptotlen = ntoh16(ih->total_length);
-    uint16_t iphlen = (ih->version_ihl & 0x0f)<<2;
-    uint16_t tcphlen  = ((th->data_off>>4)<<2);
+    uint16_t iptotlen = ntoh16(tih->ip.total_length);
+    uint16_t iphlen = (tih->ip.version_ihl & 0x0f)<<2;
+    uint16_t tcphlen  = ((tih->tcp.data_off>>4)<<2);
     return iptotlen - iphlen - tcphlen;
 }
-inline uint16_t data_len(const tcpip* tih)
-{
-    return data_len(&tih->tcp, &tih->ip);
-}
-inline uint16_t opt_len(const tcpip* tih)
+static uint16_t opt_len(const tcpip* tih)
 {
     uint16_t len = tih->tcp.data_off>>2;
     len -= sizeof(stcp_tcp_header);
     return len;
 }
-inline void swap_port(stcp_tcp_header* th)
+static void swap_port(tcpip* tih)
 {
-    uint16_t tmp = th->sport;
-    th->sport    = th->dport;
-    th->dport    = tmp;
+    uint16_t tmp   = tih->tcp.sport;
+    tih->tcp.sport = tih->tcp.dport;
+    tih->tcp.dport = tmp;
 }
-inline void swap_port(tcpip* tih)
+static bool HAVE(tcpip* tih, tcpflag type)
 {
-    swap_port(&tih->tcp);
+    return ((tih->tcp.flags & type) != 0x00);
 }
-inline bool HAVE(stcp_tcp_header* th, tcpflag type)
-{
-    return ((th->flags & type) != 0x00);
-}
-inline bool HAVE(tcpip* tih, tcpflag type)
-{
-    return HAVE(&tih->tcp, type);
-}
-inline const char* tcpstate2str(tcpstate state)
+static const char* tcpstate2str(tcpstate state)
 {
     switch (state) {
         case TCPS_CLOSED:      return "CLOSED";
@@ -164,7 +146,7 @@ mbuf* stcp_tcp_sock::read()
     }
 
     mbuf* m = rxq.pop();
-    DEBUG("[%15p] READ datalen=%zd\n", this, rte::pktmbuf_pkt_len(m));
+    DEBUG("[%15p] READ datalen=%zd\n", this, mbuf_pkt_len(m));
     return m;
 }
 
@@ -191,51 +173,11 @@ stcp_tcp_sock* stcp_tcp_sock::accept(struct stcp_sockaddr_in* addr)
 
 void stcp_tcp_sock::proc()
 {
-
-    /*
-     * TODO
-     * Proc msgs from txq to tcp_module
-     */
-
-
-    /*
-     * Othre proc;
-     */
-    switch (state) {
-        case TCPS_CLOSE_WAIT:
-            break;
-        case TCPS_ESTABLISHED:
-            proc_ESTABLISHED();
-            break;
-        case TCPS_LISTEN:
-        case TCPS_CLOSED:
-        case TCPS_SYN_SENT:
-        case TCPS_SYN_RCVD:
-        case TCPS_FIN_WAIT_1:
-        case TCPS_FIN_WAIT_2:
-        case TCPS_CLOSING:
-        case TCPS_LAST_ACK:
-        case TCPS_TIME_WAIT:
-            /*
-             * TODO
-             * Not Implement yet.
-             * No Operation
-             */
-            break;
-        default:
-            throw exception("UNKNOWN TCP STATE!!!");
-            break;
-    }
-}
-
-
-void stcp_tcp_sock::proc_ESTABLISHED()
-{
     while (!txq.empty()) {
         mbuf* msg = txq.pop();
-        size_t datalen = rte::pktmbuf_pkt_len(msg);
+        size_t datalen = mbuf_pkt_len(msg);
         DEBUG("[%15p] proc_ESTABLISHED send(txq.pop(), %zd)\n",
-                this, rte::pktmbuf_pkt_len(msg));
+                this, mbuf_pkt_len(msg));
 
         mbuf_push(msg, sizeof(stcp_ip_header));
         mbuf_push(msg, sizeof(stcp_tcp_header));
@@ -244,7 +186,7 @@ void stcp_tcp_sock::proc_ESTABLISHED()
         /*
          * Craft IP header for tcp checksum
          */
-        tih->ip.total_length  = hton16(rte::pktmbuf_pkt_len(msg));
+        tih->ip.total_length  = hton16(mbuf_pkt_len(msg));
         tih->ip.next_proto_id = STCP_IPPROTO_TCP;
         tih->ip.src           = addr.sin_addr;
         tih->ip.dst           = pair.sin_addr;
@@ -306,12 +248,9 @@ void stcp_tcp_sock::move_state_DEBUG(tcpstate next_state)
 
 void stcp_tcp_sock::move_state(tcpstate next_state)
 {
-// TODO
-#if 1
     DEBUG("[%15p] %s -> %s \n", this,
             tcpstate2str(state),
             tcpstate2str(next_state) );
-#endif
 
     switch (state) {
         case TCPS_CLOSED     :
@@ -500,7 +439,7 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
          * ERASE zeroclear tcp options
          */
         stcp_tcp_header* th
-            = rte::pktmbuf_mtod_offset<stcp_tcp_header*>(msg, sizeof(stcp_ip_header));
+            = mbuf_mtod_offset<stcp_tcp_header*>(msg, sizeof(stcp_ip_header));
         uint8_t* buf = reinterpret_cast<uint8_t*>(th);
         buf += sizeof(stcp_tcp_header);
         size_t tcpoplen = th->data_off/4 - sizeof(stcp_tcp_header);
@@ -509,13 +448,13 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
 
     switch (state) {
         case TCPS_CLOSED:
-            rx_push_CLOSED(clone(msg), src);
+            rx_push_CLOSED(mbuf_clone(msg), src);
             break;
         case TCPS_LISTEN:
-            rx_push_LISTEN(clone(msg), src);
+            rx_push_LISTEN(mbuf_clone(msg), src);
             break;
         case TCPS_SYN_SENT:
-            rx_push_SYN_SEND(clone(msg), src);
+            rx_push_SYN_SEND(mbuf_clone(msg), src);
             break;
         case TCPS_SYN_RCVD:
         case TCPS_ESTABLISHED:
@@ -525,7 +464,7 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
         case TCPS_CLOSING:
         case TCPS_LAST_ACK:
         case TCPS_TIME_WAIT:
-            rx_push_ELSESTATE(clone(msg), src);
+            rx_push_ELSESTATE(mbuf_clone(msg), src);
             break;
         default:
             throw exception("OKASHII91934");
@@ -540,10 +479,10 @@ void stcp_tcp_sock::rx_push_CLOSED(mbuf* msg, stcp_sockaddr_in* src)
     tcpip* tih = mtod_tih(msg);
 
     if (HAVE(tih, TCPF_RST)) {
-        rte::pktmbuf_free(msg);
+        mbuf_free(msg);
     } else {
 #if 1
-        rte::pktmbuf_free(msg);
+        mbuf_free(msg);
         return;
 #else
         if (HAVE(tih, TCPF_ACK)) {
@@ -574,7 +513,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
      * 1: RST Check
      */
     if (HAVE(tih, TCPF_RST)) {
-        rte::pktmbuf_free(msg);
+        mbuf_free(msg);
         return;
     }
 
@@ -582,7 +521,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
      * 2: ACK Check
      */
     if (HAVE(tih, TCPF_ACK)) {
-        rte::pktmbuf_free(msg);
+        mbuf_free(msg);
         return;
     }
 
@@ -591,15 +530,11 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
      */
     if (HAVE(tih, TCPF_SYN)) {
         /*
-         * Securty Check is not implemented
-         * TODO: not imple yet
+         * Be not implemented
+         *  - Securty Check
+         *  - Priority Check
+         * TODO: imple
          */
-
-        /*
-         * Priority Check
-         * TODO: not imple yet
-         */
-
         stcp_tcp_sock* newsock = alloc_new_sock_connected(
                 TCPS_SYN_RCVD,
                 port, tih->tcp.sport,
@@ -614,7 +549,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
 
         newsock->si.rcv_nxt_H(ntoh32(tih->tcp.seq) + 1);
 
-        swap_port(&tih->tcp);
+        swap_port(tih);
         tih->tcp.seq     = newsock->si.iss_N();
         tih->tcp.ack     = newsock->si.rcv_nxt_N();
         tih->tcp.flags   = TCPF_SYN|TCPF_ACK;
@@ -649,13 +584,13 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
         if (ntoh32(tih->tcp.ack) <= si.iss_H() ||
                 ntoh32(tih->tcp.ack) > si.snd_nxt_H()) {
             if (HAVE(tih, TCPF_RST)) {
-                swap_port(&tih->tcp);
+                swap_port(tih);
                 tih->tcp.seq   = tih->tcp.ack;
                 tih->tcp.flags = TCPF_RST;
 
                 core::tcp.tx_push(msg, src);
             } else {
-                rte::pktmbuf_free(msg);
+                mbuf_free(msg);
             }
             printf("SLANKDEVSLANKDEV error: connection reset\n");
             move_state(TCPS_CLOSED);
@@ -667,7 +602,7 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
      * 2: RST Check
      */
     if (HAVE(tih, TCPF_RST)) {
-        rte::pktmbuf_free(msg);
+        mbuf_free(msg);
         return;
     }
 
@@ -710,11 +645,11 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
      * 5: (!SYN && !RST) Pattern
      */
     if (!HAVE(tih, TCPF_SYN) && !HAVE(tih, TCPF_RST)) {
-        rte::pktmbuf_free(msg);
+        mbuf_free(msg);
         return;
     }
 
-    rte::pktmbuf_free(msg);
+    mbuf_free(msg);
     throw exception("OKASHII12222223");
 }
 
@@ -733,24 +668,24 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
  */
 void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
 {
-    if (!rx_push_ES_seqchk(clone(msg), src))  return;
-    if (!rx_push_ES_rstchk(clone(msg), src))  return;
+    if (!rx_push_ES_seqchk(mbuf_clone(msg), src))  return;
+    if (!rx_push_ES_rstchk(mbuf_clone(msg), src))  return;
 
     /*
      * 3: Securty and Priority Check
      * TODO: not implement yet
      */
 
-    if (!rx_push_ES_synchk(clone(msg), src))  return;
-    if (!rx_push_ES_ackchk(clone(msg), src))  return;
+    if (!rx_push_ES_synchk(mbuf_clone(msg), src))  return;
+    if (!rx_push_ES_ackchk(mbuf_clone(msg), src))  return;
 
     /*
      * 6: URG Check
      * TODO: not implement yet
      */
 
-    if (!rx_push_ES_textseg(clone(msg), src)) return;
-    if (!rx_push_ES_finchk( clone(msg), src))  return;
+    if (!rx_push_ES_textseg(mbuf_clone(msg), src)) return;
+    if (!rx_push_ES_finchk( mbuf_clone(msg), src))  return;
 }
 
 
@@ -798,12 +733,12 @@ bool stcp_tcp_sock::rx_push_ES_seqchk(mbuf* msg, stcp_sockaddr_in* src)
             }
 
             if (!pass) {
-                rte::pktmbuf_free(msg);
+                mbuf_free(msg);
                 return false;
             }
 
             if (HAVE(tih, TCPF_RST)) {
-                rte::pktmbuf_free(msg);
+                mbuf_free(msg);
                 return false;
             }
             break;
@@ -832,7 +767,7 @@ bool stcp_tcp_sock::rx_push_ES_rstchk(mbuf* msg, stcp_sockaddr_in* src)
         {
             if (HAVE(tih, TCPF_RST)) {
                 printf("SLANKDEVSLANKDEV conection reset\n");
-                rte::pktmbuf_free(msg);
+                mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;
             }
@@ -846,7 +781,7 @@ bool stcp_tcp_sock::rx_push_ES_rstchk(mbuf* msg, stcp_sockaddr_in* src)
         {
             if (HAVE(tih, TCPF_RST)) {
                 printf("SLANKDEVSLANKDEV conection reset\n");
-                rte::pktmbuf_free(msg);
+                mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;
             }
@@ -858,7 +793,7 @@ bool stcp_tcp_sock::rx_push_ES_rstchk(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_TIME_WAIT:
         {
             if (HAVE(tih, TCPF_RST)) {
-                rte::pktmbuf_free(msg);
+                mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;
             }
@@ -895,7 +830,7 @@ bool stcp_tcp_sock::rx_push_ES_synchk(mbuf* msg, stcp_sockaddr_in* src)
         {
             if (HAVE(tih, TCPF_SYN)) {
                 printf("SLANKDEVSLANKDEV conection reset\n");
-                rte::pktmbuf_free(msg);
+                mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;
             }
@@ -968,7 +903,7 @@ bool stcp_tcp_sock::rx_push_ES_ackchk(mbuf* msg, stcp_sockaddr_in* src)
                     if (si.snd_nxt_H() <= ntoh32(tih->tcp.ack)) {
                         move_state(TCPS_TIME_WAIT);
                     }
-                    rte::pktmbuf_free(msg);
+                    mbuf_free(msg);
                 }
                 break;
             }
@@ -1006,7 +941,7 @@ bool stcp_tcp_sock::rx_push_ES_ackchk(mbuf* msg, stcp_sockaddr_in* src)
         }
 
     } else {
-        rte::pktmbuf_free(msg);
+        mbuf_free(msg);
         return false;
     }
     return true;
@@ -1027,19 +962,19 @@ bool stcp_tcp_sock::rx_push_ES_textseg(mbuf* msg, stcp_sockaddr_in* src)
             case TCPS_FIN_WAIT_1:
             case TCPS_FIN_WAIT_2:
             {
-                mbuf* mseg = clone(msg);
+                mbuf* mseg = mbuf_clone(msg);
                 mbuf_pull(mseg, sizeof(stcp_ip_header));
                 uint16_t tcphlen  = ((tih->tcp.data_off>>4)<<2);
                 mbuf_pull(mseg, tcphlen);
                 rxq.push(mseg);
 
                 si.rcv_nxt_inc_H(data_len(tih));
-                rte::pktmbuf_trim(msg, data_len(tih));
+                mbuf_trim(msg, data_len(tih));
 
                 tih->ip.dst = tih->ip.src;
                 tih->ip.src = addr.sin_addr;
                 tih->ip.next_proto_id = STCP_IPPROTO_TCP;
-                tih->ip.total_length  = hton16(rte::pktmbuf_pkt_len(msg));
+                tih->ip.total_length  = hton16(mbuf_pkt_len(msg));
 
                 swap_port(tih);
                 tih->tcp.seq    = si.snd_nxt_N();
@@ -1087,7 +1022,7 @@ bool stcp_tcp_sock::rx_push_ES_finchk(mbuf* msg, stcp_sockaddr_in* src)
             case TCPS_CLOSED:
             case TCPS_LISTEN:
             case TCPS_SYN_SENT:
-                rte::pktmbuf_free(msg);
+                mbuf_free(msg);
                 return false;
                 break;
             case TCPS_SYN_RCVD:
@@ -1210,15 +1145,14 @@ void tcp_module::print_stat() const
 
 void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
 {
-    stcp_tcp_header* th
-        = rte::pktmbuf_mtod<stcp_tcp_header*>(msg);
+    stcp_tcp_header* th = mbuf_mtod<stcp_tcp_header*>(msg);
     rx_cnt++;
 
     bool find_socket = false;
     uint16_t dst_port = th->dport;
     for (stcp_tcp_sock* sock : socks) {
         if (sock->port == dst_port) {
-            mbuf* m = clone(msg);
+            mbuf* m = mbuf_clone(msg);
             mbuf_push(m, sizeof(stcp_ip_header));
             sock->rx_push(m, src);
             find_socket = true;
@@ -1232,7 +1166,7 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
         /*
          * Delete TCP Option field
          */
-        rte::pktmbuf_trim(msg, opt_len(tih));
+        mbuf_trim(msg, opt_len(tih));
 
         /*
          * Set TCP/IP hdr
@@ -1240,7 +1174,7 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
         tih->ip.src           = tih->ip.dst;
         tih->ip.dst           = src->sin_addr;
         tih->ip.next_proto_id = STCP_IPPROTO_TCP;
-        tih->ip.total_length  = hton16(rte::pktmbuf_pkt_len(msg));
+        tih->ip.total_length  = hton16(mbuf_pkt_len(msg));
         swap_port(tih);
         tih->tcp.ack      = tih->tcp.seq + hton32(1);
         tih->tcp.seq      = 0;
@@ -1254,7 +1188,7 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
         core::tcp.tx_push(msg, src);
         return;
     }
-    rte::pktmbuf_free(msg);
+    mbuf_free(msg);
 }
 
 

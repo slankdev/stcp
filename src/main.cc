@@ -1,6 +1,5 @@
 
 #include <stcp/stcp.h>
-#include <stcp/api.h>
 #include <stcp/util.h>
 #include <unistd.h> // for sleep()
 #define UNUSED(x) (void)(x)
@@ -29,8 +28,6 @@ int user_main2(void* arg)
 #endif
 
 
-
-#if 1
 // TODO #21
 int user_main1(void* arg)
 {
@@ -69,35 +66,8 @@ int user_main1(void* arg)
     }
     return 0;
 }
-#else
-int user_main1(void* arg)
-{
-    UNUSED(arg);
-    stcp_tcp_sock* sock = core::create_tcp_socket();
 
-    stcp_sockaddr_in addr;
-    addr.sin_fam  = STCP_AF_INET;
-    addr.sin_port = hton16(8888);
-    sock->bind(&addr, sizeof(addr));
-    sock->listen(5);
 
-    stcp_sockaddr_in caddr;
-    stcp_tcp_sock* csock = sock->accept(&caddr);
-
-    while (true) {
-        try {
-            mbuf* msg = csock->read();
-            rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
-            csock->write(msg);
-        } catch (std::exception& e) {
-            core::destroy_tcp_socket(csock);
-            break;
-        }
-
-    }
-    return 0;
-}
-#endif
 
 int main(int argc, char** argv)
 {

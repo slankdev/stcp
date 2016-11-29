@@ -3,8 +3,6 @@
 #pragma once
 
 #include <stcp/rte.h>
-#include <stcp/exception.h>
-#include <stcp/log.h>
 #include <queue>
 #include <mutex>
 #include <stdio.h>
@@ -18,7 +16,30 @@ namespace slank {
 
 using eth_conf = struct rte_eth_conf;
 using mbuf = struct rte_mbuf;
-using pkt_queue = std::queue<struct rte_mbuf*>;
+
+class pkt_queue {
+    std::queue<mbuf*> queue;
+public:
+    void push(mbuf* msg)
+    {
+        queue.push(msg);
+    }
+    mbuf* pop()
+    {
+        mbuf* msg = queue.front();
+        queue.pop();
+        return msg;
+    }
+    size_t size() const
+    {
+        return queue.size();
+    }
+    bool empty() const
+    {
+        return queue.empty();
+    }
+};
+
 
 template<class T>
 class queue_TS {

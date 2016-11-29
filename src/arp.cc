@@ -24,7 +24,7 @@ void arp_module::rx_push(mbuf* msg)
     struct stcp_arphdr* ah  = rte::pktmbuf_mtod<struct stcp_arphdr*>(msg);
     uint8_t port = msg->port;
 
-    if (ah->operation == hton16(STCP_ARPOP_REPLY)) {
+    if (ah->operation == hton16(ARPOP_REPLY)) {
 
         /*
          * Proc ARP-Reply Packet
@@ -43,7 +43,7 @@ void arp_module::rx_push(mbuf* msg)
         ioctl_siocaarpent(&req);
         rte::pktmbuf_free(msg);
 
-    } else if (ah->operation == hton16(STCP_ARPOP_REQUEST)) {
+    } else if (ah->operation == hton16(ARPOP_REQUEST)) {
         if (core::is_request_to_me(ah, port)) { // TODO
 
             /*
@@ -60,7 +60,7 @@ void arp_module::rx_push(mbuf* msg)
             rep_ah->ptype  = hton16(0x0800);
             rep_ah->hwlen  = static_cast<uint8_t>(stcp_ether_addr::addrlen);
             rep_ah->plen   = static_cast<uint8_t>(stcp_in_addr::addrlen   );
-            rep_ah->operation = hton16(STCP_ARPOP_REPLY);
+            rep_ah->operation = hton16(ARPOP_REPLY);
             core::get_mymac(&rep_ah->hwsrc, port); // TODO
             rep_ah->psrc  = ah->pdst;
             rep_ah->hwdst = ah->hwsrc;
@@ -242,7 +242,7 @@ void arp_module::arp_request(uint8_t port, const stcp_in_addr* tip)
 	req_ah->ptype  = hton16(0x0800);
 	req_ah->hwlen  = static_cast<uint8_t>(stcp_ether_addr::addrlen);
 	req_ah->plen   = static_cast<uint8_t>(stcp_in_addr::addrlen   );
-    req_ah->operation = hton16(STCP_ARPOP_REQUEST);
+    req_ah->operation = hton16(ARPOP_REQUEST);
     core::get_mymac(&req_ah->hwsrc, port); // TODO
     core::get_myip(&req_ah->psrc, port); // TODO
     for (size_t i=0; i<stcp_ether_addr::addrlen; i++) {

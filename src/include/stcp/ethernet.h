@@ -23,9 +23,9 @@ struct stcp_ether_header {
 };
 
 enum stcp_ether_type : uint16_t {
-    STCP_ETHERTYPE_IP     = 0x0800,
-    STCP_ETHERTYPE_ARP    = 0x0806, 
-    STCP_ETHERTYPE_REVARP = 0x8035,
+    ETHERTYPE_IP     = 0x0800,
+    ETHERTYPE_ARP    = 0x0806,
+    ETHERTYPE_REVARP = 0x8035,
 };
 
 
