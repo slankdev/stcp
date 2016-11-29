@@ -491,24 +491,18 @@ void stcp_tcp_sock::move_state_from_TIME_WAIT(tcpstate next_state)
  */
 void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
 {
-    stcp_tcp_header* th
-        = rte::pktmbuf_mtod_offset<stcp_tcp_header*>(msg, sizeof(stcp_ip_header));
-
     {
         /*
          * TODO Proc TCP-Option
          * ERASE zeroclear tcp options
          */
+        stcp_tcp_header* th
+            = rte::pktmbuf_mtod_offset<stcp_tcp_header*>(msg, sizeof(stcp_ip_header));
         uint8_t* buf = reinterpret_cast<uint8_t*>(th);
         buf += sizeof(stcp_tcp_header);
         size_t tcpoplen = th->data_off/4 - sizeof(stcp_tcp_header);
         memset(buf, 0x00, tcpoplen);
     }
-
-    /*
-     * TODO
-     * Drop or Reply RSTACK to independent packet.
-     */
 
     switch (state) {
         case TCPS_CLOSED:
@@ -797,10 +791,10 @@ bool stcp_tcp_sock::rx_push_ES_seqchk(mbuf* msg, stcp_sockaddr_in* src)
                             si.rcv_nxt_H() + si.rcv_win_H();
 #endif
                     pass = cond1 || cond2;
-                    if (cond1 || cond2) DEBUG("cond1||cond2\n");
+                    if (cond1 || cond2) {DEBUG("cond1||cond2\n");}
 
-                    if (pass) DEBUG("pass\n");
-                    else      DEBUG("unpass\n");
+                    if (pass) {DEBUG("pass\n");}
+                    else      {DEBUG("unpass\n");}
                 }
             }
 
@@ -1031,7 +1025,7 @@ bool stcp_tcp_sock::rx_push_ES_textseg(mbuf* msg, stcp_sockaddr_in* src)
     tcpip* tih = mtod_tih(msg);
 
     if (data_len(tih) > 0) {
-        DEBUG("[%s] SLANKDEVSLANKDEV: asdfadfasdfasfs", tcpstate2str(state));
+        DEBUG("[%s] SLANKDEVSLANKDEV: asdfadfasdfasfs\n", tcpstate2str(state));
         switch (state) {
             case TCPS_ESTABLISHED:
             case TCPS_FIN_WAIT_1:
