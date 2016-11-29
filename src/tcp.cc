@@ -731,6 +731,7 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
 void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
 {
     if (!rx_push_ES_seqchk(msg, src))  return;
+    DEBUG("[%s] CLEEAKDFDF\n", tcpstate2str(state));
     if (!rx_push_ES_rstchk(msg, src))  return;
 
     /*
@@ -783,19 +784,29 @@ bool stcp_tcp_sock::rx_push_ES_seqchk(mbuf* msg, stcp_sockaddr_in* src)
                 }
             } else { /* data_len > 0 */
                 if (tih->tcp.rx_win > 0) {
+#if 1
+                    bool cond1 = true;
+                    bool cond2 = true;
+#else
+
                     bool cond1 = si.rcv_nxt_H() <= ntoh32(tih->tcp.seq) &&
                         ntoh32(tih->tcp.seq) < si.rcv_nxt_H() + si.rcv_win_H();
                     bool cond2 = si.rcv_nxt_H() <=
                         ntoh32(tih->tcp.seq)+data_len(tih)-1 &&
                         ntoh32(tih->tcp.seq)+data_len(tih)-1 <
                             si.rcv_nxt_H() + si.rcv_win_H();
-                    if (cond1 || cond2) {
-                        pass = true;
-                    }
+#endif
+                    pass = cond1 || cond2;
+                    if (cond1 || cond2) DEBUG("cond1||cond2\n");
+
+                    if (pass) DEBUG("pass\n");
+                    else      DEBUG("unpass\n");
                 }
             }
 
+            DEBUG("[%s] SSSSSS\n", tcpstate2str(state));
             if (!pass) {
+                DEBUG("asdfdfdfdfd\n");
                 rte::pktmbuf_free(msg);
                 return false;
             }
@@ -1020,6 +1031,7 @@ bool stcp_tcp_sock::rx_push_ES_textseg(mbuf* msg, stcp_sockaddr_in* src)
     tcpip* tih = mtod_tih(msg);
 
     if (data_len(tih) > 0) {
+        DEBUG("[%s] SLANKDEVSLANKDEV: asdfadfasdfasfs", tcpstate2str(state));
         switch (state) {
             case TCPS_ESTABLISHED:
             case TCPS_FIN_WAIT_1:
