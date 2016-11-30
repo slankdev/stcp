@@ -6,6 +6,7 @@
 #include <stcp/stcp.h>
 #include <stcp/util.h>
 #include <stcp/mempool.h>
+#include <stcp/arch/dpdk/device.h>
 
 
 
@@ -18,11 +19,11 @@ void arp_module::init()
 {
     mp = pool_create(
             "ARP Mem Pool",
-            8192 * rte::eth_dev_count(),
+            8192 * eth_dev_count(),
             250,
             0,
-            RTE_MBUF_DEFAULT_BUF_SIZE,
-            rte::socket_id());
+            MBUF_DEFAULT_BUF_SIZE, // TODO KOKOKARA
+            cpu_socket_id());
 }
 
 

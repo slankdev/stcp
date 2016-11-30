@@ -213,8 +213,10 @@ public:
     void move_state(tcpstate next_state);
     tcpstate get_state() const { return state; }
 
-public: /* for Users Operation */
-
+public:
+    /*
+     * for Users Operation
+     */
     void bind(const struct stcp_sockaddr_in* addr, size_t addrlen);
     void listen(size_t backlog);
     stcp_tcp_sock* accept(struct stcp_sockaddr_in* addr);

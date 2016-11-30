@@ -19,9 +19,6 @@ class ifnet {
 private:
     pkt_queue rx;
     pkt_queue tx;
-    uint16_t rx_packets;
-    uint16_t tx_packets;
-    uint16_t drop_packets;
     std::string name;
 
     /*
@@ -37,19 +34,12 @@ public:
     bool promiscuous_mode;
     std::vector<ifaddr> addrs;
 
-    /*
-     * TODO XXX can't set ring_size before constructor().
-     */
     ifnet(uint8_t p) :
-        rx_packets(0),
-        tx_packets(0),
-        drop_packets(0),
-
         port_id(p),
-        rx_ring_size(128), // TODO fix
-        tx_ring_size(512), // TODO fix
-        num_rx_rings(1  ), // TODO fix
-        num_tx_rings(1  ), // TODO fix
+        rx_ring_size(128),
+        tx_ring_size(512),
+        num_rx_rings(1  ),
+        num_tx_rings(1  ),
         promiscuous_mode(true)
     { name = "PORT" + std::to_string(port_id); }
 
@@ -74,8 +64,8 @@ private:
     void ioctl_siocpromisc(const uint64_t* val);
 
 public:
-    void rx_push(mbuf* msg) { rx.push(msg); rx_packets++; }
-    void tx_push(mbuf* msg) { tx.push(msg); tx_packets++; }
+    void rx_push(mbuf* msg) { rx.push(msg); }
+    void tx_push(mbuf* msg) { tx.push(msg); }
     mbuf* rx_pop() { return rx.pop(); }
     mbuf* tx_pop() { return tx.pop(); }
 };

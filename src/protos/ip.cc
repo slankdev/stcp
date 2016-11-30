@@ -10,6 +10,7 @@
 #include <stcp/stcp.h>
 #include <stcp/util.h>
 #include <stcp/mempool.h>
+#include <stcp/arch/dpdk/device.h>
 
 namespace slank {
 
@@ -25,31 +26,27 @@ void ip_module::init()
 
     direct_pool = pool_create(
             "IP Direct Pool",
-            8192 * rte::eth_dev_count(),
+            8192 * eth_dev_count(),
             250,
             0,
-            RTE_MBUF_DEFAULT_BUF_SIZE,
-            rte::socket_id());
+            MBUF_DEFAULT_BUF_SIZE,
+            cpu_socket_id());
 
 
     indirect_pool = pool_create(
             "IP Indirect Pool",
-            8192 * rte::eth_dev_count(),
+            8192 * eth_dev_count(),
             32,
             0,
             0,
-            rte::socket_id());
+            cpu_socket_id());
 
-    frag_tbl = rte_ip_frag_table_create(
+    frag_tbl = ip_frag_table_create(
             bucket_num,
             bucket_entries,
             max_entries,
             max_cycles,
-            rte_socket_id());
-
-    if (!frag_tbl) {
-        throw exception("rte_ip_frag_table_create");
-    }
+            cpu_socket_id());
 
     srand(time(NULL));
 }
@@ -75,14 +72,13 @@ void ip_module::rx_push(mbuf* msg)
         return;
     }
 
-    if (rte::ipv4_frag_pkt_is_fragmented(ih)) {
+    if (ipv4_frag_pkt_is_fragmented(ih)) {
         mbuf_push(msg, sizeof(stcp_ether_header));
 
         msg->l2_len = sizeof(stcp_ether_header);
         msg->l3_len = sizeof(stcp_ip_header);
-        mbuf* reasmd_msg = rte::ipv4_frag_reassemble_packet(
-                frag_tbl, &dr, msg, rdtsc(),
-                reinterpret_cast<struct ipv4_hdr*>(ih));
+        mbuf* reasmd_msg = ipv4_frag_reassemble_packet(
+                frag_tbl, &dr, msg, rdtsc(), ih);
 
         if (reasmd_msg == NULL) {
             return;
@@ -293,14 +289,13 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
     ih->dst               = dst->sin_addr;
     ih->hdr_checksum      = 0x00;
 
-    ih->hdr_checksum = rte_ipv4_cksum((const struct ipv4_hdr*)ih);
+    ih->hdr_checksum = ipv4_cksum(ih);
 
     mbuf* msgs[ip_module::num_max_fragment];
     memset(msgs, 0, sizeof msgs);
-    uint32_t nb = rte::ipv4_fragment_packet(msg, &msgs[0], 10,
+    uint32_t nb = ipv4_fragment_packet(msg, &msgs[0], 10,
             core::dpdk.ipv4_mtu_default,
-            direct_pool,
-            indirect_pool);
+            direct_pool, indirect_pool);
 
     stcp_sockaddr_in next;
     uint8_t port;
@@ -316,7 +311,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
         for (size_t i=0; i<nb; i++) {
 
             stcp_ip_header* iph = mbuf_mtod<stcp_ip_header*>(msgs[i]);
-            iph->hdr_checksum = rte_ipv4_cksum(reinterpret_cast<const struct ipv4_hdr*>(iph));
+            iph->hdr_checksum = ipv4_cksum(iph);
 
             msgs[i]->port = port;
             core::ether.tx_push(msgs[i]->port, msgs[i],

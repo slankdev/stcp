@@ -48,10 +48,53 @@ inline uint16_t timediff_ms(uint64_t before, uint64_t after)
     return (after-before) * 1000 / hz;
 }
 
-inline uint16_t ipv4_udptcp_cksum(stcp_ip_header* ih, const void* th)
+inline uint16_t ipv4_udptcp_cksum(const stcp_ip_header* ih, const void* th)
 {
     return rte_ipv4_udptcp_cksum(
-        reinterpret_cast<ipv4_hdr*>(ih), th);
+        reinterpret_cast<const ipv4_hdr*>(ih), th);
+}
+
+inline uint16_t ipv4_cksum(const stcp_ip_header* ih)
+{
+    return rte_ipv4_cksum(reinterpret_cast<const ipv4_hdr*>(ih));
+}
+
+inline bool ipv4_frag_pkt_is_fragmented(const stcp_ip_header* ih)
+{
+    return rte_ipv4_frag_pkt_is_fragmented(
+            reinterpret_cast<const ipv4_hdr*>(ih));
+}
+
+inline uint32_t ipv4_fragment_packet(
+                    mbuf* pkt_in, mbuf** pkts_out,
+                    uint16_t nb_pkts_out, uint16_t mtu_size,
+                    mempool* pool_direct,
+                    mempool* pool_indirect) noexcept
+{
+    int32_t res = rte::ipv4_fragment_packet(pkt_in, pkts_out,
+            nb_pkts_out, mtu_size, pool_direct, pool_indirect);
+    if (res < 0) {
+        return 1;
+    }
+    return res;
+}
+
+inline mbuf* ipv4_frag_reassemble_packet(ip_frag_tbl* tbl, ip_frag_death_row* dr,
+                                mbuf* mb, uint64_t tms, stcp_ip_header* ip_hdr)
+{
+    return rte::ipv4_frag_reassemble_packet(tbl, dr, mb, tms,
+            reinterpret_cast<ipv4_hdr*>(ip_hdr));
+}
+
+inline ip_frag_tbl* ip_frag_table_create(uint32_t bucket_num, uint32_t bucket_entries,
+                            uint32_t max_entries, uint64_t max_cycles, int socket_id)
+{
+    ip_frag_tbl* tab = rte_ip_frag_table_create(bucket_num, bucket_entries,
+                                max_entries, max_cycles, socket_id);
+    if (!tab) {
+        throw exception("ip_frag_table_create");
+    }
+    return tab;
 }
 
 inline uint64_t rand()
@@ -87,6 +130,7 @@ inline void *memcpy (void *dst, const void *src, size_t n)
 {
     return rte::memcpy(dst, src, n);
 }
+
 
 
 

@@ -38,7 +38,7 @@ void icmp_module::send_err(icmp_type type, icmp_code code, const stcp_sockaddr_i
     ih->icmp_seq_nb = 0x0000;
 
 
-    if (rte::pktmbuf_is_contiguous(msg)) {
+    if (mbuf_is_contiguous(msg)) {
         ih->icmp_cksum = checksum((uint16_t*)ih, mbuf_pkt_len(msg));
     } else {
         uint8_t* buf = alloc_contiguous_data_from_mbufchain(msg);
@@ -62,7 +62,7 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr_in* src)
             ih->icmp_code  = 0x00;
             ih->icmp_cksum = 0x0000;
 
-            if (rte::pktmbuf_is_contiguous(msg)) {
+            if (mbuf_is_contiguous(msg)) {
                 ih->icmp_cksum = checksum((uint16_t*)ih, mbuf_pkt_len(msg));
             } else {
                 uint8_t* buf = alloc_contiguous_data_from_mbufchain(msg);

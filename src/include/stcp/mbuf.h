@@ -8,6 +8,10 @@
 
 namespace slank {
 
+enum {
+    MBUF_DEFAULT_BUF_SIZE = RTE_MBUF_DEFAULT_BUF_SIZE,
+};
+
 inline void mbuf_pull(mbuf* msg, size_t len)
 {
     rte::pktmbuf_adj(msg, len);
@@ -53,6 +57,11 @@ inline void mbuf_trim(mbuf* m, uint16_t len)
 inline void mbuf_dump(FILE* f,const mbuf* m, unsigned dump_len)
 {
     rte::pktmbuf_dump(f, m, dump_len);
+}
+
+inline bool mbuf_is_contiguous(const mbuf* msg)
+{
+    return rte::pktmbuf_is_contiguous(msg);
 }
 
 template<class T>

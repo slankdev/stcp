@@ -71,7 +71,6 @@ uint16_t ifnet::io_rx()
         rx.push(bufs[i]);
     }
 
-    rx_packets += num_rx;
     return num_rx;
 }
 
@@ -98,7 +97,6 @@ uint16_t ifnet::io_tx(size_t num_request_to_send)
         num_tx_sum += num_tx;
     }
 
-    tx_packets += num_tx_sum;
     return num_tx_sum;
 }
 
@@ -118,9 +116,6 @@ void ifnet::print_stat() const
     stat& s = stat::instance();
     s.write("%s: %s", name.c_str(), promiscuous_mode?"PROMISC":"");
     s.write("");
-    s.write("\tRX Packets %u Queue %zu", rx_packets, rx.size());
-    s.write("\tTX Packets %u Queue %zu", tx_packets, tx.size());
-    s.write("\tDrop Packets %u", drop_packets);
 
     s.write("");
     for (const ifaddr& ifa : addrs) {

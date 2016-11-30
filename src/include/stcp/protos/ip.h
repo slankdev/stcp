@@ -96,8 +96,8 @@ private:
     static const size_t  num_max_fragment = 10;
     size_t not_to_me;
     stcp_in_addr myip;
-    struct rte_ip_frag_death_row dr;
-    struct rte_ip_frag_tbl* frag_tbl;
+    ip_frag_death_row  dr;
+    ip_frag_tbl*       frag_tbl;
 
 public:
     mempool* direct_pool;

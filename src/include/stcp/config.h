@@ -17,6 +17,9 @@ namespace slank {
 using eth_conf = struct rte_eth_conf;
 using mbuf = struct rte_mbuf;
 using mempool = struct rte_mempool;
+using ip_frag_death_row = struct rte_ip_frag_death_row;
+using ip_frag_tbl       = struct rte_ip_frag_tbl;
+
 
 class pkt_queue {
     std::queue<mbuf*> queue;
