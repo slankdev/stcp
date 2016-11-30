@@ -7,6 +7,13 @@
 
 namespace slank {
 
+
+const stcp_ether_addr stcp_ether_addr::broadcast(0xff, 0xff, 0xff, 0xff, 0xff, 0xff);
+const stcp_ether_addr stcp_ether_addr::zero(0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+const stcp_in_addr    stcp_in_addr::broadcast(0xff, 0xff, 0xff, 0xff);
+const stcp_in_addr    stcp_in_addr::zero(0x00, 0x00, 0x00, 0x00);
+
+
 std::vector<stcp_usrapp_info> core::lapps;
 tcp_module   core::tcp;
 udp_module   core::udp;
@@ -211,7 +218,9 @@ void core::init(int argc, char** argv)
     stat::instance().open_new("stcp.stat.log");
 
     dpdk.init(argc, argv);
+    arp.init();
     ip.init();
+    tcp.init();
 }
 
 void core::ifs_proc()
@@ -244,7 +253,7 @@ void core::run()
      * TODO #21 Launch user app.
      */
     for (stcp_usrapp_info& app : lapps) {
-        rte_eal_remote_launch(
+        rte::eal_remote_launch(
                 usrapp_wrap, reinterpret_cast<void*>(&app), app.lcore_id);
     }
 

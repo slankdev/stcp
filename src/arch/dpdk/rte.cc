@@ -249,7 +249,8 @@ uint64_t bswap64(uint64_t x)
 }
 
 uint32_t ipv4_fragment_packet(rte_mbuf* pkt_in, rte_mbuf** pkts_out, uint16_t nb_pkts_out,
-        uint16_t mtu_size, struct rte_mempool* pool_direct, struct rte_mempool* pool_indirect) noexcept
+                    uint16_t mtu_size, struct rte_mempool* pool_direct,
+                    struct rte_mempool* pool_indirect) noexcept
 {
     int32_t res = rte_ipv4_fragment_packet(pkt_in, pkts_out,
             nb_pkts_out, mtu_size, pool_direct, pool_indirect);
@@ -324,6 +325,11 @@ void delay_us(uint32_t us)
 void delay_ms(uint32_t ms)
 {
     return rte_delay_ms(ms);
+}
+
+int eal_remote_launch(lcore_function_t *f, void *arg, unsigned slave_id)
+{
+    return rte_eal_remote_launch(f, arg, slave_id);
 }
 
 

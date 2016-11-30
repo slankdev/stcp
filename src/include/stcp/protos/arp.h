@@ -85,15 +85,15 @@ class arp_module {
 private:
     bool use_dynamic_arp;
 private:
-    size_t rx_cnt;
-    size_t tx_cnt;
     std::vector<stcp_arpreq> table;
+    mempool* mp;
 
 public:
     std::queue<wait_ent> arpresolv_wait_queue;
 
 public:
-    arp_module() : use_dynamic_arp(true), rx_cnt(0), tx_cnt(0) {}
+    arp_module() : use_dynamic_arp(true), mp(nullptr) {}
+    void init();
     void rx_push(mbuf* msg);
     void tx_push(mbuf* msg);
 

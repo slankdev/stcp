@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <stcp/dpdk.h>
+#include <stcp/arch/dpdk/dpdk.h>
 #include <stcp/config.h>
 #include <stcp/util.h>
 
@@ -94,18 +94,18 @@ class ip_module {
 private:
     static const uint8_t ttl_default      = 0x40;
     static const size_t  num_max_fragment = 10;
-    size_t rx_cnt;
-    size_t tx_cnt;
     size_t not_to_me;
     stcp_in_addr myip;
     struct rte_ip_frag_death_row dr;
     struct rte_ip_frag_tbl* frag_tbl;
 
 public:
-    struct rte_mempool* indirect_pool;
+    mempool* direct_pool;
+    mempool* indirect_pool;
     std::vector<stcp_rtentry> rttable;
 
-    ip_module() : rx_cnt(0), tx_cnt(0), not_to_me(0) {}
+    ip_module() : not_to_me(0),
+            direct_pool(nullptr), indirect_pool(nullptr) {}
     void init();
 
     void set_ipaddr(const stcp_in_addr* addr);

@@ -4,17 +4,17 @@
 
 #include <stdlib.h>
 
-#include <stcp/dpdk.h>
+#include <stcp/arch/dpdk/dpdk.h>
 #include <stcp/config.h>
 #include <stcp/mbuf.h>
 #include <stcp/log.h>
 
-#include <stcp/ethernet.h>
-#include <stcp/arp.h>
-#include <stcp/ip.h>
-#include <stcp/icmp.h>
-#include <stcp/udp.h>
-#include <stcp/tcp.h>
+#include <stcp/protos/ethernet.h>
+#include <stcp/protos/arp.h>
+#include <stcp/protos/ip.h>
+#include <stcp/protos/icmp.h>
+#include <stcp/protos/udp.h>
+#include <stcp/protos/tcp.h>
 
 #include <vector>
 
@@ -71,7 +71,6 @@ public:
     static stcp_udp_sock* create_udp_socket();
     static void destroy_tcp_socket(stcp_tcp_sock* sock);
     static void destroy_udp_socket(stcp_udp_sock* sock);
-    static rte_mempool* get_mempool() { return dpdk.get_mempool(); }
 
 private:
     static tcp_module    tcp;

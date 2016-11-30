@@ -4,7 +4,7 @@
 
 #include <stcp/config.h>
 #include <stcp/socket.h>
-#include <stcp/dpdk.h>
+#include <stcp/arch/dpdk/dpdk.h>
 #include <stcp/stcp.h>
 #include <stcp/util.h>
 #include <vector>
@@ -262,12 +262,12 @@ class tcp_module {
     friend class stcp_tcp_sock;
 private:
     static size_t mss;
-    size_t rx_cnt;
-    size_t tx_cnt;
+    mempool* mp;
     std::vector<stcp_tcp_sock*> socks;
 
 public:
-    tcp_module() : rx_cnt(0), tx_cnt(0) {}
+    tcp_module() : mp(nullptr) {}
+    void init();
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
     void tx_push(mbuf* msg, const stcp_sockaddr_in* dst);
 

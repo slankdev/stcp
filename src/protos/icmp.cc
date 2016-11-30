@@ -1,6 +1,6 @@
 
 
-#include <stcp/icmp.h>
+#include <stcp/protos/icmp.h>
 #include <stcp/socket.h>
 #include <stcp/stcp.h>
 #include <stcp/util.h>
@@ -52,7 +52,6 @@ void icmp_module::send_err(icmp_type type, icmp_code code, const stcp_sockaddr_i
 
 void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr_in* src)
 {
-    rx_cnt++;
 
     stcp_icmp_header* ih = mbuf_mtod<stcp_icmp_header*>(msg);
 
@@ -72,7 +71,6 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr_in* src)
             }
 
             core::ip.tx_push(msg, src, STCP_IPPROTO_ICMP);
-            tx_cnt++;
             break;
         }
         case STCP_ICMP_ECHOREPLY:
@@ -94,8 +92,6 @@ void icmp_module::print_stat() const
 {
     stat& s = stat::instance();
     s.write("ICMP module");
-    s.write("\tRX Packets %zd", rx_cnt);
-    s.write("\tTX Packets %zd", tx_cnt);
 }
 
 } /* namespace slank */

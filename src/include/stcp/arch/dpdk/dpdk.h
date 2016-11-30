@@ -21,6 +21,7 @@ namespace slank {
 
 
 class dpdk_core {
+    friend class ifnet;
 private:
     static std::string mp_name;       /* memory pool name                        */
     struct rte_mempool* mempool;
@@ -54,7 +55,6 @@ public:
             devices.push_back(dev);
         }
     }
-    struct rte_mempool* get_mempool() { return mempool; }
 };
 
 } /* namespace */

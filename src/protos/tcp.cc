@@ -1,7 +1,8 @@
 
 
 #include <assert.h>
-#include <stcp/tcp.h>
+#include <stcp/protos/tcp.h>
+#include <stcp/mempool.h>
 #include <stcp/config.h>
 #define UNUSED(x) (void)(x)
 
@@ -59,6 +60,18 @@ static const char* tcpstate2str(tcpstate state)
         case TCPS_TIME_WAIT:   return "TIME_WAIT";
         default:               return "UNKNOWN";
     }
+}
+
+
+void tcp_module::init()
+{
+    mp = pool_create(
+            "TCP Mem Pool",
+            8192 * rte::eth_dev_count(),
+            250,
+            0,
+            RTE_MBUF_DEFAULT_BUF_SIZE,
+            rte::socket_id());
 }
 
 
@@ -447,13 +460,13 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
 
     switch (state) {
         case TCPS_CLOSED:
-            rx_push_CLOSED(mbuf_clone(msg), src);
+            rx_push_CLOSED(mbuf_clone(msg, core::tcp.mp), src);
             break;
         case TCPS_LISTEN:
-            rx_push_LISTEN(mbuf_clone(msg), src);
+            rx_push_LISTEN(mbuf_clone(msg, core::tcp.mp), src);
             break;
         case TCPS_SYN_SENT:
-            rx_push_SYN_SEND(mbuf_clone(msg), src);
+            rx_push_SYN_SEND(mbuf_clone(msg, core::tcp.mp), src);
             break;
         case TCPS_SYN_RCVD:
         case TCPS_ESTABLISHED:
@@ -463,7 +476,7 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
         case TCPS_CLOSING:
         case TCPS_LAST_ACK:
         case TCPS_TIME_WAIT:
-            rx_push_ELSESTATE(mbuf_clone(msg), src);
+            rx_push_ELSESTATE(mbuf_clone(msg, core::tcp.mp), src);
             break;
         default:
             throw exception("OKASHII91934");
@@ -667,24 +680,24 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
  */
 void stcp_tcp_sock::rx_push_ELSESTATE(mbuf* msg, stcp_sockaddr_in* src)
 {
-    if (!rx_push_ES_seqchk(mbuf_clone(msg), src))  return;
-    if (!rx_push_ES_rstchk(mbuf_clone(msg), src))  return;
+    if (!rx_push_ES_seqchk(mbuf_clone(msg, core::tcp.mp), src))  return;
+    if (!rx_push_ES_rstchk(mbuf_clone(msg, core::tcp.mp), src))  return;
 
     /*
      * 3: Securty and Priority Check
      * TODO: not implement yet
      */
 
-    if (!rx_push_ES_synchk(mbuf_clone(msg), src))  return;
-    if (!rx_push_ES_ackchk(mbuf_clone(msg), src))  return;
+    if (!rx_push_ES_synchk(mbuf_clone(msg, core::tcp.mp), src))  return;
+    if (!rx_push_ES_ackchk(mbuf_clone(msg, core::tcp.mp), src))  return;
 
     /*
      * 6: URG Check
      * TODO: not implement yet
      */
 
-    if (!rx_push_ES_textseg(mbuf_clone(msg), src)) return;
-    if (!rx_push_ES_finchk( mbuf_clone(msg), src))  return;
+    if (!rx_push_ES_textseg(mbuf_clone(msg, core::tcp.mp), src)) return;
+    if (!rx_push_ES_finchk( mbuf_clone(msg, core::tcp.mp), src))  return;
 }
 
 
@@ -961,7 +974,7 @@ bool stcp_tcp_sock::rx_push_ES_textseg(mbuf* msg, stcp_sockaddr_in* src)
             case TCPS_FIN_WAIT_1:
             case TCPS_FIN_WAIT_2:
             {
-                mbuf* mseg = mbuf_clone(msg);
+                mbuf* mseg = mbuf_clone(msg, core::tcp.mp);
                 mbuf_pull(mseg, sizeof(stcp_ip_header));
                 uint16_t tcphlen  = ((tih->tcp.data_off>>4)<<2);
                 mbuf_pull(mseg, tcphlen);
@@ -1128,8 +1141,6 @@ void tcp_module::print_stat() const
 {
     stat& s = stat::instance();
     s.write("TCP module");
-    s.write("\tRX Packets %zd", rx_cnt);
-    s.write("\tTX Packets %zd", tx_cnt);
 
     if (!socks.empty()) {
         s.write("");
@@ -1145,13 +1156,12 @@ void tcp_module::print_stat() const
 void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
 {
     stcp_tcp_header* th = mbuf_mtod<stcp_tcp_header*>(msg);
-    rx_cnt++;
 
     bool find_socket = false;
     uint16_t dst_port = th->dport;
     for (stcp_tcp_sock* sock : socks) {
         if (sock->port == dst_port) {
-            mbuf* m = mbuf_clone(msg);
+            mbuf* m = mbuf_clone(msg, core::tcp.mp);
             mbuf_push(m, sizeof(stcp_ip_header));
             sock->rx_push(m, src);
             find_socket = true;

@@ -14,18 +14,15 @@ TMUXVSPLIT = tmux split-window -h
 TARGET = a.out
 LOGNAME = log.log
 SRCS   = \
-		util.cc \
-		rte.cc \
-		dpdk.cc \
 		ifnet.cc \
-		mbuf.cc \
-		socket.cc \
-		ethernet.cc \
-		arp.cc \
-		ip.cc \
-		icmp.cc \
-		udp.cc \
-		tcp.cc \
+		arch/dpdk/rte.cc \
+		arch/dpdk/dpdk.cc \
+		protos/ethernet.cc \
+		protos/arp.cc \
+		protos/ip.cc \
+		protos/icmp.cc \
+		protos/udp.cc \
+		protos/tcp.cc \
 		stcp.cc \
 		main.cc
 

@@ -1,6 +1,6 @@
 
 
-#include <stcp/udp.h>
+#include <stcp/protos/udp.h>
 #include <stcp/stcp.h>
 #include <stcp/config.h>
 
@@ -61,7 +61,6 @@ void udp_module::tx_push(mbuf* msg,
     uh->len   = hton16(sizeof(stcp_udp_header) + udplen);
     uh->cksum = 0x0000;
 
-    tx_cnt++;
     core::ip.tx_push(msg, dst, STCP_IPPROTO_UDP);
 }
 
@@ -69,7 +68,6 @@ void udp_module::tx_push(mbuf* msg,
 void udp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
 {
     stcp_udp_header* uh = mbuf_mtod<stcp_udp_header*>(msg);
-    rx_cnt++;
 
     uint16_t dst_port = uh->dport;
     for (stcp_udp_sock* sock : socks) {
@@ -91,8 +89,6 @@ void udp_module::print_stat() const
 {
     stat& s = stat::instance();
     s.write("UDP module");
-    s.write("\tRX Packets %zd", rx_cnt);
-    s.write("\tTX Packets %zd", tx_cnt);
 
     if (!socks.empty()) {
         s.write("");

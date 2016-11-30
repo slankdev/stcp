@@ -30,11 +30,9 @@ enum stcp_ether_type : uint16_t {
 
 class ether_module {
 private:
-    size_t rx_cnt;
-    size_t tx_cnt;
 
 public:
-    ether_module() : rx_cnt(0), tx_cnt(0) {}
+    ether_module() {}
 
     void rx_push(mbuf* msg);
     void tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst);

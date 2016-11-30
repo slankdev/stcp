@@ -1,7 +1,7 @@
 
 
 #include <stcp/stcp.h>
-#include <stcp/ethernet.h>
+#include <stcp/protos/ethernet.h>
 #include <stcp/util.h>
 #include <string>
 #include <stcp/mbuf.h>
@@ -99,7 +99,6 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
     }
     eh->type = ether_type;
 
-    tx_cnt++;
     for (ifnet& dev : core::dpdk.devices) {
         dev.tx_push(msg);
     }
@@ -108,7 +107,6 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
 
 void ether_module::rx_push(mbuf* msg)
 {
-    rx_cnt++;
     stcp_ether_header* eh = mbuf_mtod<stcp_ether_header*>(msg);
     uint16_t etype = ntoh16(eh->type);
     mbuf_pull(msg, sizeof(stcp_ether_header));
@@ -136,8 +134,6 @@ void ether_module::print_stat() const
 {
     stat& s = stat::instance();
     s.write("%s", "Ether module");
-    s.write("\tRX Packets %zd", rx_cnt);
-    s.write("\tTX Packets %zd", tx_cnt);
 }
 
 

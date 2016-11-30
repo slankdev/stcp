@@ -3,7 +3,7 @@
 
 #include <stcp/config.h>
 #include <stcp/socket.h>
-#include <stcp/dpdk.h>
+#include <stcp/arch/dpdk/dpdk.h>
 #include <stcp/util.h>
 
 #include <vector>
@@ -69,12 +69,10 @@ public: /* for Users Operation */
 class udp_module {
     friend class core;
 private:
-    size_t rx_cnt;
-    size_t tx_cnt;
     std::vector<stcp_udp_sock*> socks;
 
 public:
-    udp_module() : rx_cnt(0), tx_cnt(0) {}
+    udp_module() {}
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
     void tx_push(mbuf* msg, const stcp_sockaddr_in* dst, uint16_t srcp);
     void print_stat() const;

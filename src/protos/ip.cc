@@ -2,13 +2,14 @@
 
 
 
-#include <stcp/ip.h>
-#include <stcp/ethernet.h>
+#include <stcp/protos/ip.h>
+#include <stcp/protos/icmp.h>
+#include <stcp/protos/ethernet.h>
 #include <stcp/socket.h>
 #include <stcp/util.h>
 #include <stcp/stcp.h>
-#include <stcp/icmp.h>
 #include <stcp/util.h>
+#include <stcp/mempool.h>
 
 namespace slank {
 
@@ -22,13 +23,30 @@ void ip_module::init()
     uint32_t max_entries    = max_flow_num;
     uint64_t max_cycles     = (tsc_hz() + MS_PER_S - 1) / MS_PER_S * MS_PER_S;
 
+    direct_pool = pool_create(
+            "IP Direct Pool",
+            8192 * rte::eth_dev_count(),
+            250,
+            0,
+            RTE_MBUF_DEFAULT_BUF_SIZE,
+            rte::socket_id());
+
+
+    indirect_pool = pool_create(
+            "IP Indirect Pool",
+            8192 * rte::eth_dev_count(),
+            32,
+            0,
+            0,
+            rte::socket_id());
+
     frag_tbl = rte_ip_frag_table_create(
             bucket_num,
             bucket_entries,
             max_entries,
             max_cycles,
-            rte_socket_id()
-            );
+            rte_socket_id());
+
     if (!frag_tbl) {
         throw exception("rte_ip_frag_table_create");
     }
@@ -45,7 +63,6 @@ void ip_module::set_ipaddr(const stcp_in_addr* addr)
 
 void ip_module::rx_push(mbuf* msg)
 {
-    rx_cnt++;
     stcp_ip_header* ih
         = mbuf_mtod<stcp_ip_header*>(msg);
 
@@ -255,7 +272,6 @@ bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr_in* addr)
 
 void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos proto)
 {
-    tx_cnt++;
 
     stcp_ip_header* ih
         = reinterpret_cast<stcp_ip_header*>(mbuf_push(msg, sizeof(stcp_ip_header)));
@@ -283,8 +299,8 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
     memset(msgs, 0, sizeof msgs);
     uint32_t nb = rte::ipv4_fragment_packet(msg, &msgs[0], 10,
             core::dpdk.ipv4_mtu_default,
-            core::dpdk.get_mempool(),
-            core::dpdk.get_mempool());
+            direct_pool,
+            indirect_pool);
 
     stcp_sockaddr_in next;
     uint8_t port;
@@ -318,8 +334,6 @@ void ip_module::print_stat() const
 {
     stat& s = stat::instance();
     s.write("IP module");
-    s.write("\tRX Packets %zd", rx_cnt);
-    s.write("\tTX Packets %zd", tx_cnt);
     s.write("\tDrops      %zd", not_to_me);
     s.write("");
     s.write("\tRouting-Table");

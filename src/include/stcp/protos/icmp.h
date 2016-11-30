@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <stcp/dpdk.h>
+#include <stcp/arch/dpdk/dpdk.h>
 #include <stcp/config.h>
 
 
@@ -64,11 +64,9 @@ enum icmp_type : uint8_t {
  */
 class icmp_module {
 private:
-    size_t rx_cnt;
-    size_t tx_cnt;
 
 public:
-    icmp_module() : rx_cnt(0), tx_cnt(0) {}
+    icmp_module() {}
 
     void rx_push(mbuf* msg, const stcp_sockaddr_in* src);
     void send_err(icmp_type type, icmp_code code,

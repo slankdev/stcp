@@ -1,10 +1,11 @@
 
 
 
-#include <stcp/arp.h>
+#include <stcp/protos/arp.h>
 #include <stcp/config.h>
 #include <stcp/stcp.h>
 #include <stcp/util.h>
+#include <stcp/mempool.h>
 
 
 
@@ -13,27 +14,38 @@ namespace slank {
 
 
 
+void arp_module::init()
+{
+    mp = pool_create(
+            "ARP Mem Pool",
+            8192 * rte::eth_dev_count(),
+            250,
+            0,
+            RTE_MBUF_DEFAULT_BUF_SIZE,
+            rte::socket_id());
+}
+
+
 
 void arp_module::rx_push(mbuf* msg)
 {
-    rx_cnt++;
 
-    struct stcp_arphdr* ah  = mbuf_mtod<struct stcp_arphdr*>(msg);
-    uint8_t port = msg->port;
+struct stcp_arphdr* ah  = mbuf_mtod<struct stcp_arphdr*>(msg);
+uint8_t port = msg->port;
 
-    if (ah->operation == hton16(ARPOP_REPLY)) {
+if (ah->operation == hton16(ARPOP_REPLY)) {
 
-        /*
-         * Proc ARP-Reply Packet
-         * using ARP table.
-         */
+    /*
+     * Proc ARP-Reply Packet
+     * using ARP table.
+     */
 
-        stcp_sockaddr     sa_pa(STCP_AF_INET);
-        stcp_sockaddr     sa_ha(STCP_AF_LINK);
-        stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
+    stcp_sockaddr     sa_pa(STCP_AF_INET);
+    stcp_sockaddr     sa_ha(STCP_AF_LINK);
+    stcp_sockaddr_in *sin_pa = reinterpret_cast<stcp_sockaddr_in*>(&sa_pa);
 
-        sin_pa->sin_addr = ah->psrc;
-        for (size_t i=0; i<stcp_ether_addr::addrlen; i++)
+    sin_pa->sin_addr = ah->psrc;
+    for (size_t i=0; i<stcp_ether_addr::addrlen; i++)
             sa_ha.sa_data[i] = ah->hwsrc.addr_bytes[i];
 
         stcp_arpreq req(&sa_pa, &sa_ha, port);
@@ -47,7 +59,7 @@ void arp_module::rx_push(mbuf* msg)
              * Reply ARP-Reply Packet
              */
 
-            mbuf* msg = mbuf_alloc(core::dpdk.get_mempool());
+            mbuf* msg = mbuf_alloc(mp);
             msg->data_len = sizeof(stcp_arphdr);
             msg->pkt_len  = sizeof(stcp_arphdr);
             msg->port = port;
@@ -75,7 +87,6 @@ void arp_module::rx_push(mbuf* msg)
 
 void arp_module::tx_push(mbuf* msg)
 {
-    tx_cnt++;
     stcp_sockaddr sa(STCP_AF_ARP);
     core::ether.tx_push(msg->port, msg, &sa);
 }
@@ -229,7 +240,7 @@ bool arp_module::arp_resolv(
 
 void arp_module::arp_request(uint8_t port, const stcp_in_addr* tip)
 {
-    mbuf* msg = mbuf_alloc(core::dpdk.get_mempool());
+    mbuf* msg = mbuf_alloc(mp);
     msg->data_len = sizeof(stcp_arphdr);
     msg->pkt_len  = sizeof(stcp_arphdr);
     msg->port = port;
@@ -253,8 +264,6 @@ void arp_module::print_stat() const
 {
     stat& s = stat::instance();
     s.write("ARP module");
-    s.write("\tRX Packets %zd", rx_cnt);
-    s.write("\tTX Packets %zd", tx_cnt);
     s.write("");
     s.write("\tWaiting packs  : %zd", arpresolv_wait_queue.size());
     s.write("\tUse dynamic arp: %s", use_dynamic_arp ? "YES" : "NO");

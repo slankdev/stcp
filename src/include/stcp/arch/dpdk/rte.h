@@ -150,6 +150,7 @@ T pktmbuf_mtod_offset(struct rte_mbuf* msg, ssize_t offset)
     return rte_pktmbuf_mtod_offset(msg, T, offset);
 }
 
+int eal_remote_launch(lcore_function_t *f, void *arg, unsigned slave_id);
 
 
 

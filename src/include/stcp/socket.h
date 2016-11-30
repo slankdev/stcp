@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <stcp/exception.h>
 #include <stcp/config.h>
 
 
@@ -60,10 +61,10 @@ enum ioctl_family : uint64_t {
 
 struct stcp_ether_addr : ether_addr {
 public:
-    static const stcp_ether_addr broadcast;
-    static const stcp_ether_addr zero;
-
     static const size_t addrlen = sizeof(ether_addr);
+    static const stcp_ether_addr broadcast; // init in stcp.cc
+    static const stcp_ether_addr zero;      // init in stcp.cc
+
     stcp_ether_addr() {}
     stcp_ether_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6) : stcp_ether_addr()
     { set(o1, o2, o3, o4, o5, o6); }
@@ -100,53 +101,18 @@ public:
 };
 
 
-
+struct stcp_sockaddr;
+struct stcp_sockaddr_in;
 struct stcp_in_addr;
 struct stcp_ether_addr;
 
-
-struct stcp_sockaddr {
-	uint8_t         sa_len;       /* total length */
-	stcp_sa_family  sa_fam;	      /* address family */
-	uint8_t         sa_data[14];  /* actually longer; address value */
-
-public:
-    stcp_sockaddr() = delete;
-    stcp_sockaddr(stcp_sa_family fam) : sa_fam(fam) {}
-    stcp_sockaddr(const stcp_sockaddr& rhs)
-    {
-        sa_len = rhs.sa_len;
-        sa_fam = rhs.sa_fam;
-        memcpy(sa_data, rhs.sa_data, sizeof(sa_data));
-    }
-
-    bool operator==(const stcp_sockaddr& rhs) const;
-    bool operator!=(const stcp_sockaddr& rhs) const { return !(*this == rhs); }
-    stcp_sockaddr& operator=(const stcp_sockaddr& rhs)
-    {
-        sa_len = rhs.sa_len;
-        sa_fam = rhs.sa_fam;
-        memcpy(sa_data, rhs.sa_data, sizeof(sa_data));
-        return *this;
-    }
-
-    void inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
-    void inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6);
-
-    friend bool operator==(const stcp_sockaddr& sa, const stcp_ether_addr& addr);
-    friend bool operator!=(const stcp_sockaddr& sa, const stcp_ether_addr& addr);
-    friend bool operator==(const stcp_sockaddr& sa, const stcp_in_addr& addr);
-    friend bool operator!=(const stcp_sockaddr& sa, const stcp_in_addr& addr);
-
-    const char* c_str() const;
-};
 
 
 struct stcp_in_addr {
 public:
     static const size_t addrlen = sizeof(uint8_t)*4;
-    static const stcp_in_addr broadcast;
-    static const stcp_in_addr zero;
+    static const stcp_in_addr broadcast; // init in stcp.cc
+    static const stcp_in_addr zero;      // init in stcp.cc
 
 public:
     uint8_t addr_bytes[4];
@@ -193,6 +159,78 @@ public:
     }
 };
 
+
+struct stcp_sockaddr {
+	uint8_t         sa_len;       /* total length */
+	stcp_sa_family  sa_fam;	      /* address family */
+	uint8_t         sa_data[14];  /* actually longer; address value */
+
+public:
+    stcp_sockaddr() = delete;
+    stcp_sockaddr(stcp_sa_family fam) : sa_fam(fam) {}
+    stcp_sockaddr(const stcp_sockaddr& rhs)
+    {
+        sa_len = rhs.sa_len;
+        sa_fam = rhs.sa_fam;
+        memcpy(sa_data, rhs.sa_data, sizeof(sa_data));
+    }
+
+    bool operator==(const stcp_sockaddr& rhs) const
+    {
+        if (sa_fam != rhs.sa_fam)
+            return false;
+
+        switch (sa_fam) {
+            case STCP_AF_LINK:
+            {
+                for (size_t i=0; i<stcp_ether_addr::addrlen; i++) {
+                    if (sa_data[i] != rhs.sa_data[i])
+                        return false;
+                }
+                return true;
+                break;
+            }
+            case STCP_AF_INET:
+            {
+                for (size_t i=0; i<stcp_in_addr::addrlen; i++) {
+                    if (sa_data[i] != rhs.sa_data[i])
+                        return false;
+                }
+                return true;
+                break;
+            }
+            default:
+            {
+                throw exception("sorry not impl yet");
+                break;
+            }
+        }
+    }
+    bool operator!=(const stcp_sockaddr& rhs) const { return !(*this == rhs); }
+    stcp_sockaddr& operator=(const stcp_sockaddr& rhs)
+    {
+        sa_len = rhs.sa_len;
+        sa_fam = rhs.sa_fam;
+        memcpy(sa_data, rhs.sa_data, sizeof(sa_data));
+        return *this;
+    }
+
+    void inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
+    void inet_hwaddr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o5, uint8_t o6)
+    {
+        sa_fam = STCP_AF_LINK;
+        sa_data[0] = o1;
+        sa_data[1] = o2;
+        sa_data[2] = o3;
+        sa_data[3] = o4;
+        sa_data[4] = o5;
+        sa_data[5] = o6;
+    }
+
+    const char* c_str() const;
+};
+
+
 struct stcp_sockaddr_in {
 	uint8_t	            sin_len;
 	stcp_sa_family      sin_fam;
@@ -223,9 +261,60 @@ public:
         sin_addr = rhs.sin_addr;
         return *this;
     }
-    const char* c_str() const;
-    void inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4);
+    const char* c_str() const
+    {
+        static char str[32];
+        const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(this);
+        sprintf(str, "%d.%d.%d.%d",
+                sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1],
+                sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
+        return str;
+    }
+    void inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
+    {
+        sin_addr.set(o1, o2, o3, o4);
+    }
 };
+
+inline void stcp_sockaddr::inet_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4)
+{
+    stcp_sockaddr_in* sin = reinterpret_cast<stcp_sockaddr_in*>(this);
+    sin->sin_fam = STCP_AF_INET;
+    sin->sin_addr.set(o1, o2, o3, o4);
+}
+
+
+inline const char* stcp_sockaddr::c_str() const
+{
+    static char str[32];
+    switch (sa_fam) {
+        case STCP_AF_LINK:
+            {
+                sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x",
+                        sa_data[0], sa_data[1],
+                        sa_data[2], sa_data[3],
+                        sa_data[4], sa_data[5]);
+                break;
+            }
+        case STCP_AF_INET:
+            {
+                const stcp_sockaddr_in* sin = reinterpret_cast<const stcp_sockaddr_in*>(this);
+                sprintf(str, "%d.%d.%d.%d",
+                        sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1],
+                        sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
+                break;
+            }
+        default:
+            {
+                std::string errstr = "Address Family is not supported ";
+                errstr += std::to_string(sa_fam);
+                throw exception(errstr.c_str());
+                break;
+            }
+    }
+    return str;
+}
+
 
 
 

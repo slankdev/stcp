@@ -8,10 +8,10 @@
 
 #include <stcp/config.h>
 #include <stcp/ifnet.h>
-#include <stcp/dpdk.h>
 #include <stcp/stcp.h>
 #include <stcp/socket.h>
 #include <stcp/arch/dpdk/rte.h>
+#include <stcp/arch/dpdk/dpdk.h>
 
 
 
@@ -29,7 +29,7 @@ void ifnet::init()
     dpdk_core& d = core::dpdk;
     for (uint16_t ring=0; ring<num_rx_rings; ring++) {
         rte::eth_rx_queue_setup(port_id, ring, rx_ring_size,
-                rte::eth_dev_socket_id(port_id), NULL, d.get_mempool());
+                rte::eth_dev_socket_id(port_id), NULL, d.mempool);
     }
     for (uint16_t ring=0; ring<num_tx_rings; ring++) {
         rte::eth_tx_queue_setup(port_id, ring, tx_ring_size,
