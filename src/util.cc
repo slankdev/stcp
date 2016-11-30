@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stcp/util.h>
+#include <stcp/tcp.h>
 
 namespace slank {
 
@@ -40,6 +41,48 @@ uint16_t timediff_ms(uint64_t before, uint64_t after)
     uint64_t hz = rte::get_tsc_hz();
     return (after-before) * 1000 / hz;
 }
+
+uint16_t ipv4_udptcp_cksum(stcp_ip_header* ih, const void* th)
+{
+    return rte_ipv4_udptcp_cksum(
+        reinterpret_cast<ipv4_hdr*>(ih), th);
+}
+
+uint64_t rand()
+{
+    return rte::rand();
+}
+
+void srand(uint64_t seedval)
+{
+    rte::srand(seedval);
+}
+
+uint64_t rdtsc()
+{
+    return rte_rdtsc();
+}
+
+uint64_t tsc_hz()
+{
+    return rte_get_tsc_hz();
+}
+
+void* malloc(const char* type, size_t size)
+{
+    return rte::malloc(type, size, 0);
+}
+void free(void *ptr)
+{
+    rte::free(ptr);
+}
+
+void *memcpy (void *dst, const void *src, size_t n)
+{
+    return rte::memcpy(dst, src, n);
+}
+
+
 
 
 } /* namespace slank */

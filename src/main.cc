@@ -54,7 +54,7 @@ int user_main1(void* arg)
                 fds.push_back(csock);
             } else if (fds[i]->readable()) {
                 mbuf* msg = fds[i]->read();
-                rte::pktmbuf_dump(stdout, msg, rte::pktmbuf_pkt_len(msg));
+                mbuf_dump(stdout, msg, mbuf_pkt_len(msg));
                 fds[i]->write(msg);
             } else if (fds[i]->sockdead()) {
                 core::destroy_tcp_socket(fds[i]);

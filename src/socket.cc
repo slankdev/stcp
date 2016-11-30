@@ -3,7 +3,6 @@
 
 #include <stcp/ifnet.h>
 #include <stcp/dpdk.h>
-#include <stcp/rte.h>
 #include <stcp/stcp.h>
 #include <stcp/socket.h>
 

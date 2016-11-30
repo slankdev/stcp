@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <stcp/dpdk.h>
+#include <stcp/arch/dpdk/dpdk.h>
 
 
 namespace slank {

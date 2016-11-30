@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <stcp/rte.h>
+#include <stcp/arch/dpdk/rte.h>
 #include <queue>
 #include <mutex>
 #include <stdio.h>

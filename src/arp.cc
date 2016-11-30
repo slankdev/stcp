@@ -3,12 +3,9 @@
 
 #include <stcp/arp.h>
 #include <stcp/config.h>
-#include <stcp/dpdk.h>
-#include <stcp/rte.h>
 #include <stcp/stcp.h>
 #include <stcp/util.h>
 
-#include <pgen2.h>
 
 
 namespace slank {
@@ -21,7 +18,7 @@ void arp_module::rx_push(mbuf* msg)
 {
     rx_cnt++;
 
-    struct stcp_arphdr* ah  = rte::pktmbuf_mtod<struct stcp_arphdr*>(msg);
+    struct stcp_arphdr* ah  = mbuf_mtod<struct stcp_arphdr*>(msg);
     uint8_t port = msg->port;
 
     if (ah->operation == hton16(ARPOP_REPLY)) {
@@ -41,7 +38,7 @@ void arp_module::rx_push(mbuf* msg)
 
         stcp_arpreq req(&sa_pa, &sa_ha, port);
         ioctl_siocaarpent(&req);
-        rte::pktmbuf_free(msg);
+        mbuf_free(msg);
 
     } else if (ah->operation == hton16(ARPOP_REQUEST)) {
         if (core::is_request_to_me(ah, port)) { // TODO
@@ -50,12 +47,12 @@ void arp_module::rx_push(mbuf* msg)
              * Reply ARP-Reply Packet
              */
 
-            mbuf* msg = rte::pktmbuf_alloc(core::dpdk.get_mempool());
+            mbuf* msg = mbuf_alloc(core::dpdk.get_mempool());
             msg->data_len = sizeof(stcp_arphdr);
             msg->pkt_len  = sizeof(stcp_arphdr);
             msg->port = port;
 
-            stcp_arphdr* rep_ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
+            stcp_arphdr* rep_ah = mbuf_mtod<stcp_arphdr*>(msg);
             rep_ah->hwtype = hton16(0x0001);
             rep_ah->ptype  = hton16(0x0800);
             rep_ah->hwlen  = static_cast<uint8_t>(stcp_ether_addr::addrlen);
@@ -69,7 +66,7 @@ void arp_module::rx_push(mbuf* msg)
             msg->port = port;
             tx_push(msg);
         } else {
-            rte::pktmbuf_free(msg);
+            mbuf_free(msg);
         }
     }
 }
@@ -232,12 +229,12 @@ bool arp_module::arp_resolv(
 
 void arp_module::arp_request(uint8_t port, const stcp_in_addr* tip)
 {
-    mbuf* msg = rte::pktmbuf_alloc(core::dpdk.get_mempool());
+    mbuf* msg = mbuf_alloc(core::dpdk.get_mempool());
     msg->data_len = sizeof(stcp_arphdr);
     msg->pkt_len  = sizeof(stcp_arphdr);
     msg->port = port;
 
-    stcp_arphdr* req_ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
+    stcp_arphdr* req_ah = mbuf_mtod<stcp_arphdr*>(msg);
     req_ah->hwtype = hton16(0x0001);
 	req_ah->ptype  = hton16(0x0800);
 	req_ah->hwlen  = static_cast<uint8_t>(stcp_ether_addr::addrlen);

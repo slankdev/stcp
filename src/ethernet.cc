@@ -1,10 +1,10 @@
 
 
-#include <stcp/rte.h>
 #include <stcp/stcp.h>
 #include <stcp/ethernet.h>
 #include <stcp/util.h>
 #include <string>
+#include <stcp/mbuf.h>
 
 namespace slank {
 
@@ -48,7 +48,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
         }
         case STCP_AF_ARP:
         {
-            stcp_arphdr* ah = rte::pktmbuf_mtod<stcp_arphdr*>(msg);
+            stcp_arphdr* ah = mbuf_mtod<stcp_arphdr*>(msg);
             switch(ntoh16(ah->operation)) {
                 case ARPOP_REQUEST:
                 case ARPOP_REPLY:
@@ -68,7 +68,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
             if (ah->hwdst == stcp_ether_addr::zero || ah->hwdst == stcp_ether_addr::broadcast) {
                 ether_dst = stcp_ether_addr::broadcast;
             } else {
-                memcpy(&ether_dst, &ah->hwdst, sizeof ether_dst);
+                slank::memcpy(&ether_dst, &ah->hwdst, sizeof ether_dst);
             }
 
             break;
@@ -109,7 +109,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
 void ether_module::rx_push(mbuf* msg)
 {
     rx_cnt++;
-    stcp_ether_header* eh = rte::pktmbuf_mtod<stcp_ether_header*>(msg);
+    stcp_ether_header* eh = mbuf_mtod<stcp_ether_header*>(msg);
     uint16_t etype = ntoh16(eh->type);
     mbuf_pull(msg, sizeof(stcp_ether_header));
 
@@ -126,7 +126,7 @@ void ether_module::rx_push(mbuf* msg)
         }
         default:
         {
-            rte::pktmbuf_free(msg);
+            mbuf_free(msg);
             break;
         }
     }

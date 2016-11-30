@@ -52,7 +52,7 @@ void stcp_udp_sock::bind(const stcp_sockaddr_in* a)
 void udp_module::tx_push(mbuf* msg,
         const stcp_sockaddr_in* dst, uint16_t srcp)
 {
-    uint16_t udplen = rte::pktmbuf_pkt_len(msg);
+    uint16_t udplen = mbuf_pkt_len(msg);
 
     stcp_udp_header* uh =
         reinterpret_cast<stcp_udp_header*>(mbuf_push(msg, sizeof(stcp_udp_header)));
@@ -68,8 +68,7 @@ void udp_module::tx_push(mbuf* msg,
 
 void udp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
 {
-    stcp_udp_header* uh
-        = rte::pktmbuf_mtod<stcp_udp_header*>(msg);
+    stcp_udp_header* uh = mbuf_mtod<stcp_udp_header*>(msg);
     rx_cnt++;
 
     uint16_t dst_port = uh->dport;

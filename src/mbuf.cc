@@ -23,6 +23,11 @@ void* mbuf_push(mbuf* msg, size_t len)
     return (void*)p;
 }
 
+mbuf* mbuf_alloc(rte_mempool* mp)
+{
+    return rte::pktmbuf_alloc(mp);
+}
+
 void mbuf_free(mbuf* m)
 {
     rte::pktmbuf_free(m);
@@ -46,6 +51,11 @@ size_t mbuf_data_len(mbuf* m)
 void mbuf_trim(mbuf* m, uint16_t len)
 {
     rte::pktmbuf_trim(m, len);
+}
+
+void mbuf_dump(FILE* f,const mbuf* m, unsigned dump_len)
+{
+    rte::pktmbuf_dump(f, m, dump_len);
 }
 
 

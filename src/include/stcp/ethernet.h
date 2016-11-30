@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <stcp/rte.h>
 #include <stcp/config.h>
 #include <stcp/socket.h>
 #include <stcp/mbuf.h>

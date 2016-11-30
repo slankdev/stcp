@@ -2,13 +2,13 @@
 
 
 
-#include <stcp/rte.h>
 #include <stcp/ip.h>
 #include <stcp/ethernet.h>
 #include <stcp/socket.h>
 #include <stcp/util.h>
 #include <stcp/stcp.h>
 #include <stcp/icmp.h>
+#include <stcp/util.h>
 
 namespace slank {
 
@@ -20,7 +20,7 @@ void ip_module::init()
     uint32_t bucket_num     = max_flow_num;
     uint32_t bucket_entries = 16; // TODO hardcode
     uint32_t max_entries    = max_flow_num;
-    uint64_t max_cycles     = (rte_get_tsc_hz() + MS_PER_S - 1) / MS_PER_S * MS_PER_S;
+    uint64_t max_cycles     = (tsc_hz() + MS_PER_S - 1) / MS_PER_S * MS_PER_S;
 
     frag_tbl = rte_ip_frag_table_create(
             bucket_num,
@@ -33,7 +33,7 @@ void ip_module::init()
         throw exception("rte_ip_frag_table_create");
     }
 
-    rte::srand(time(NULL));
+    srand(time(NULL));
 }
 
 
@@ -47,14 +47,14 @@ void ip_module::rx_push(mbuf* msg)
 {
     rx_cnt++;
     stcp_ip_header* ih
-        = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
+        = mbuf_mtod<stcp_ip_header*>(msg);
 
-    size_t trailer_len = rte::pktmbuf_data_len(msg) - ntoh16(ih->total_length);
-    rte::pktmbuf_trim(msg, trailer_len);
+    size_t trailer_len = mbuf_data_len(msg) - ntoh16(ih->total_length);
+    mbuf_trim(msg, trailer_len);
 
     if (myip != ih->dst && stcp_in_addr::broadcast != ih->dst) {
         not_to_me++;
-        rte::pktmbuf_free(msg);
+        mbuf_free(msg);
         return;
     }
 
@@ -64,7 +64,7 @@ void ip_module::rx_push(mbuf* msg)
         msg->l2_len = sizeof(stcp_ether_header);
         msg->l3_len = sizeof(stcp_ip_header);
         mbuf* reasmd_msg = rte::ipv4_frag_reassemble_packet(
-                frag_tbl, &dr, msg, rte_rdtsc(),
+                frag_tbl, &dr, msg, rdtsc(),
                 reinterpret_cast<struct ipv4_hdr*>(ih));
 
         if (reasmd_msg == NULL) {
@@ -73,7 +73,7 @@ void ip_module::rx_push(mbuf* msg)
         msg = reasmd_msg;
 
         mbuf_pull(msg, sizeof(stcp_ether_header));
-        ih = rte::pktmbuf_mtod<stcp_ip_header*>(msg);
+        ih = mbuf_mtod<stcp_ip_header*>(msg);
     }
 
     mbuf_pull(msg, sizeof(stcp_ip_header));
@@ -262,10 +262,10 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
 
     ih->version_ihl       = 0x45;
     ih->type_of_service   = 0x00;
-    ih->total_length      = hton16(rte::pktmbuf_pkt_len(msg));
-    ih->packet_id         = hton16(rte::rand() % 0xffff);
+    ih->total_length      = hton16(mbuf_pkt_len(msg));
+    ih->packet_id         = hton16(rand() % 0xffff);
 
-    if (rte::pktmbuf_pkt_len(msg) > core::dpdk.ipv4_mtu_default) {
+    if (mbuf_pkt_len(msg) > core::dpdk.ipv4_mtu_default) {
         ih->fragment_offset = hton16(0x0000);
     } else {
         ih->fragment_offset   = hton16(0x4000);
@@ -292,14 +292,14 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
     next.sin_fam = STCP_AF_INET;
 
     if (nb > 1) { /* packet was fragmented */
-        rte::pktmbuf_free(msg);
+        mbuf_free(msg);
 
         if (ip_module::num_max_fragment < nb) {
             throw exception("Too Fragment maybe overflow");
         }
         for (size_t i=0; i<nb; i++) {
 
-            stcp_ip_header* iph = rte::pktmbuf_mtod<stcp_ip_header*>(msgs[i]);
+            stcp_ip_header* iph = mbuf_mtod<stcp_ip_header*>(msgs[i]);
             iph->hdr_checksum = rte_ipv4_cksum(reinterpret_cast<const struct ipv4_hdr*>(iph));
 
             msgs[i]->port = port;

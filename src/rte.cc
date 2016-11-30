@@ -19,7 +19,7 @@
 #include <rte_hexdump.h>
 #include <rte_ip.h>
 
-#include <stcp/rte.h>
+#include <stcp/arch/dpdk/rte.h>
 #include <stcp/stcp.h>
 
 

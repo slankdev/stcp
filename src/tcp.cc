@@ -18,8 +18,7 @@ static tcpip* mtod_tih(mbuf* msg)
 }
 static uint16_t cksum_tih(tcpip* tih)
 {
-    return rte_ipv4_udptcp_cksum(
-        reinterpret_cast<ipv4_hdr*>(&tih->ip), &tih->tcp);
+    return ipv4_udptcp_cksum(&tih->ip, &tih->tcp);
 }
 static uint16_t data_len(const tcpip* tih)
 {
@@ -538,7 +537,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
         stcp_tcp_sock* newsock = alloc_new_sock_connected(
                 TCPS_SYN_RCVD,
                 port, tih->tcp.sport,
-                rte::rand() % 0xffffffff,
+                rand() % 0xffffffff,
                 hton32(tih->tcp.seq),
                 this);
         num_connected ++;

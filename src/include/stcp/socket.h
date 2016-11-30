@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stcp/config.h>
-#include <stcp/rte.h>
 
 
 
