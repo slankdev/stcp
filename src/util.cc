@@ -35,5 +35,11 @@ uint16_t checksum(const void* data, size_t len) noexcept
     return ~sum;
 }
 
+uint16_t timediff_ms(uint64_t before, uint64_t after)
+{
+    uint64_t hz = rte::get_tsc_hz();
+    return (after-before) * 1000 / hz;
+}
+
 
 } /* namespace slank */

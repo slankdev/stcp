@@ -15,5 +15,6 @@ inline uint16_t hton16(uint16_t n) noexcept {return rte::bswap16(n);}
 
 uint16_t checksum(const void* data, size_t len) noexcept;
 
+uint16_t timediff_ms(uint64_t before, uint64_t after);
 
 } /* namespace slank */
