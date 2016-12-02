@@ -28,7 +28,6 @@ int user_main2(void* arg)
 #endif
 
 
-// TODO #21
 int user_main1(void* arg)
 {
     UNUSED(arg);
@@ -75,7 +74,7 @@ int main(int argc, char** argv)
     core::set_ip_addr(192, 168, 222, 10, 24);
     core::set_default_gw(192, 168, 222, 1, 0);
 
-    core::set_app(user_main1, NULL); // TODO #21
-    // core::set_app(user_main2, NULL); // TODO #21
+    core::set_app(user_main1, NULL);
+    // core::set_app(user_main2, NULL);
     core::run();
 }

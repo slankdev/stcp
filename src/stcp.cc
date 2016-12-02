@@ -42,7 +42,6 @@ static int usrapp_wrap(void* arg)
 
 
 
-// TODO #21
 void core::set_app(stcp_usrapp func_ptr, void* func_arg)
 {
     static uint32_t c = 0; // TODO hardcode
@@ -248,15 +247,9 @@ void core::ifs_proc()
     }
 }
 
-/*
- * TODO #21 Modify core::run() to launch user application
- */
 void core::run()
 {
 
-    /*
-     * TODO #21 Launch user app.
-     */
     for (stcp_usrapp_info& app : lapps) {
         rte::eal_remote_launch(
                 usrapp_wrap, reinterpret_cast<void*>(&app), app.lcore_id);

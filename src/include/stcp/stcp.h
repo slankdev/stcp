@@ -84,7 +84,7 @@ private:
 public:
     static void init(int argc, char** argv);
     static void add_cyclic(stcp_cyclic_func* f);
-    static void run(); // TODO #21 modify to launch userapplication
+    static void run();
 
 private:
     static void ifs_proc();
@@ -98,7 +98,7 @@ public:
     static void set_default_gw(
             uint8_t o1, uint8_t o2, uint8_t o3,
             uint8_t o4, uint8_t port);
-    static void set_app(stcp_usrapp func_ptr, void* func_arg); // TODO #21
+    static void set_app(stcp_usrapp func_ptr, void* func_arg);
 
     /*
      * TODO XXX Not Support Multi Interface
