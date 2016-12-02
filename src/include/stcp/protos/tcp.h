@@ -265,7 +265,11 @@ class tcp_module {
 private:
     static size_t mss;
     mempool* mp;
+#if 1
     std::vector<stcp_tcp_sock*> socks;
+#else
+    std::vector<stcp_tcp_sock> socks;
+#endif
 
 public:
     tcp_module() : mp(nullptr) {}
