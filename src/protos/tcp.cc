@@ -62,6 +62,15 @@ static const char* tcpstate2str(tcpstate state)
         default:               return "UNKNOWN";
     }
 }
+static const char* sockstate2str(socketstate state)
+{
+    switch (state) {
+        case SOCKS_USE :    return "USE";
+        case SOCKS_UNUSE:   return "UNUSE";
+        case SOCKS_WAITACCEPT: return "WAITACCEPT";
+        default:            return "UNKNOWN";
+    }
+}
 
 
 void tcp_module::init()
@@ -87,10 +96,8 @@ void tcp_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst)
 
 
 stcp_tcp_sock::stcp_tcp_sock() :
-    accepted(false),
-    dead(false),
     head(nullptr),
-    num_connected(0),
+    wait_accept_count(0),
     sock_state(SOCKS_UNUSE),
     tcp_state(TCPS_CLOSED),
     port(0),
@@ -104,10 +111,8 @@ stcp_tcp_sock::stcp_tcp_sock() :
 void stcp_tcp_sock::init()
 {
     DEBUG("[%15p] SOCK INIT \n", this);
-    accepted = false;
-    dead = false;
     head = nullptr;
-    num_connected = 0;
+    wait_accept_count = 0;
     sock_state = SOCKS_UNUSE;
     tcp_state  = TCPS_CLOSED;
     port = 0;
@@ -116,13 +121,20 @@ void stcp_tcp_sock::init()
     si.irs_H(0);
 }
 
+void stcp_tcp_sock::term()
+{
+    while (!rxq.empty()) {
+        mbuf_free(rxq.pop());
+    }
+    while (!txq.empty()) {
+        mbuf_free(txq.pop());
+    }
+}
+
 
 stcp_tcp_sock::~stcp_tcp_sock()
 {
     DEBUG("[%15p] SOCK DESTRUCTOR \n", this);
-    if (head) {
-        head->num_connected --;
-    }
 }
 
 
@@ -162,14 +174,16 @@ stcp_tcp_sock* stcp_tcp_sock::accept(struct stcp_sockaddr_in* addr)
 {
     UNUSED(addr);
 
-    while (wait_accept.size() == 0) ;
-
-    /*
-     * Dequeue wait_accept and return that.
-     */
-    stcp_tcp_sock* sock = wait_accept.pop();
-    DEBUG("[%15p] ACCEPT return new socket [%p]\n", this, sock);
-    return sock;
+    for (;;) {
+        for (stcp_tcp_sock& s : core::tcp.socks) {
+            if ((s.head == this) && (s.sock_state == SOCKS_WAITACCEPT)) {
+                DEBUG("[%15p] ACCEPT return new socket [%p]\n", this, &s);
+                s.sock_state = SOCKS_USE;
+                wait_accept_count--;
+                return &s;
+            }
+        }
+    }
 }
 
 
@@ -235,7 +249,7 @@ void stcp_tcp_sock::bind(const struct stcp_sockaddr_in* addr, size_t addrlen)
 void stcp_tcp_sock::listen(size_t backlog)
 {
     if (backlog < 1) throw exception("OKASHII1944");
-    num_connected = 0;
+    wait_accept_count = 0;
     max_connect   = backlog;
     move_state(TCPS_LISTEN);
 }
@@ -292,6 +306,9 @@ void stcp_tcp_sock::move_state(tcpstate next_state)
         default:
             throw exception("invalid tcp sock state");
             break;
+    }
+    if (next_state == TCPS_CLOSED) {
+        sock_state = SOCKS_UNUSE;
     }
 }
 
@@ -408,7 +425,6 @@ void stcp_tcp_sock::move_state_from_LAST_ACK(tcpstate next_state)
     switch (next_state) {
         case TCPS_CLOSED:
             tcp_state = next_state;
-            dead = true;
             break;
         default:
             throw exception("invalid state-change");
@@ -420,7 +436,6 @@ void stcp_tcp_sock::move_state_from_TIME_WAIT(tcpstate next_state)
     switch (next_state) {
         case TCPS_CLOSED:
             tcp_state = next_state;
-            dead = true;
             break;
         default:
             throw exception("invalid state-change");
@@ -540,14 +555,14 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
          */
         stcp_tcp_sock* newsock = core::create_tcp_socket();
         newsock->tcp_state = TCPS_SYN_RCVD;
+        newsock->sock_state = SOCKS_WAITACCEPT;
         newsock->port      = port;
         newsock->pair_port = tih->tcp.sport;
         newsock->si.iss_H(rand() % 0xffffffff);
         newsock->si.irs_N(tih->tcp.seq);
         newsock->head = this;
 
-        num_connected ++;
-        wait_accept.push(newsock);
+        wait_accept_count ++;
 
         newsock->addr.sin_addr = tih->ip.dst;
         newsock->pair.sin_addr = tih->ip.src;
@@ -1081,52 +1096,36 @@ bool stcp_tcp_sock::rx_push_ES_finchk(mbuf* msg, stcp_sockaddr_in* src)
 void stcp_tcp_sock::print_stat() const
 {
     stat& s = stat::instance();
-    s.write("\t%u/tcp state=%s[this=%p] rx/tx=%zd/%zd %u/%u %u",
-            ntoh16(port),
-            tcpstate2str(tcp_state), this,
-            rxq.size(), txq.size(),
-            si.snd_nxt_H(), si.rcv_nxt_H(),
-            ntoh16(pair_port));
+    s.write("\tsock/tcp=%s/%s [this=%p]",
+            sockstate2str(sock_state),
+            tcpstate2str(tcp_state),
+            this);
 
-#if 0
-    switch (state) {
-#if 0
+    switch (tcp_state) {
         case TCPS_LISTEN:
-            s.write("\t - socket alloced %zd/%zd", num_connected, max_connect);
-            s.write("\n\n\n");
-            break;
-        case TCPS_CLOSED:
-            s.write("\n\n\n");
-            break;
-        default:
-            s.write("\n\n\n");
-            break;
-#endif
-        case TCPS_LISTEN:
-            s.write("\t - socket alloced %zd/%zd", num_connected, max_connect);
+            s.write("\t - local  port: %u", ntoh16(port));
+            s.write("\t - wait accept count: %zd", wait_accept_count);
             break;
         case TCPS_ESTABLISHED:
-            s.write("\t - iss    : %u", iss    );
-            // s.write("\t - snd_una: %u", snd_una);
-            s.write("\t - snd_nxt: %u", snd_nxt);
-            // s.write("\t - snd_win: %u", snd_win);
-            // s.write("\t - snd_up : %u", snd_up );
-            // s.write("\t - snd_wl1: %u", snd_wl1);
-            // s.write("\t - snd_wl2: %u", snd_wl2);
-            s.write("\t - irs    : %u", irs    );
-            s.write("\t - rcv_nxt: %u", rcv_nxt);
-            // s.write("\t - rcv_wnd: %u", rcv_wnd);
-            // s.write("\t - rcv_up : %u", rcv_up );
-            s.write("\t - port/pair_port: %u/%u",
-                    ntoh16(port),
-                    ntoh16(pair_port));
-            s.write("\t - addr: %s", addr.c_str());
-            s.write("\t - pair: %s", pair.c_str());
+            s.write("\t - local : %s:%u", addr.c_str(), ntoh16(port)     );
+            s.write("\t - remote: %s:%u", pair.c_str(), ntoh16(pair_port));
+            s.write("\t - txq/rxq: %zd/%zd",rxq.size(), txq.size());
+            s.write("\t - stream info");
+            s.write("\t   - iss    : %u", si.iss_H());
+            s.write("\t   - snd_una: %u", si.snd_una_H());
+            s.write("\t   - snd_nxt: %u", si.snd_nxt_H());
+            s.write("\t   - snd_win: %u", si.snd_win_H());
+            // s.write("\t - snd_up : %u", si.snd_up_H() );
+            s.write("\t   - snd_wl1: %u", si.snd_wl1_H());
+            s.write("\t   - snd_wl2: %u", si.snd_wl2_H());
+            s.write("\t   - irs    : %u", si.irs_H()    );
+            s.write("\t   - rcv_nxt: %u", si.rcv_nxt_H());
+            s.write("\t   - rcv_wnd: %u", si.rcv_win_H());
+            // s.write("\t - rcv_up : %u", si.rcv_up_H() );
             break;
         default:
             break;
     }
-#endif
 }
 
 
@@ -1142,6 +1141,8 @@ void tcp_module::print_stat() const
     for (size_t i=0; i<socks.size(); i++) {
         socks[i].print_stat();
     }
+    s.write("\n\n\n\n");
+    s.write("\n\n\n\n");
 }
 
 

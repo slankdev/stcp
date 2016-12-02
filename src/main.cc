@@ -45,24 +45,22 @@ int user_main1(void* arg)
     fds.push_back(sock);
 
     while (true) {
-        // printf("[");
         for (size_t i=0; i<fds.size(); i++) {
-            // printf("%p, ", fds[i]);
             if (fds[i]->acceptable()) {
                 stcp_sockaddr_in caddr;
                 stcp_tcp_sock* csock = fds[i]->accept(&caddr);
                 fds.push_back(csock);
-            } else if (fds[i]->readable()) {
+            }
+            if (fds[i]->readable()) {
                 mbuf* msg = fds[i]->read();
                 mbuf_dump(stdout, msg, mbuf_pkt_len(msg));
                 fds[i]->write(msg);
-            } else if (fds[i]->sockdead()) {
+            }
+            if (fds[i]->sockdead()) {
                 core::destroy_tcp_socket(fds[i]);
                 fds.erase(fds.begin() + i);
-            } else {
             }
         }
-        // printf("]\n");
     }
     return 0;
 }

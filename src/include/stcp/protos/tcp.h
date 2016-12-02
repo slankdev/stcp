@@ -33,7 +33,7 @@ enum tcpflag : uint8_t {
 enum socketstate {
     SOCKS_USE,
     SOCKS_UNUSE,
-    // SOCKS_WAITACCEPT,
+    SOCKS_WAITACCEPT,
 };
 
 enum tcpstate {
@@ -183,19 +183,19 @@ public:
      * for polling infos
      */
     bool readable()   { return !rxq.empty(); }
-    bool acceptable() { return !wait_accept.empty(); }
-    bool sockdead()   { return dead; }
+    bool acceptable() { return wait_accept_count > 0; }
+    bool sockdead()   { return sock_state==SOCKS_UNUSE; }
 
 private:
-    bool accepted; // TODO ERASE
+#if 0
     bool dead;     // TODO ERASE
+#endif
     stcp_tcp_sock* head; // TODO rename to parent
-    queue_TS<stcp_tcp_sock*> wait_accept; //TODO ERASE
 
     queue_TS<mbuf*> rxq;
     queue_TS<mbuf*> txq;
 
-    size_t num_connected;
+    size_t wait_accept_count;
     size_t max_connect;
 
 private:
@@ -216,6 +216,7 @@ private:
 
 public:
     void init();
+    void term();
     stcp_tcp_sock();
     ~stcp_tcp_sock();
     void move_state(tcpstate next_state);
@@ -276,7 +277,7 @@ private:
     std::vector<stcp_tcp_sock> socks;
 
 public:
-    tcp_module() : mp(nullptr), socks(10) {}
+    tcp_module() : mp(nullptr), socks(5) {}
     void init();
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
     void tx_push(mbuf* msg, const stcp_sockaddr_in* dst);

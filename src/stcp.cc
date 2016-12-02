@@ -63,6 +63,7 @@ void core::set_app(stcp_usrapp func_ptr, void* func_arg)
 
 stcp_tcp_sock* core::create_tcp_socket()
 {
+    DEBUG("CREATE SOCK\n");
     for (stcp_tcp_sock& s : tcp.socks) {
         if (s.sock_state == SOCKS_UNUSE) {
             s.init();
@@ -79,6 +80,8 @@ stcp_tcp_sock* core::create_tcp_socket()
 
 void core::destroy_tcp_socket(stcp_tcp_sock* sock)
 {
+    DEBUG("DESTROY SOCK\n");
+    sock->term();
     sock->sock_state = SOCKS_UNUSE;
 }
 
