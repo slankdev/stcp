@@ -63,21 +63,23 @@ void core::set_app(stcp_usrapp func_ptr, void* func_arg)
 
 stcp_tcp_sock* core::create_tcp_socket()
 {
-    stcp_tcp_sock* s = new stcp_tcp_sock;
-    tcp.socks.push_back(s);
-    return s;
+    for (stcp_tcp_sock& s : tcp.socks) {
+        if (s.sock_state == SOCKS_UNUSE) {
+            s.init();
+            s.sock_state = SOCKS_USE;
+            return &s;
+        }
+    }
+
+    /*
+     * TODO reserve socks.
+     */
+    throw exception("NO SOCKET SPACE");
 }
 
 void core::destroy_tcp_socket(stcp_tcp_sock* sock)
 {
-    for (size_t i=0; i<tcp.socks.size(); i++) {
-        if (sock == tcp.socks[i]) {
-            tcp.socks.erase(tcp.socks.begin() + i);
-            delete sock;
-            return;
-        }
-    }
-    throw exception("OKASHIII");
+    sock->sock_state = SOCKS_UNUSE;
 }
 
 

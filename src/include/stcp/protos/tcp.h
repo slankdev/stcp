@@ -15,6 +15,7 @@
 namespace slank {
 
 
+
 enum tcpflag : uint8_t {
     TCPF_FIN  = 0x01<<0, /* 00000001 */
     TCPF_SYN  = 0x01<<1, /* 00000010 */
@@ -29,6 +30,11 @@ enum tcpflag : uint8_t {
 #endif
 };
 
+enum socketstate {
+    SOCKS_USE,
+    SOCKS_UNUSE,
+    // SOCKS_WAITACCEPT,
+};
 
 enum tcpstate {
     TCPS_CLOSED      = 0,
@@ -124,8 +130,10 @@ public:
     tcp_stream_info(uint32_t iss, uint32_t irs)
         : iss_(iss), irs_(irs), snd_win_(512) {}
 
-    void irs_N(uint32_t arg) { irs_ = arg; }
-    void irs_H(uint32_t arg) { irs_ = hton32(arg); }
+    void iss_H(uint32_t arg) { iss_ = arg; }
+    void iss_N(uint32_t arg) { iss_ = hton32(arg); }
+    void irs_H(uint32_t arg) { irs_ = arg; }
+    void irs_N(uint32_t arg) { irs_ = hton32(arg); }
 
     void snd_una_N(uint32_t arg)    { snd_una_ =  ntoh32(arg); }
     void snd_nxt_N(uint32_t arg)    { snd_nxt_ =  ntoh32(arg); }
@@ -169,6 +177,7 @@ public:
 
 class stcp_tcp_sock {
     friend class tcp_module;
+    friend class core;
 public:
     /*
      * for polling infos
@@ -178,10 +187,11 @@ public:
     bool sockdead()   { return dead; }
 
 private:
-    bool accepted;
-    bool dead;
-    stcp_tcp_sock* head;
-    queue_TS<stcp_tcp_sock*> wait_accept;
+    bool accepted; // TODO ERASE
+    bool dead;     // TODO ERASE
+    stcp_tcp_sock* head; // TODO rename to parent
+    queue_TS<stcp_tcp_sock*> wait_accept; //TODO ERASE
+
     queue_TS<mbuf*> rxq;
     queue_TS<mbuf*> txq;
 
@@ -189,7 +199,8 @@ private:
     size_t max_connect;
 
 private:
-    tcpstate state;
+    socketstate sock_state;
+    tcpstate    tcp_state;
     uint16_t port;      /* NetworkByteOrder */
     uint16_t pair_port; /* NetworkByteOrder */
     stcp_sockaddr_in addr;
@@ -198,20 +209,17 @@ private:
 
 private:
     void move_state_DEBUG(tcpstate next_state);
-    stcp_tcp_sock* alloc_new_sock_connected(tcpstate st, uint16_t lp, uint16_t rp,
-            uint32_t arg_iss, uint32_t arg_irs, stcp_tcp_sock* head);
 
     void proc();
     void print_stat() const;
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
 
 public:
+    void init();
     stcp_tcp_sock();
-    stcp_tcp_sock(tcpstate s, uint16_t lp, uint16_t rp,
-                        uint32_t arg_iss, uint32_t arg_irs, stcp_tcp_sock* h);
     ~stcp_tcp_sock();
     void move_state(tcpstate next_state);
-    tcpstate get_state() const { return state; }
+    tcpstate get_state() const { return tcp_state; }
 
 public:
     /*
@@ -265,14 +273,10 @@ class tcp_module {
 private:
     static size_t mss;
     mempool* mp;
-#if 1
-    std::vector<stcp_tcp_sock*> socks;
-#else
     std::vector<stcp_tcp_sock> socks;
-#endif
 
 public:
-    tcp_module() : mp(nullptr) {}
+    tcp_module() : mp(nullptr), socks(10) {}
     void init();
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
     void tx_push(mbuf* msg, const stcp_sockaddr_in* dst);

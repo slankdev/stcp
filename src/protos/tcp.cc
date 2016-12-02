@@ -91,31 +91,31 @@ stcp_tcp_sock::stcp_tcp_sock() :
     dead(false),
     head(nullptr),
     num_connected(0),
-    state(TCPS_CLOSED),
+    sock_state(SOCKS_UNUSE),
+    tcp_state(TCPS_CLOSED),
     port(0),
     pair_port(0),
     si(0, 0)
 {
     DEBUG("[%15p] SOCK CNSTRCTR \n", this);
+    init();
 }
 
-/*
- * Constructor for LISTEN socket
- */
-stcp_tcp_sock::stcp_tcp_sock(tcpstate s, uint16_t lp, uint16_t rp,
-            uint32_t arg_iss, uint32_t arg_irs, stcp_tcp_sock* h) :
-    accepted(false),
-    dead(false),
-    head(h),
-    num_connected(0),
-    state(s),
-    port(lp),
-    pair_port(rp),
-    si(arg_iss, arg_irs)
+void stcp_tcp_sock::init()
 {
-    DEBUG("[%15p] SOCK CNSTRCTR(%s,%u,%u,%u,%u,%p) \n",
-            this, tcpstate2str(state), port, pair_port, si.iss_H(), si.irs_H(), head);
+    DEBUG("[%15p] SOCK INIT \n", this);
+    accepted = false;
+    dead = false;
+    head = nullptr;
+    num_connected = 0;
+    sock_state = SOCKS_UNUSE;
+    tcp_state  = TCPS_CLOSED;
+    port = 0;
+    pair_port = 0;
+    si.iss_H(0);
+    si.irs_H(0);
 }
+
 
 stcp_tcp_sock::~stcp_tcp_sock()
 {
@@ -125,23 +125,13 @@ stcp_tcp_sock::~stcp_tcp_sock()
     }
 }
 
-stcp_tcp_sock* stcp_tcp_sock::alloc_new_sock_connected(tcpstate st,
-        uint16_t lp, uint16_t rp, uint32_t arg_iss, uint32_t arg_irs,
-        stcp_tcp_sock* head)
-{
-    stcp_tcp_sock* s = new stcp_tcp_sock(st, lp, rp, arg_iss, arg_irs, head);
-    core::tcp.socks.push_back(s);
-    return s;
-}
-
-
 
 
 void stcp_tcp_sock::write(mbuf* msg)
 {
-    if (state != TCPS_ESTABLISHED) {
+    if (tcp_state != TCPS_ESTABLISHED) {
         std::string errstr = "Not Open Port state=";
-        errstr += tcpstate2str(state);
+        errstr += tcpstate2str(tcp_state);
         throw exception(errstr.c_str());
     }
     txq.push(msg);
@@ -151,9 +141,9 @@ void stcp_tcp_sock::write(mbuf* msg)
 mbuf* stcp_tcp_sock::read()
 {
     while (rxq.size() == 0) {
-        if (state == TCPS_CLOSED) {
+        if (tcp_state == TCPS_CLOSED) {
             std::string errstr = "Not Open Port state=";
-            errstr += tcpstate2str(state);
+            errstr += tcpstate2str(tcp_state);
             throw exception(errstr.c_str());
         }
     }
@@ -232,7 +222,7 @@ void stcp_tcp_sock::proc()
 void tcp_module::proc()
 {
     for (size_t i=0; i<socks.size(); i++) {
-        socks[i]->proc();
+        socks[i].proc();
     }
 }
 
@@ -254,18 +244,18 @@ void stcp_tcp_sock::listen(size_t backlog)
 void stcp_tcp_sock::move_state_DEBUG(tcpstate next_state)
 {
     DEBUG("[%15p] %s -> %s (MOVE state debug) \n", this,
-            tcpstate2str(state),
+            tcpstate2str(tcp_state),
             tcpstate2str(next_state) );
-    state = next_state;
+    tcp_state = next_state;
 }
 
 void stcp_tcp_sock::move_state(tcpstate next_state)
 {
     DEBUG("[%15p] %s -> %s \n", this,
-            tcpstate2str(state),
+            tcpstate2str(tcp_state),
             tcpstate2str(next_state) );
 
-    switch (state) {
+    switch (tcp_state) {
         case TCPS_CLOSED     :
             move_state_from_CLOSED(next_state);
             break;
@@ -311,7 +301,7 @@ void stcp_tcp_sock::move_state_from_CLOSED(tcpstate next_state)
     switch (next_state) {
         case TCPS_LISTEN:
         case TCPS_SYN_SENT:
-            state = next_state;
+            tcp_state = next_state;
             break;
         default:
             throw exception("invalid state-change");
@@ -324,7 +314,7 @@ void stcp_tcp_sock::move_state_from_LISTEN(tcpstate next_state)
         case TCPS_CLOSED:
         case TCPS_SYN_SENT:
         case TCPS_SYN_RCVD:
-            state = next_state;
+            tcp_state = next_state;
             break;
         default:
             throw exception("invalid state-change");
@@ -337,7 +327,7 @@ void stcp_tcp_sock::move_state_from_SYN_SENT(tcpstate next_state)
         case TCPS_CLOSED:
         case TCPS_SYN_RCVD:
         case TCPS_ESTABLISHED:
-            state = next_state;
+            tcp_state = next_state;
             break;
         default:
             throw exception("invalid state-change");
@@ -349,7 +339,7 @@ void stcp_tcp_sock::move_state_from_SYN_RCVD(tcpstate next_state)
     switch (next_state) {
         case TCPS_ESTABLISHED:
         case TCPS_FIN_WAIT_1:
-            state = next_state;
+            tcp_state = next_state;
             break;
         default:
             throw exception("invalid state-change");
@@ -361,7 +351,7 @@ void stcp_tcp_sock::move_state_from_ESTABLISHED(tcpstate next_state)
     switch (next_state) {
         case TCPS_FIN_WAIT_1:
         case TCPS_CLOSE_WAIT:
-            state = next_state;
+            tcp_state = next_state;
             break;
         default:
             throw exception("invalid state-change");
@@ -373,7 +363,7 @@ void stcp_tcp_sock::move_state_from_FIN_WAIT_1(tcpstate next_state)
     switch (next_state) {
         case TCPS_CLOSING:
         case TCPS_FIN_WAIT_2:
-            state = next_state;
+            tcp_state = next_state;
             break;
         default:
             throw exception("invalid state-change");
@@ -384,7 +374,7 @@ void stcp_tcp_sock::move_state_from_FIN_WAIT_2(tcpstate next_state)
 {
     switch (next_state) {
         case TCPS_TIME_WAIT:
-            state = next_state;
+            tcp_state = next_state;
             break;
         default:
             throw exception("invalid state-change");
@@ -395,7 +385,7 @@ void stcp_tcp_sock::move_state_from_CLOSE_WAIT(tcpstate next_state)
 {
     switch (next_state) {
         case TCPS_LAST_ACK:
-            state = next_state;
+            tcp_state = next_state;
             break;
         default:
             throw exception("invalid state-change");
@@ -406,7 +396,7 @@ void stcp_tcp_sock::move_state_from_CLOSING(tcpstate next_state)
 {
     switch (next_state) {
         case TCPS_TIME_WAIT:
-            state = next_state;
+            tcp_state = next_state;
             break;
         default:
             throw exception("invalid state-change");
@@ -417,7 +407,7 @@ void stcp_tcp_sock::move_state_from_LAST_ACK(tcpstate next_state)
 {
     switch (next_state) {
         case TCPS_CLOSED:
-            state = next_state;
+            tcp_state = next_state;
             dead = true;
             break;
         default:
@@ -429,7 +419,7 @@ void stcp_tcp_sock::move_state_from_TIME_WAIT(tcpstate next_state)
 {
     switch (next_state) {
         case TCPS_CLOSED:
-            state = next_state;
+            tcp_state = next_state;
             dead = true;
             break;
         default:
@@ -459,7 +449,7 @@ void stcp_tcp_sock::rx_push(mbuf* msg,stcp_sockaddr_in* src)
         memset(buf, 0x00, tcpoplen);
     }
 
-    switch (state) {
+    switch (tcp_state) {
         case TCPS_CLOSED:
             rx_push_CLOSED(mbuf_clone(msg, core::tcp.mp), src);
             break;
@@ -548,12 +538,14 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
          *  - Priority Check
          * TODO: imple
          */
-        stcp_tcp_sock* newsock = alloc_new_sock_connected(
-                TCPS_SYN_RCVD,
-                port, tih->tcp.sport,
-                rand() % 0xffffffff,
-                hton32(tih->tcp.seq),
-                this);
+        stcp_tcp_sock* newsock = core::create_tcp_socket();
+        newsock->tcp_state = TCPS_SYN_RCVD;
+        newsock->port      = port;
+        newsock->pair_port = tih->tcp.sport;
+        newsock->si.iss_H(rand() % 0xffffffff);
+        newsock->si.irs_N(tih->tcp.seq);
+        newsock->head = this;
+
         num_connected ++;
         wait_accept.push(newsock);
 
@@ -709,7 +701,7 @@ bool stcp_tcp_sock::rx_push_ES_seqchk(mbuf* msg, stcp_sockaddr_in* src)
 {
     UNUSED(src);
     tcpip* tih = mtod_tih(msg);
-    switch (state) {
+    switch (tcp_state) {
 
         case TCPS_SYN_RCVD:
         case TCPS_ESTABLISHED:
@@ -775,7 +767,7 @@ bool stcp_tcp_sock::rx_push_ES_rstchk(mbuf* msg, stcp_sockaddr_in* src)
 {
     UNUSED(src);
     tcpip* tih = mtod_tih(msg);
-    switch (state) {
+    switch (tcp_state) {
         case TCPS_SYN_RCVD:
         {
             if (HAVE(tih, TCPF_RST)) {
@@ -831,7 +823,7 @@ bool stcp_tcp_sock::rx_push_ES_synchk(mbuf* msg, stcp_sockaddr_in* src)
 {
     UNUSED(src);
     tcpip* tih = mtod_tih(msg);
-    switch (state) {
+    switch (tcp_state) {
         case TCPS_SYN_RCVD:
         case TCPS_ESTABLISHED:
         case TCPS_FIN_WAIT_1:
@@ -868,7 +860,7 @@ bool stcp_tcp_sock::rx_push_ES_ackchk(mbuf* msg, stcp_sockaddr_in* src)
 {
     tcpip* tih = mtod_tih(msg);
     if (HAVE(tih, TCPF_ACK)) {
-        switch (state) {
+        switch (tcp_state) {
             case TCPS_SYN_RCVD:
             {
                 if (si.snd_una_H() <= ntoh32(tih->tcp.ack) &&
@@ -912,7 +904,7 @@ bool stcp_tcp_sock::rx_push_ES_ackchk(mbuf* msg, stcp_sockaddr_in* src)
                     }
                 }
 
-                if (state == TCPS_CLOSING) {
+                if (tcp_state == TCPS_CLOSING) {
                     if (si.snd_nxt_H() <= ntoh32(tih->tcp.ack)) {
                         move_state(TCPS_TIME_WAIT);
                     }
@@ -970,7 +962,7 @@ bool stcp_tcp_sock::rx_push_ES_textseg(mbuf* msg, stcp_sockaddr_in* src)
     tcpip* tih = mtod_tih(msg);
 
     if (data_len(tih) > 0) {
-        switch (state) {
+        switch (tcp_state) {
             case TCPS_ESTABLISHED:
             case TCPS_FIN_WAIT_1:
             case TCPS_FIN_WAIT_2:
@@ -1031,7 +1023,7 @@ bool stcp_tcp_sock::rx_push_ES_finchk(mbuf* msg, stcp_sockaddr_in* src)
     UNUSED(src);
     tcpip* tih = mtod_tih(msg);
     if (HAVE(tih, TCPF_FIN)) {
-        switch (state) {
+        switch (tcp_state) {
             case TCPS_CLOSED:
             case TCPS_LISTEN:
             case TCPS_SYN_SENT:
@@ -1067,7 +1059,7 @@ bool stcp_tcp_sock::rx_push_ES_finchk(mbuf* msg, stcp_sockaddr_in* src)
         tih->tcp.seq = si.snd_nxt_N();
         tih->tcp.ack = si.rcv_nxt_N();
 
-        if (state == TCPS_CLOSE_WAIT) {
+        if (tcp_state == TCPS_CLOSE_WAIT) {
             tih->tcp.flags = TCPF_ACK|TCPF_FIN;
             move_state(TCPS_LAST_ACK);
         } else {
@@ -1091,7 +1083,7 @@ void stcp_tcp_sock::print_stat() const
     stat& s = stat::instance();
     s.write("\t%u/tcp state=%s[this=%p] rx/tx=%zd/%zd %u/%u %u",
             ntoh16(port),
-            tcpstate2str(state), this,
+            tcpstate2str(tcp_state), this,
             rxq.size(), txq.size(),
             si.snd_nxt_H(), si.rcv_nxt_H(),
             ntoh16(pair_port));
@@ -1148,7 +1140,7 @@ void tcp_module::print_stat() const
         s.write("\tNetStat %zd ports", socks.size());
     }
     for (size_t i=0; i<socks.size(); i++) {
-        socks[i]->print_stat();
+        socks[i].print_stat();
     }
 }
 
@@ -1160,11 +1152,11 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
 
     bool find_socket = false;
     uint16_t dst_port = th->dport;
-    for (stcp_tcp_sock* sock : socks) {
-        if (sock->port == dst_port) {
+    for (stcp_tcp_sock& sock : socks) {
+        if (sock.port == dst_port) {
             mbuf* m = mbuf_clone(msg, core::tcp.mp);
             mbuf_push(m, sizeof(stcp_ip_header));
-            sock->rx_push(m, src);
+            sock.rx_push(m, src);
             find_socket = true;
         }
     }
