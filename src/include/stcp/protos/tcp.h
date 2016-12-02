@@ -187,10 +187,7 @@ public:
     bool sockdead()   { return sock_state==SOCKS_UNUSE; }
 
 private:
-#if 0
-    bool dead;     // TODO ERASE
-#endif
-    stcp_tcp_sock* head; // TODO rename to parent
+    stcp_tcp_sock* parent;
 
     queue_TS<mbuf*> rxq;
     queue_TS<mbuf*> txq;

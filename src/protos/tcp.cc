@@ -96,7 +96,7 @@ void tcp_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst)
 
 
 stcp_tcp_sock::stcp_tcp_sock() :
-    head(nullptr),
+    parent(nullptr),
     wait_accept_count(0),
     sock_state(SOCKS_UNUSE),
     tcp_state(TCPS_CLOSED),
@@ -111,7 +111,7 @@ stcp_tcp_sock::stcp_tcp_sock() :
 void stcp_tcp_sock::init()
 {
     DEBUG("[%15p] SOCK INIT \n", this);
-    head = nullptr;
+    parent = nullptr;
     wait_accept_count = 0;
     sock_state = SOCKS_UNUSE;
     tcp_state  = TCPS_CLOSED;
@@ -176,7 +176,7 @@ stcp_tcp_sock* stcp_tcp_sock::accept(struct stcp_sockaddr_in* addr)
 
     for (;;) {
         for (stcp_tcp_sock& s : core::tcp.socks) {
-            if ((s.head == this) && (s.sock_state == SOCKS_WAITACCEPT)) {
+            if ((s.parent == this) && (s.sock_state == SOCKS_WAITACCEPT)) {
                 DEBUG("[%15p] ACCEPT return new socket [%p]\n", this, &s);
                 s.sock_state = SOCKS_USE;
                 wait_accept_count--;
@@ -560,7 +560,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
         newsock->pair_port = tih->tcp.sport;
         newsock->si.iss_H(rand() % 0xffffffff);
         newsock->si.irs_N(tih->tcp.seq);
-        newsock->head = this;
+        newsock->parent = this;
 
         wait_accept_count ++;
 
