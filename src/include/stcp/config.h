@@ -11,9 +11,14 @@
 
 namespace slank {
 
-#define DEBUG(...) \
-    printf("%-10s:%4d: ", __FILE__, __LINE__); \
+#define DEBUG
+#ifdef DEBUG
+#define DPRINT(...) \
+    printf("%-15s:%4d: ", __FILE__, __LINE__); \
     printf(__VA_ARGS__)
+#else
+#define DPRINT(...)
+#endif
 
 using eth_conf = struct rte_eth_conf;
 using mbuf = struct rte_mbuf;
@@ -23,7 +28,7 @@ using ip_frag_tbl       = struct rte_ip_frag_tbl;
 
 inline int stcp_printf(const char* format, ...)
 {
-    printf("STCP_PRINTF: ");
+    printf("%-15s %4s: ", "STCP_PRINTF", "");
     va_list argptr;
     va_start(argptr, format);
     int ret = vprintf(format, argptr);

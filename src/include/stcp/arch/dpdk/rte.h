@@ -23,6 +23,7 @@
 #include <rte_hexdump.h>
 #include <rte_ip.h>
 #include <rte_ip_frag.h>
+#include <stcp/config.h>
 
 
 
@@ -49,6 +50,15 @@ class exception : public std::exception {
 };
 
 
+inline size_t pktmbuf_data_len(const rte_mbuf* m)
+{
+    return m->data_len;
+}
+
+inline size_t pktmbuf_pkt_len(const rte_mbuf* m)
+{
+    return m->pkt_len;
+}
 
 inline void eth_dev_init(int argc, char** argv)
 {
@@ -232,19 +242,13 @@ inline void pktmbuf_trim(rte_mbuf* m, uint16_t len)
 {
     int ret = rte_pktmbuf_trim(m, len);
     if (ret == -1) {
+        // TODO ERASE
+        puts("");
+        rte::pktmbuf_dump(stdout, m, 0);
         throw rte::exception("rte_pktmbuf_trim");
     }
 }
 
-inline size_t pktmbuf_data_len(const rte_mbuf* m)
-{
-    return m->data_len;
-}
-
-inline size_t pktmbuf_pkt_len(const rte_mbuf* m)
-{
-    return m->pkt_len;
-}
 
 inline size_t raw_cksum(const void* buf, size_t len)
 {

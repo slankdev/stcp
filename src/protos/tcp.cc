@@ -104,13 +104,13 @@ stcp_tcp_sock::stcp_tcp_sock() :
     pair_port(0),
     si(0, 0)
 {
-    DEBUG("[%15p] SOCK CNSTRCTR \n", this);
     init();
 }
 
+stcp_tcp_sock::~stcp_tcp_sock() {}
+
 void stcp_tcp_sock::init()
 {
-    DEBUG("[%15p] SOCK INIT \n", this);
     parent = nullptr;
     wait_accept_count = 0;
     sock_state = SOCKS_UNUSE;
@@ -132,10 +132,6 @@ void stcp_tcp_sock::term()
 }
 
 
-stcp_tcp_sock::~stcp_tcp_sock()
-{
-    DEBUG("[%15p] SOCK DESTRUCTOR \n", this);
-}
 
 
 
@@ -161,7 +157,7 @@ mbuf* stcp_tcp_sock::read()
     }
 
     mbuf* m = rxq.pop();
-    DEBUG("[%15p] READ datalen=%zd\n", this, mbuf_pkt_len(m));
+    DPRINT("[%15p] READ datalen=%zd\n", this, mbuf_pkt_len(m));
     return m;
 }
 
@@ -177,7 +173,7 @@ stcp_tcp_sock* stcp_tcp_sock::accept(struct stcp_sockaddr_in* addr)
     for (;;) {
         for (stcp_tcp_sock& s : core::tcp.socks) {
             if ((s.parent == this) && (s.sock_state == SOCKS_WAITACCEPT)) {
-                DEBUG("[%15p] ACCEPT return new socket [%p]\n", this, &s);
+                DPRINT("[%15p] ACCEPT return new socket [%p]\n", this, &s);
                 s.sock_state = SOCKS_USE;
                 wait_accept_count--;
                 return &s;
@@ -193,7 +189,7 @@ void stcp_tcp_sock::proc()
     while (!txq.empty()) {
         mbuf* msg = txq.pop();
         size_t datalen = mbuf_pkt_len(msg);
-        DEBUG("[%15p] proc_ESTABLISHED send(txq.pop(), %zd)\n",
+        DPRINT("[%15p] proc_ESTABLISHED send(txq.pop(), %zd)\n",
                 this, mbuf_pkt_len(msg));
 
         mbuf_push(msg, sizeof(stcp_ip_header));
@@ -257,7 +253,7 @@ void stcp_tcp_sock::listen(size_t backlog)
 
 void stcp_tcp_sock::move_state(tcpstate next_state)
 {
-    DEBUG("[%15p] %s -> %s \n", this,
+    DPRINT("[%15p] %s -> %s \n", this,
             tcpstate2str(tcp_state),
             tcpstate2str(next_state) );
 
@@ -553,6 +549,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
         newsock->si.iss_H(rand() % 0xffffffff);
         newsock->si.irs_N(tih->tcp.seq);
         newsock->parent = this;
+        stcp_printf("[%15p] open new connection from %p \n", newsock, this);
 
         wait_accept_count ++;
 
@@ -604,7 +601,7 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
             } else {
                 mbuf_free(msg);
             }
-            DEBUG("SLANKDEVSLANKDEV error: connection reset\n");
+            DPRINT("SLANKDEVSLANKDEV error: connection reset\n");
             move_state(TCPS_CLOSED);
             return;
         }
@@ -774,7 +771,7 @@ bool stcp_tcp_sock::rx_push_ES_rstchk(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_SYN_RCVD:
         {
             if (HAVE(tih, TCPF_RST)) {
-                DEBUG("SLANKDEVSLANKDEV conection reset\n");
+                DPRINT("SLANKDEVSLANKDEV conection reset\n");
                 mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;
@@ -788,7 +785,7 @@ bool stcp_tcp_sock::rx_push_ES_rstchk(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_CLOSE_WAIT:
         {
             if (HAVE(tih, TCPF_RST)) {
-                DEBUG("SLANKDEVSLANKDEV conection reset\n");
+                DPRINT("SLANKDEVSLANKDEV conection reset\n");
                 mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;
@@ -837,7 +834,7 @@ bool stcp_tcp_sock::rx_push_ES_synchk(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_TIME_WAIT:
         {
             if (HAVE(tih, TCPF_SYN)) {
-                DEBUG("SLANKDEVSLANKDEV conection reset\n");
+                DPRINT("SLANKDEVSLANKDEV conection reset\n");
                 mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;
@@ -1055,7 +1052,7 @@ bool stcp_tcp_sock::rx_push_ES_finchk(mbuf* msg, stcp_sockaddr_in* src)
             default:
                 throw exception("OKASHII939201: unknown state");
         }
-        DEBUG("[%15p] connection closing\n", this);
+        stcp_printf("[%15p] connection closing\n", this);
         si.rcv_nxt_H(ntoh32(tih->tcp.seq) + 1);
 
         swap_port(tih);

@@ -66,5 +66,5 @@ stat:
 
 
 include $(prefix)/mk/vars.mk
-# LDFLAGS += -lslankdev -lpgen2
+LDFLAGS += -lncurses
 

@@ -32,7 +32,7 @@ static int usrapp_wrap(void* arg)
     void*       f_arg = app_info->func_arg;
     try {
         int ret = f_ptr(f_arg);
-        DEBUG("USRREMOTEAPP returned %d\n", ret);
+        stcp_printf("USRREMOTEAPP returned %d\n", ret);
 
         return ret;
     } catch (std::exception& e) {
@@ -53,7 +53,7 @@ void core::set_app(stcp_usrapp func_ptr, void* func_arg)
     a.func_arg  = func_arg;
 
     core::lapps.push_back(a);
-    DEBUG("SET APP lcore_id=%u\n", a.lcore_id);
+    stcp_printf("SET APP lcore_id=%u\n", a.lcore_id);
 }
 
 
@@ -62,7 +62,6 @@ void core::set_app(stcp_usrapp func_ptr, void* func_arg)
 
 stcp_tcp_sock* core::create_tcp_socket()
 {
-    DEBUG("CREATE SOCK\n");
     for (stcp_tcp_sock& s : tcp.socks) {
         if (s.sock_state == SOCKS_UNUSE) {
             s.init();
@@ -79,7 +78,6 @@ stcp_tcp_sock* core::create_tcp_socket()
 
 void core::destroy_tcp_socket(stcp_tcp_sock* sock)
 {
-    DEBUG("DESTROY SOCK\n");
     sock->term();
     sock->sock_state = SOCKS_UNUSE;
 }
@@ -225,6 +223,8 @@ void core::init(int argc, char** argv)
     arp.init();
     ip.init();
     tcp.init();
+    puts("\n\n\n\n");
+
 }
 
 void core::ifs_proc()
@@ -234,7 +234,7 @@ void core::ifs_proc()
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
 
         if (num_tx != num_reqest_to_send) {
-            DEBUG("core::ifs_proc(): num_tx!=num_reqest_to_send, Oh yeah!");
+            DPRINT("core::ifs_proc(): num_tx!=num_reqest_to_send, Oh yeah!");
         }
 
         uint16_t num_rx = dev.io_rx();
