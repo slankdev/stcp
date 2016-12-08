@@ -6,6 +6,7 @@
 #include <queue>
 #include <mutex>
 #include <stdio.h>
+#include <stdarg.h>
 
 
 namespace slank {
@@ -19,6 +20,16 @@ using mbuf = struct rte_mbuf;
 using mempool = struct rte_mempool;
 using ip_frag_death_row = struct rte_ip_frag_death_row;
 using ip_frag_tbl       = struct rte_ip_frag_tbl;
+
+inline int stcp_printf(const char* format, ...)
+{
+    printf("STCP_PRINTF: ");
+    va_list argptr;
+    va_start(argptr, format);
+    int ret = vprintf(format, argptr);
+    va_end(argptr);
+    return ret;
+}
 
 
 class pkt_queue {
