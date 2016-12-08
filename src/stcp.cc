@@ -24,6 +24,7 @@ ether_module core::ether;
 dpdk_core    core::dpdk;
 
 
+ncurses screen;
 
 static int usrapp_wrap(void* arg)
 {
@@ -217,14 +218,10 @@ void core::set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o
 
 void core::init(int argc, char** argv)
 {
-    stat::instance().open_new("stcp.stat.log");
-
     dpdk.init(argc, argv);
     arp.init();
     ip.init();
     tcp.init();
-    puts("\n\n\n\n");
-
 }
 
 void core::ifs_proc()
@@ -249,13 +246,12 @@ void core::ifs_proc()
 
 void core::run()
 {
+    slank::screen.init();
 
     for (stcp_usrapp_info& app : lapps) {
         rte::eal_remote_launch(
                 usrapp_wrap, reinterpret_cast<void*>(&app), app.lcore_id);
     }
-
-    core::stat_all(); // TODO ERASE
 
     while (true) {
         ifs_proc();
@@ -269,26 +265,22 @@ void core::run()
 
 void core::stat_all()
 {
-    stat& s = stat::instance();
-    s.clean();
 
+    size_t i=0;
     for (ifnet& dev : dpdk.devices) {
-        dev.print_stat();
+        size_t rooty = screen.POS_PORT.y;
+        size_t rootx = screen.POS_PORT.x;
+        dev.print_stat(rootx, rooty+i*6);
+        i++;
     }
 
     ether.print_stat();
-    s.write("");
     arp.print_stat();
-    s.write("");
     ip.print_stat();
-    s.write("");
     icmp.print_stat();
-    s.write("");
     udp.print_stat();
-    s.write("");
     tcp.print_stat();
-
-    s.flush();
 }
+
 
 } /* namespace */

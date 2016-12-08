@@ -111,16 +111,17 @@ static const char* af2str(stcp_sa_family af)
 }
 
 
-void ifnet::print_stat() const
+void ifnet::print_stat(size_t rootx, size_t rooty) const
 {
-    stat& s = stat::instance();
-    s.write("%s: %s", name.c_str(), promiscuous_mode?"PROMISC":"");
-    s.write("");
+    screen.mvprintw(rooty, rootx, "%s: %s", name.c_str(), promiscuous_mode?"PROMISC":"");
+    screen.mvprintw(rooty+1, rootx, "");
+    screen.mvprintw(rooty+2, rootx, "");
 
-    s.write("");
+    size_t i=0;
     for (const ifaddr& ifa : addrs) {
         if (ifa.family == STCP_AF_LINK) {
-            s.write("\t%-10s %02x:%02x:%02x:%02x:%02x:%02x "
+            screen.mvprintw(rooty+3+i, rootx,
+                    "\t%-10s %02x:%02x:%02x:%02x:%02x:%02x "
                 , af2str(ifa.family)
                 , ifa.raw.sa_data[0], ifa.raw.sa_data[1]
                 , ifa.raw.sa_data[2], ifa.raw.sa_data[3]
@@ -128,13 +129,13 @@ void ifnet::print_stat() const
         } else if (ifa.family == STCP_AF_INET || ifa.family == STCP_AF_INMASK) {
             const struct stcp_sockaddr_in* sin =
                 reinterpret_cast<const stcp_sockaddr_in*>(&ifa.raw);
-            s.write("\t%-10s %d.%d.%d.%d "
+            screen.mvprintw(rooty+3+i, rootx, "\t%-10s %d.%d.%d.%d "
                 , af2str(ifa.family)
                 , sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1]
                 , sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
         }
+        i++;
     }
-    s.write("");
 }
 
 

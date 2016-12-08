@@ -50,7 +50,7 @@ public:
     size_t tx_size() { return tx.size(); }
     bool   rx_empty() { return rx.empty(); }
     bool   tx_empty() { return tx.empty(); }
-    void print_stat() const;
+    void print_stat(size_t rootx, size_t rooty) const;
 
     void ioctl(uint64_t request, void* arg);
 

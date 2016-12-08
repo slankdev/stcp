@@ -39,7 +39,7 @@ class filefd {
         std::string name;
     public:
         filefd() : fp(NULL) {}
-        ~filefd() 
+        ~filefd()
         {
             close();
         }
@@ -126,7 +126,7 @@ class filefd {
         }
 };
 
-    
+
 
 template <class Tag>
 class log {
@@ -134,11 +134,11 @@ class log {
         static bool inited;
         filefd fd;
         std::vector<std::string> depth;
-    
+
         log() {}
         ~log() {}
         log(const log&) = delete;
-        log& operator=(const log&) = delete; 
+        log& operator=(const log&) = delete;
 
     public:
         static log& instance()

@@ -87,18 +87,23 @@ void udp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
 
 void udp_module::print_stat() const
 {
-    stat& s = stat::instance();
-    s.write("UDP module");
+    size_t rootx = screen.POS_UDP.x;
+    size_t rooty = screen.POS_UDP.y;
+
+    screen.mvprintw(rooty, rootx, "UDP module");
 
     if (!socks.empty()) {
-        s.write("");
-        s.write("\tNetStat");
+        screen.mvprintw(rooty+1, rootx, "");
+        screen.mvprintw(rooty+2, rootx, "\tNetStat");
     }
+    size_t i = 0;
     for (const stcp_udp_sock* sock : socks) {
-        s.write("\t%u/udp rxq=%zd txq=%zd",
+
+        screen.mvprintw(rooty+3+i, rootx, "\t%u/udp rxq=%zd txq=%zd",
                 hton16(sock->port),
                 sock->rxq.size(),
                 sock->txq.size());
+        i ++;
     }
 }
 

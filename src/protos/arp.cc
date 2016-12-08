@@ -263,21 +263,24 @@ void arp_module::arp_request(uint8_t port, const stcp_in_addr* tip)
 
 void arp_module::print_stat() const
 {
-    stat& s = stat::instance();
-    s.write("ARP module");
-    s.write("");
-    s.write("\tWaiting packs  : %zd", arpresolv_wait_queue.size());
-    s.write("\tUse dynamic arp: %s", use_dynamic_arp ? "YES" : "NO");
-    s.write("");
-    s.write("\tARP-chace");
-    s.write("\t%-16s %-20s %s", "Address", "HWaddress", "Iface");
+    size_t rootx = screen.POS_ARP.x;
+    size_t rooty = screen.POS_ARP.y;
+
+    screen.mvprintw(rooty, rootx, "ARP module");
+    screen.mvprintw(rooty+1, rootx, "\tWaiting packs  : %zd", arpresolv_wait_queue.size());
+    screen.mvprintw(rooty+2, rootx, "\tUse dynamic arp: %s", use_dynamic_arp ? "YES" : "NO");
+    screen.mvprintw(rooty+3, rootx, "\tARP-chace");
+    screen.mvprintw(rooty+4, rootx, "\t%-16s %-20s %s", "Address", "HWaddress", "Iface");
+
+    size_t i=0;
     for (const stcp_arpreq& a : table) {
         std::string pa = a.arp_pa.c_str();
         std::string ha = a.arp_ha.c_str();
-        s.write("\t%-16s %-20s %d",
+        screen.mvprintw(rooty+5+i, rootx, "\t%-16s %-20s %d",
                 pa.c_str(),
                 ha.c_str(),
                 a.arp_ifindex);
+        i++;
     }
 }
 

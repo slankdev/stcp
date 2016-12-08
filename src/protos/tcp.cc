@@ -1078,35 +1078,34 @@ bool stcp_tcp_sock::rx_push_ES_finchk(mbuf* msg, stcp_sockaddr_in* src)
 
 
 
-void stcp_tcp_sock::print_stat() const
+void stcp_tcp_sock::print_stat(size_t rootx, size_t rooty) const
 {
-    stat& s = stat::instance();
-    s.write("\tsock/tcp=%s/%s [this=%p]",
+    screen.mvprintw(rooty+1, rootx, "\tsock/tcp=%s/%s [this=%p]",
             sockstate2str(sock_state),
             tcpstate2str(tcp_state),
             this);
 
     switch (tcp_state) {
         case TCPS_LISTEN:
-            s.write("\t - local  port: %u", ntoh16(port));
-            s.write("\t - wait accept count: %zd", wait_accept_count);
+            screen.mvprintw(rooty+2, rootx, "\t - local  port: %u", ntoh16(port));
+            screen.mvprintw(rooty+3, rootx, "\t - wait accept count: %zd", wait_accept_count);
             break;
         case TCPS_ESTABLISHED:
-            s.write("\t - local : %s:%u", addr.c_str(), ntoh16(port)     );
-            s.write("\t - remote: %s:%u", pair.c_str(), ntoh16(pair_port));
-            s.write("\t - txq/rxq: %zd/%zd",rxq.size(), txq.size());
-            s.write("\t - stream info");
-            s.write("\t   - iss    : %u", si.iss_H());
-            s.write("\t   - snd_una: %u", si.snd_una_H());
-            s.write("\t   - snd_nxt: %u", si.snd_nxt_H());
-            s.write("\t   - snd_win: %u", si.snd_win_H());
-            // s.write("\t - snd_up : %u", si.snd_up_H() );
-            s.write("\t   - snd_wl1: %u", si.snd_wl1_H());
-            s.write("\t   - snd_wl2: %u", si.snd_wl2_H());
-            s.write("\t   - irs    : %u", si.irs_H()    );
-            s.write("\t   - rcv_nxt: %u", si.rcv_nxt_H());
-            s.write("\t   - rcv_wnd: %u", si.rcv_win_H());
-            // s.write("\t - rcv_up : %u", si.rcv_up_H() );
+            screen.mvprintw(rooty+2 , rootx, "\t - local/remote : %s:%u/%s:%u",
+                    addr.c_str(), ntoh16(port), pair.c_str(), ntoh16(pair_port));
+            screen.mvprintw(rooty+3 , rootx, "\t - txq/rxq: %zd/%zd",rxq.size(), txq.size());
+            screen.mvprintw(rooty+4 , rootx, "\t   - iss/irs: %u/%u", si.iss_H(), si.irs_H());
+            screen.mvprintw(rooty+5 , rootx, "\t   - snd_una: %u", si.snd_una_H());
+            screen.mvprintw(rooty+6 , rootx, "\t   - snd_nxt: %u", si.snd_nxt_H());
+            screen.mvprintw(rooty+7 , rootx, "\t   - snd_win: %u", si.snd_win_H());
+            screen.mvprintw(rooty+8 , rootx, "\t   - snd_wl1/wl2: %u/%u", si.snd_wl1_H(), si.snd_wl2_H());
+            screen.mvprintw(rooty+9 , rootx, "\t   - rcv_nxt: %u", si.rcv_nxt_H());
+            screen.mvprintw(rooty+10, rootx, "\t   - rcv_wnd: %u", si.rcv_win_H());
+            break;
+        case TCPS_CLOSED:
+            for (size_t i=2; i<11; i++)
+                screen.mvprintw(rooty+i, rootx,
+                    "                                                                ");
             break;
         default:
             break;
@@ -1116,18 +1115,18 @@ void stcp_tcp_sock::print_stat() const
 
 void tcp_module::print_stat() const
 {
-    stat& s = stat::instance();
-    s.write("TCP module");
+    size_t rootx = screen.POS_TCP.x;
+    size_t rooty = screen.POS_TCP.y;
+    screen.mvprintw(rooty, rootx, "TCP module");
 
     if (!socks.empty()) {
-        s.write("");
-        s.write("\tNetStat %zd ports", socks.size());
+        screen.mvprintw(rooty+1, rootx, "");
+        screen.mvprintw(rooty+2, rootx, "\tNetStat %zd ports", socks.size());
     }
+
     for (size_t i=0; i<socks.size(); i++) {
-        socks[i].print_stat();
+        socks[i].print_stat(rootx, 10*i + rooty+3);
     }
-    s.write("\n\n\n\n");
-    s.write("\n\n\n\n");
 }
 
 

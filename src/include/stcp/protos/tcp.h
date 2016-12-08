@@ -206,7 +206,7 @@ private:
 
 private:
     void proc();
-    void print_stat() const;
+    void print_stat(size_t rootx, size_t rooty) const;
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
 
 public:

@@ -130,11 +130,7 @@ void ether_module::rx_push(mbuf* msg)
     }
 }
 
-void ether_module::print_stat() const
-{
-    stat& s = stat::instance();
-    s.write("%s", "Ether module");
-}
+void ether_module::print_stat() const {}
 
 
 } /* namespace slank */

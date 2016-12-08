@@ -58,12 +58,6 @@ gdb:
 	sudo gdb -q --args \
 		./$(TARGET) --vdev=eth_pcap0,iface=$(INTERFACE)
 
-stat:
-	$(TMUXVSPLIT) ./stat.zsh
-
-	# $(TMUXVSPLIT)  tail -f stcp.rx.log
-	# $(TMUXVSPLIT)  tail -f stcp.tx.log
-
 
 include $(prefix)/mk/vars.mk
 LDFLAGS += -lncurses

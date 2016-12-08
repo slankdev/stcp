@@ -242,9 +242,6 @@ inline void pktmbuf_trim(rte_mbuf* m, uint16_t len)
 {
     int ret = rte_pktmbuf_trim(m, len);
     if (ret == -1) {
-        // TODO ERASE
-        puts("");
-        rte::pktmbuf_dump(stdout, m, 0);
         throw rte::exception("rte_pktmbuf_trim");
     }
 }

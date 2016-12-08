@@ -14,7 +14,7 @@ int user_main2(void* arg)
 
     stcp_sockaddr_in addr;
     addr.sin_fam  = STCP_AF_INET;
-    addr.sin_port = hton16(9999);
+    addr.sin_port = hton16(8888);
     stcp_udp_sock* sock = core::create_udp_socket();
     sock->bind(&addr);
 
@@ -40,7 +40,7 @@ int user_main1(void* arg)
     sock->bind(&addr, sizeof(addr));
     sock->listen(5);
 
-#if 1
+#if 0
     while (true);
 #else
     std::vector<stcp_tcp_sock*> fds;

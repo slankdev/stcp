@@ -90,8 +90,9 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr_in* src)
 
 void icmp_module::print_stat() const
 {
-    stat& s = stat::instance();
-    s.write("ICMP module");
+    size_t rootx = screen.POS_ICMP.x;
+    size_t rooty = screen.POS_ICMP.y;
+    screen.mvprintw(rooty, rootx, "ICMP module");
 }
 
 } /* namespace slank */
