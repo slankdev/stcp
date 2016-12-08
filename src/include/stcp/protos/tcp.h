@@ -205,8 +205,6 @@ private:
     tcp_stream_info si;
 
 private:
-    void move_state_DEBUG(tcpstate next_state);
-
     void proc();
     void print_stat() const;
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);

@@ -255,14 +255,6 @@ void stcp_tcp_sock::listen(size_t backlog)
 }
 
 
-void stcp_tcp_sock::move_state_DEBUG(tcpstate next_state)
-{
-    DEBUG("[%15p] %s -> %s (MOVE state debug) \n", this,
-            tcpstate2str(tcp_state),
-            tcpstate2str(next_state) );
-    tcp_state = next_state;
-}
-
 void stcp_tcp_sock::move_state(tcpstate next_state)
 {
     DEBUG("[%15p] %s -> %s \n", this,
@@ -612,7 +604,7 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
             } else {
                 mbuf_free(msg);
             }
-            printf("SLANKDEVSLANKDEV error: connection reset\n");
+            DEBUG("SLANKDEVSLANKDEV error: connection reset\n");
             move_state(TCPS_CLOSED);
             return;
         }
@@ -757,10 +749,6 @@ bool stcp_tcp_sock::rx_push_ES_seqchk(mbuf* msg, stcp_sockaddr_in* src)
                 return false;
             }
 
-            if (HAVE(tih, TCPF_RST)) {
-                mbuf_free(msg);
-                return false;
-            }
             break;
         }
 
@@ -786,7 +774,7 @@ bool stcp_tcp_sock::rx_push_ES_rstchk(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_SYN_RCVD:
         {
             if (HAVE(tih, TCPF_RST)) {
-                printf("SLANKDEVSLANKDEV conection reset\n");
+                DEBUG("SLANKDEVSLANKDEV conection reset\n");
                 mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;
@@ -800,7 +788,7 @@ bool stcp_tcp_sock::rx_push_ES_rstchk(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_CLOSE_WAIT:
         {
             if (HAVE(tih, TCPF_RST)) {
-                printf("SLANKDEVSLANKDEV conection reset\n");
+                DEBUG("SLANKDEVSLANKDEV conection reset\n");
                 mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;
@@ -849,7 +837,7 @@ bool stcp_tcp_sock::rx_push_ES_synchk(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_TIME_WAIT:
         {
             if (HAVE(tih, TCPF_SYN)) {
-                printf("SLANKDEVSLANKDEV conection reset\n");
+                DEBUG("SLANKDEVSLANKDEV conection reset\n");
                 mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;

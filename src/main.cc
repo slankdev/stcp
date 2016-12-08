@@ -40,6 +40,9 @@ int user_main1(void* arg)
     sock->bind(&addr, sizeof(addr));
     sock->listen(5);
 
+#if 1
+    while (true);
+#else
     std::vector<stcp_tcp_sock*> fds;
     fds.push_back(sock);
 
@@ -62,6 +65,7 @@ int user_main1(void* arg)
         }
     }
     return 0;
+#endif
 }
 
 
