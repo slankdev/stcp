@@ -330,11 +330,11 @@ void ip_module::print_stat() const
     size_t rooty = screen.POS_IP.y;
     size_t rootx = screen.POS_IP.x;
 
-    screen.mvprintw(rooty, rootx, "IP module");
-    screen.mvprintw(rooty+1, rootx, "\tDrops      %zd", not_to_me);
-    screen.mvprintw(rooty+2, rootx, "\tRouting-Table");
+    screen.mvprintw(rooty, rootx,   "IP module");
+    screen.mvprintw(rooty+1, rootx, " Drops      %zd", not_to_me);
+    screen.mvprintw(rooty+2, rootx, " Routing-Table");
     screen.mvprintw(rooty+3, rootx,
-            "\t%-16s%-16s%-16s%-6s%-3s", "Destination", "Gateway", "Genmask", "Flags", "if");
+            " %-16s%-16s%-16s%-6s%-3s", "Destination", "Gateway", "Genmask", "Flags", "if");
 
     size_t i = 0;
     for (const stcp_rtentry& rt : rttable) {
@@ -359,7 +359,7 @@ void ip_module::print_stat() const
         } else {
             gateway_str = rt.rt_gateway.c_str();
         }
-        screen.mvprintw(rooty+4+i, rootx, "\t%-16s%-16s%-16s%-6s%-3u",
+        screen.mvprintw(rooty+4+i, rootx, " %-16s%-16s%-16s%-6s%-3u",
                 str_dest.c_str(),
                 gateway_str.c_str(),
                 rt.rt_genmask.c_str(),
