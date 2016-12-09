@@ -4,6 +4,7 @@
 #include <stcp/stcp.h>
 #include <stcp/socket.h>
 #include <stcp/filefd.h>
+#include <stcp/debug.h>
 
 
 namespace stcp {
@@ -24,9 +25,11 @@ arp_module   core::arp;
 ether_module core::ether;
 dataplane    core::dplane;
 
-ncurses screen;
-filefd stcp_stdout;
-filefd stcp_stddbg;
+ncurses      core::screen;
+filefd       core::stcp_stdout;
+filefd       core::stcp_stddbg;
+
+
 
 static int usrapp_wrap(void* arg)
 {
@@ -250,7 +253,7 @@ void core::ifs_proc()
 
 void core::run()
 {
-    stcp::screen.init();
+    screen.init();
 
     for (stcp_usrapp_info& app : lapps) {
         rte::eal_remote_launch(

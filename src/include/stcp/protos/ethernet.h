@@ -9,7 +9,6 @@
 
 #include <stcp/config.h>
 #include <stcp/socket.h>
-#include <stcp/mbuf.h>
 
 
 namespace stcp {

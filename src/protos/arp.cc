@@ -262,26 +262,26 @@ void arp_module::arp_request(uint8_t port, const stcp_in_addr* tip)
 
 void arp_module::print_stat() const
 {
-    size_t rootx = screen.POS_ARP.x;
-    size_t rooty = screen.POS_ARP.y;
-    screen.move(rooty, rootx);
+    size_t rootx = core::screen.POS_ARP.x;
+    size_t rooty = core::screen.POS_ARP.y;
+    core::screen.move(rooty, rootx);
 
-    screen.printwln("ARP module");
-    screen.printwln(" Pool: %u/%u", pool_use_count(mp), pool_size(mp));
-    screen.printwln(" Waiting packs  : %zd", arpresolv_wait_queue.size());
-    screen.printwln(" Use dynamic arp: %s", use_dynamic_arp ? "YES" : "NO");
-    screen.printwln(" ARP-chace");
-    screen.printwln(" %-16s %-20s %s", "Address", "HWaddress", "Iface");
+    core::screen.printwln("ARP module");
+    core::screen.printwln(" Pool: %u/%u", pool_use_count(mp), pool_size(mp));
+    core::screen.printwln(" Waiting packs  : %zd", arpresolv_wait_queue.size());
+    core::screen.printwln(" Use dynamic arp: %s", use_dynamic_arp ? "YES" : "NO");
+    core::screen.printwln(" ARP-chace");
+    core::screen.printwln(" %-16s %-20s %s", "Address", "HWaddress", "Iface");
 
     size_t i=0;
     for (const stcp_arpreq& a : table) {
         std::string pa = a.arp_pa.c_str();
         std::string ha = a.arp_ha.c_str();
-        screen.printwln(" %-16s %-20s %d",
+        core::screen.printwln(" %-16s %-20s %d",
                 pa.c_str(),
                 ha.c_str(),
                 a.arp_ifindex);
-        i++;
+        i++; // TODO ERASE
     }
 }
 

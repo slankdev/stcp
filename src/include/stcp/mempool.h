@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stcp/config.h>
+#include <stcp/debug.h>
 
 namespace stcp {
 

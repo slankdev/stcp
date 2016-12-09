@@ -13,22 +13,7 @@
 
 namespace stcp {
 
-extern ncurses screen;
-extern filefd stcp_stdout;
-extern filefd stcp_stddbg;
 
-#define DEBUG
-
-#ifdef DEBUG
-#define DPRINT(...) \
-  { \
-      stcp_stddbg.fprintf("%-15s:%4d: ", __FILE__, __LINE__); \
-      stcp_stddbg.fprintf(__VA_ARGS__); \
-      stcp_stddbg.fflush(); \
-  }
-#else
-#define DPRINT(...)
-#endif
 
 
 
@@ -38,14 +23,6 @@ using mempool = struct rte_mempool;
 using ip_frag_death_row = struct rte_ip_frag_death_row;
 using ip_frag_tbl       = struct rte_ip_frag_tbl;
 
-template <class... Args>
-inline int stcp_printf(const char* format, Args... args)
-{
-    stcp_stdout.fprintf("%-15s:%4s: ", "STCP_PRINTF", "");
-    int ret = stcp_stdout.fprintf(format, args...);
-    stcp_stdout.fflush();
-    return ret;
-}
 
 
 class pkt_queue {

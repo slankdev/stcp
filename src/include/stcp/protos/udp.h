@@ -5,6 +5,7 @@
 #include <stcp/socket.h>
 #include <stcp/dataplane.h>
 #include <stcp/util.h>
+#include <stcp/debug.h>
 
 #include <vector>
 #include <queue>
@@ -21,13 +22,13 @@ struct stcp_udp_header {
     uint16_t len;
     uint16_t cksum;
 
-    void print() const
+    void print(FILE* f) const
     {
-        stcp_printf("UDP header \n");
-        stcp_printf("+ sport    : %u 0x%04x \n", ntoh16(sport), ntoh16(sport));
-        stcp_printf("+ dport    : %u 0x%04x \n", ntoh16(dport), ntoh16(dport));
-        stcp_printf("+ len      : %u 0x%08x \n", ntoh16(len  ), ntoh16(len  ));
-        stcp_printf("+ cksum    : 0x%04x \n"   , ntoh16(cksum)  );
+        fprintf(f, "UDP header \n");
+        fprintf(f, "+ sport    : %u 0x%04x \n", ntoh16(sport), ntoh16(sport));
+        fprintf(f, "+ dport    : %u 0x%04x \n", ntoh16(dport), ntoh16(dport));
+        fprintf(f, "+ len      : %u 0x%08x \n", ntoh16(len  ), ntoh16(len  ));
+        fprintf(f, "+ cksum    : 0x%04x \n"   , ntoh16(cksum)  );
     }
 };
 

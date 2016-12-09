@@ -48,15 +48,15 @@ void tcp_module::proc()
 
 void tcp_module::print_stat() const
 {
-    size_t rootx = screen.POS_TCP.x;
-    size_t rooty = screen.POS_TCP.y;
-    screen.move(rooty, rootx);
+    size_t rootx = core::screen.POS_TCP.x;
+    size_t rooty = core::screen.POS_TCP.y;
+    core::screen.move(rooty, rootx);
 
-    screen.printwln("TCP module");
-    screen.printwln(" Pool: %u/%u", pool_use_count(mp), pool_size(mp));
+    core::screen.printwln("TCP module");
+    core::screen.printwln(" Pool: %u/%u", pool_use_count(mp), pool_size(mp));
 
     if (!socks.empty()) {
-        screen.printwln(" NetStat %zd ports", socks.size());
+        core::screen.printwln(" NetStat %zd ports", socks.size());
     }
 
     for (size_t i=0; i<socks.size(); i++) {

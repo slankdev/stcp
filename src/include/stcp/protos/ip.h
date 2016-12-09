@@ -5,6 +5,7 @@
 #include <stcp/config.h>
 #include <stcp/util.h>
 #include <stcp/tuning.h>
+#include <stcp/debug.h>
 
 
 
@@ -35,22 +36,22 @@ struct stcp_ip_header {
     stcp_in_addr src;
     stcp_in_addr dst;
 
-    void print() const
+    void print(FILE* f) const
     {
-        stcp_printf("IP header \n");
-        stcp_printf("+ version_ihl    : 0x%02x    \n", version_ihl         );
-        stcp_printf("+ type_of_service: 0x%02x    \n", type_of_service     );
-        stcp_printf("+ total_length   : %u 0x%04x \n",
-                ntoh16(total_length), ntoh16(total_length)       );
-        stcp_printf("+ packet_id      : %u 0x%04x \n",
-                ntoh16(packet_id), ntoh16(packet_id)             );
-        stcp_printf("+ fragment_offset: %u 0x%04x \n",
-                ntoh16(fragment_offset), ntoh16(fragment_offset) );
-        stcp_printf("+ time_to_live   : 0x%02x \n"   , time_to_live        );
-        stcp_printf("+ next_proto_id  : 0x%02x \n"   , next_proto_id       );
-        stcp_printf("+ hdr_checksum   : 0x%04x \n"   , ntoh16(hdr_checksum));
-        stcp_printf("+ src address    : %s \n"       , src.c_str()         );
-        stcp_printf("+ dst address    : %s \n"       , dst.c_str()         );
+        fprintf(f, "IP header \n");
+        fprintf(f, "+ version_ihl    : 0x%02x    \n", version_ihl         );
+        fprintf(f, "+ type_of_service: 0x%02x    \n", type_of_service     );
+        fprintf(f, "+ total_length   : %u 0x%04x \n",
+           ntoh16(total_length), ntoh16(total_length)       );
+        fprintf(f, "+ packet_id      : %u 0x%04x \n",
+           ntoh16(packet_id), ntoh16(packet_id)             );
+        fprintf(f, "+ fragment_offset: %u 0x%04x \n",
+           ntoh16(fragment_offset), ntoh16(fragment_offset) );
+        fprintf(f, "+ time_to_live   : 0x%02x \n"   , time_to_live        );
+        fprintf(f, "+ next_proto_id  : 0x%02x \n"   , next_proto_id       );
+        fprintf(f, "+ hdr_checksum   : 0x%04x \n"   , ntoh16(hdr_checksum));
+        fprintf(f, "+ src address    : %s \n"       , src.c_str()         );
+        fprintf(f, "+ dst address    : %s \n"       , dst.c_str()         );
     }
 };
 

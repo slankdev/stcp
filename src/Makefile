@@ -26,6 +26,7 @@ SRCS   = \
 		protos/tcp.cc \
 		protos/tcp_socket.cc \
 		stcp.cc \
+		debug.cc \
 		main.cc
 
 

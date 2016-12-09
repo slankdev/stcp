@@ -322,18 +322,18 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
 
 void ip_module::print_stat() const
 {
-    size_t rooty = screen.POS_IP.y;
-    size_t rootx = screen.POS_IP.x;
-    screen.move(rooty, rootx);
+    size_t rooty = core::screen.POS_IP.y;
+    size_t rootx = core::screen.POS_IP.x;
+    core::screen.move(rooty, rootx);
 
-    screen.printwln("IP module");
-    screen.printwln(" DirectPool  : %u/%u",
+    core::screen.printwln("IP module");
+    core::screen.printwln(" DirectPool  : %u/%u",
             pool_use_count(direct_pool), pool_size(direct_pool));
-    screen.printwln(" IndirectPool: %u/%u",
+    core::screen.printwln(" IndirectPool: %u/%u",
             pool_use_count(indirect_pool), pool_size(indirect_pool));
-    screen.printwln(" Drops      %zd", not_to_me);
-    screen.printwln(" Routing-Table");
-    screen.printwln(
+    core::screen.printwln(" Drops      %zd", not_to_me);
+    core::screen.printwln(" Routing-Table");
+    core::screen.printwln(
             " %-16s%-16s%-16s%-6s%-3s", "Destination", "Gateway", "Genmask", "Flags", "if");
 
     for (const stcp_rtentry& rt : rttable) {
@@ -358,7 +358,7 @@ void ip_module::print_stat() const
         } else {
             gateway_str = rt.rt_gateway.c_str();
         }
-        screen.printwln(" %-16s%-16s%-16s%-6s%-3u",
+        core::screen.printwln(" %-16s%-16s%-16s%-6s%-3u",
                 str_dest.c_str(),
                 gateway_str.c_str(),
                 rt.rt_genmask.c_str(),

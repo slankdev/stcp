@@ -11,12 +11,12 @@ namespace stcp {
 
 void dataplane::print_stat() const
 {
-    size_t rooty = screen.POS_PORT.y;
-    size_t rootx = screen.POS_PORT.x;
-    screen.move(rooty, rootx);
+    size_t rooty = core::screen.POS_PORT.y;
+    size_t rootx = core::screen.POS_PORT.x;
+    core::screen.move(rooty, rootx);
 
-    screen.printwln("DataPlane ");
-    screen.printwln(" Pool  : %u/%u",
+    core::screen.printwln("DataPlane ");
+    core::screen.printwln(" Pool  : %u/%u",
             pool_use_count(mp), pool_size(mp));
 
     size_t i=0;

@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <stcp/util.h>
 #include <stddef.h>
 #include <stcp/arch/dpdk/rte.h>
 

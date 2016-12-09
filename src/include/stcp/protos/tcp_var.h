@@ -6,6 +6,7 @@
 #include <stcp/socket.h>
 #include <stcp/stcp.h>
 #include <stcp/util.h>
+#include <stcp/debug.h>
 
 
 namespace stcp {
@@ -57,17 +58,17 @@ struct stcp_tcp_header {
 	uint16_t cksum   ; /* TCP checksum.               */
 	uint16_t urp     ; /* TCP urgent pointer, if any. */
 
-    void print() const
+    void print(FILE* f) const
     {
-        stcp_printf("TCP header \n");
-        stcp_printf("+ sport    : %u 0x%04x \n", ntoh16(sport), ntoh16(sport));
-        stcp_printf("+ dport    : %u 0x%04x \n", ntoh16(dport), ntoh16(dport));
-        stcp_printf("+ seq num  : %u 0x%08x \n", ntoh32(seq  ), ntoh32(seq  ));
-        stcp_printf("+ ack num  : %u 0x%08x \n", ntoh32(ack  ), ntoh32(ack  ));
-        stcp_printf("+ data off : 0x%02x \n"   , data_off      );
-        stcp_printf("+ tcp flags: 0x%02x \n"   , flags         );
-        stcp_printf("+ rx win   : 0x%04x \n"   , ntoh16(rx_win)  );
-        stcp_printf("+ cksum    : 0x%04x \n"   , ntoh16(cksum )  );
+        fprintf(f, "TCP header \n");
+        fprintf(f, "+ sport    : %u 0x%04x \n", ntoh16(sport), ntoh16(sport));
+        fprintf(f, "+ dport    : %u 0x%04x \n", ntoh16(dport), ntoh16(dport));
+        fprintf(f, "+ seq num  : %u 0x%08x \n", ntoh32(seq  ), ntoh32(seq  ));
+        fprintf(f, "+ ack num  : %u 0x%08x \n", ntoh32(ack  ), ntoh32(ack  ));
+        fprintf(f, "+ data off : 0x%02x \n"   , data_off      );
+        fprintf(f, "+ tcp flags: 0x%02x \n"   , flags         );
+        fprintf(f, "+ rx win   : 0x%04x \n"   , ntoh16(rx_win)  );
+        fprintf(f, "+ cksum    : 0x%04x \n"   , ntoh16(cksum )  );
     }
 };
 
@@ -75,10 +76,10 @@ struct stcp_tcp_header {
 struct tcpip {
     stcp_ip_header ip;
     stcp_tcp_header tcp;
-    void print() const
+    void print(FILE* f) const
     {
-        ip.print();
-        tcp.print();
+        ip.print(f);
+        tcp.print(f);
     }
 };
 

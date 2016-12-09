@@ -4,10 +4,11 @@
 
 #include <stdlib.h>
 
-#include <stcp/dataplane.h>
 #include <stcp/config.h>
+#include <stcp/debug.h>
 #include <stcp/mbuf.h>
 
+#include <stcp/dataplane.h>
 #include <stcp/protos/ethernet.h>
 #include <stcp/protos/arp.h>
 #include <stcp/protos/ip.h>
@@ -19,6 +20,8 @@
 
 
 namespace stcp {
+
+
 
 
 
@@ -71,6 +74,11 @@ public:
     static stcp_udp_sock* create_udp_socket();
     static void destroy_tcp_socket(stcp_tcp_sock* sock);
     static void destroy_udp_socket(stcp_udp_sock* sock);
+
+public:
+    static ncurses screen;
+    static filefd  stcp_stdout;
+    static filefd  stcp_stddbg;
 
 private:
     static tcp_module    tcp;
@@ -131,6 +139,14 @@ private:
 };
 
 
+template <class... Args>
+inline int stcp_printf(const char* format, Args... args)
+{
+    core::stcp_stdout.fprintf("%-15s:%4s: ", "STCP_PRINTF", "");
+    int ret = core::stcp_stdout.fprintf(format, args...);
+    core::stcp_stdout.fflush();
+    return ret;
+}
 
 
 } /* namespace */

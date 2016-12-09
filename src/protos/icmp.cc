@@ -90,10 +90,10 @@ void icmp_module::rx_push(mbuf* msg, const stcp_sockaddr_in* src)
 
 void icmp_module::print_stat() const
 {
-    size_t rootx = screen.POS_ICMP.x;
-    size_t rooty = screen.POS_ICMP.y;
-    screen.move(rooty, rootx);
-    screen.printwln("ICMP module");
+    size_t rootx = core::screen.POS_ICMP.x;
+    size_t rooty = core::screen.POS_ICMP.y;
+    core::screen.move(rooty, rootx);
+    core::screen.printwln("ICMP module");
 }
 
 } /* namespace stcp */

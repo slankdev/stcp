@@ -5,6 +5,7 @@
 #include <stcp/protos/tcp.h>
 #include <stcp/mempool.h>
 #include <stcp/config.h>
+#include <stcp/debug.h>
 #include <stcp/arch/dpdk/device.h>
 #include <stcp/protos/tcp_socket.h>
 #include <stcp/protos/tcp_util.h>
@@ -1018,31 +1019,31 @@ bool stcp_tcp_sock::rx_push_ES_finchk(mbuf* msg, stcp_sockaddr_in* src)
 
 void stcp_tcp_sock::print_stat(size_t rootx, size_t rooty) const
 {
-    screen.move(rooty, rootx);
-
-    screen.printwln(" sock/tcp=%s/%s [this=%p]",
+    core::screen.move(rooty, rootx);
+    core::screen.printwln(" sock/tcp=%s/%s [this=%p]",
             sockstate2str(sock_state),
             tcpstate2str(tcp_state),
             this);
 
     switch (tcp_state) {
         case TCPS_LISTEN:
-            screen.printwln("  - local  port: %u", ntoh16(port));
-            screen.printwln("  - wait accept count: %zd", wait_accept_count);
+            core::screen.printwln("  - local  port: %u", ntoh16(port));
+            core::screen.printwln("  - wait accept count: %zd", wait_accept_count);
             break;
         case TCPS_ESTABLISHED:
-            screen.printwln("  - local/remote: %s:%u/%s:%u",
+            core::screen.printwln("  - local/remote: %s:%u/%s:%u",
                     addr.c_str(), ntoh16(port), pair.c_str(), ntoh16(pair_port));
-            screen.printwln("  - txq/rxq: %zd/%zd",rxq.size(), txq.size());
-            screen.printwln("  - iss/irs        : %u/%u", si.iss_H(), si.irs_H());
-            screen.printwln("  - snd_una        : %u", si.snd_una_H());
-            screen.printwln("  - snd_nxt/rcv_nxt: %u/%u", si.snd_nxt_H(), si.rcv_nxt_H());
-            screen.printwln("  - snd_win/rcv_win: %u/%u", si.snd_win_H(), si.rcv_win_H());
-            screen.printwln("  - snd_wl1/wl2    : %u/%u", si.snd_wl1_H(), si.snd_wl2_H());
+            core::screen.printwln("  - txq/rxq: %zd/%zd",rxq.size(), txq.size());
+            core::screen.printwln("  - iss/irs        : %u/%u", si.iss_H(), si.irs_H());
+            core::screen.printwln("  - snd_una        : %u", si.snd_una_H());
+            core::screen.printwln("  - snd_nxt/rcv_nxt: %u/%u", si.snd_nxt_H(), si.rcv_nxt_H());
+            core::screen.printwln("  - snd_win/rcv_win: %u/%u", si.snd_win_H(), si.rcv_win_H());
+            core::screen.printwln("  - snd_wl1/wl2    : %u/%u", si.snd_wl1_H(), si.snd_wl2_H());
             break;
         case TCPS_CLOSED:
             for (size_t i=1; i<=7; i++)
-                screen.printwln("                                                                ");
+                core::screen.printwln(
+                        "                                                             ");
             break;
         default:
             break;
