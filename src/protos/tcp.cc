@@ -53,8 +53,7 @@ void tcp_module::print_stat() const
     screen.move(rooty, rootx);
 
     screen.printwln("TCP module");
-    screen.printwln(" Pool: %u/%u",
-            rte_mempool_in_use_count(mp), mp->size);
+    screen.printwln(" Pool: %u/%u", pool_use_count(mp), pool_size(mp));
 
     if (!socks.empty()) {
         screen.printwln(" NetStat %zd ports", socks.size());

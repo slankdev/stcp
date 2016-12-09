@@ -268,6 +268,7 @@ void arp_module::print_stat() const
     screen.move(rooty, rootx);
 
     screen.printwln("ARP module");
+    screen.printwln(" Pool: %u/%u", pool_use_count(mp), pool_size(mp));
     screen.printwln(" Waiting packs  : %zd", arpresolv_wait_queue.size());
     screen.printwln(" Use dynamic arp: %s", use_dynamic_arp ? "YES" : "NO");
     screen.printwln(" ARP-chace");

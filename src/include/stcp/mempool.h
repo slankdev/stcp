@@ -20,6 +20,7 @@ inline mempool* pool_create(
 }
 
 
+// inline void pool_dump(mempool* mp)// TODO
 inline void pool_dump(rte_mempool* mp)
 {
     DPRINT("Mempool\n");
@@ -30,6 +31,16 @@ inline void pool_dump(rte_mempool* mp)
 
     DPRINT(" avail/in_use : %u/%u \n",
         rte_mempool_avail_count(mp), rte_mempool_in_use_count(mp));
+}
+
+inline uint32_t pool_use_count(mempool* mp)
+{
+    return rte_mempool_in_use_count(mp);
+}
+
+inline uint32_t pool_size(mempool* mp)
+{
+    return mp->size;
 }
 
 

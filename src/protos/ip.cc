@@ -332,6 +332,10 @@ void ip_module::print_stat() const
     screen.move(rooty, rootx);
 
     screen.printwln("IP module");
+    screen.printwln(" DirectPool  : %u/%u",
+            pool_use_count(direct_pool), pool_size(direct_pool));
+    screen.printwln(" IndirectPool: %u/%u",
+            pool_use_count(indirect_pool), pool_size(indirect_pool));
     screen.printwln(" Drops      %zd", not_to_me);
     screen.printwln(" Routing-Table");
     screen.printwln(
