@@ -7,7 +7,6 @@
 #include <stcp/dataplane.h>
 #include <stcp/config.h>
 #include <stcp/mbuf.h>
-#include <stcp/log.h>
 
 #include <stcp/protos/ethernet.h>
 #include <stcp/protos/arp.h>
@@ -22,7 +21,6 @@
 namespace slank {
 
 
-using stat  = log<class status_infos>;
 
 class tcp_module;
 class stcp_tcp_sock;

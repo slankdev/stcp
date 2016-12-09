@@ -3,7 +3,7 @@
 
 #include <stcp/stcp.h>
 #include <stcp/socket.h>
-#include <slankdev/filefd.h>
+#include <stcp/filefd.h>
 
 
 namespace slank {
@@ -25,8 +25,8 @@ ether_module core::ether;
 dataplane    core::dplane;
 
 ncurses screen;
-slankdev::filefd stcp_stdout;
-slankdev::filefd stcp_stddbg;
+filefd stcp_stdout;
+filefd stcp_stddbg;
 
 static int usrapp_wrap(void* arg)
 {

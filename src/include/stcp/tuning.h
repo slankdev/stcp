@@ -26,5 +26,9 @@ namespace slank {
 #define ST_NB_TCPSOCKET_ALLOC 5
 #define ST_MBUF_BUFSIZ 2176 // include headroom
 
+#define ST_IPFRAG_NB_BUCKETS         0x1000
+#define ST_IPFRAG_NB_ENT_PER_BUCKET  16
+#define ST_IPFRAG_MAX_ENT_PER_BUCKET 0x1000
+
 
 } /* namespace slank */

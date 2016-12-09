@@ -19,17 +19,11 @@ namespace slank {
 
 void ip_module::init()
 {
-    uint32_t max_flow_num   = 0x1000; // TODO hardcode
-    uint32_t bucket_num     = max_flow_num;
-    uint32_t bucket_entries = 16; // TODO hardcode
-    uint32_t max_entries    = max_flow_num;
-    uint64_t max_cycles     = (tsc_hz() + MS_PER_S - 1) / MS_PER_S * MS_PER_S;
 
     direct_pool = pool_create(
             "IP Direct Pool",
             ST_IPMODULE_DIR_MEMPOOL_NSEG * eth_dev_count(),
             ST_IPMODULE_DIR_MP_CACHESIZ,
-            0,
             ST_MBUF_BUFSIZ,
             cpu_socket_id());
 
@@ -38,15 +32,15 @@ void ip_module::init()
             "IP Indirect Pool",
             ST_IPMODULE_IND_MEMPOOL_NSEG * eth_dev_count(),
             ST_IPMODULE_IND_MP_CACHESIZ,
-            0,
-            0, // TODO MARKED
+            0, /* pool for indirect-buffer doesnt need buffersize */
             cpu_socket_id());
 
+    uint64_t max_cycles     = (tsc_hz() + MS_PER_S - 1) / MS_PER_S * MS_PER_S;
     frag_tbl = ip_frag_table_create(
-            bucket_num,
-            bucket_entries,
-            max_entries,
-            max_cycles,
+            ST_IPFRAG_NB_BUCKETS,         /* number of bucket to store fragmented packets */
+            ST_IPFRAG_NB_ENT_PER_BUCKET,  /* number of entrys to store a fragmented packet*/
+            ST_IPFRAG_MAX_ENT_PER_BUCKET, /* max entry of bucket number                   */
+            max_cycles, /* max cycle to store packets in each-buckets, timeout to drop */
             cpu_socket_id());
 
     srand(time(NULL));

@@ -21,7 +21,6 @@ void arp_module::init()
             "ARP Mem Pool",
             ST_ARPMODULE_MEMPOOL_NSEG * eth_dev_count(),
             ST_ARPMODULE_MP_CACHESIZ,
-            0,    /* private data size */
             ST_MBUF_BUFSIZ,
             cpu_socket_id());
 }

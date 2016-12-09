@@ -21,7 +21,6 @@ void tcp_module::init()
             "TCP Mem Pool",
             ST_TCPMODULE_MEMPOOL_NSEG * eth_dev_count(),
             ST_TCPMODULE_MP_CACHESIZ,
-            0,
             ST_MBUF_BUFSIZ,
             cpu_socket_id());
 }

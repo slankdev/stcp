@@ -8,14 +8,14 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stcp/ncurses.h>
-#include <slankdev/filefd.h>
+#include <stcp/filefd.h>
 
 
 namespace slank {
 
 extern ncurses screen;
-extern slankdev::filefd stcp_stdout;
-extern slankdev::filefd stcp_stddbg;
+extern filefd stcp_stdout;
+extern filefd stcp_stddbg;
 
 #define DEBUG
 
