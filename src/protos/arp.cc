@@ -20,9 +20,9 @@ void arp_module::init()
     mp = pool_create(
             "ARP Mem Pool",
             ST_ARPMODULE_MEMPOOL_NSEG * eth_dev_count(),
-            250,
+            ST_ARPMODULE_MP_CACHESIZ,
             0,
-            MBUF_DEFAULT_BUF_SIZE, // TODO KOKOKARA
+            MBUF_DEFAULT_BUF_SIZE, // TODO KOKOKARA MARKED
             cpu_socket_id());
 }
 

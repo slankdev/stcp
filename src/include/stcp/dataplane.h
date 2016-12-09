@@ -36,7 +36,7 @@ public:
         mp = rte::pktmbuf_pool_create(
                 "Dataplane Mem Pool",
                 ST_DATAPLANE_MEMPOOL_NSEG * rte::eth_dev_count(),
-                250,                         // cache_size
+                ST_DATAPLANE_MP_CACHESIZ,
                 0,
                 RTE_MBUF_DEFAULT_BUF_SIZE,
                 rte::socket_id()

@@ -28,7 +28,7 @@ void ip_module::init()
     direct_pool = pool_create(
             "IP Direct Pool",
             ST_IPMODULE_DIR_MEMPOOL_NSEG * eth_dev_count(),
-            250,
+            ST_IPMODULE_DIR_MP_CACHESIZ,
             0,
             MBUF_DEFAULT_BUF_SIZE,
             cpu_socket_id());
@@ -37,7 +37,7 @@ void ip_module::init()
     indirect_pool = pool_create(
             "IP Indirect Pool",
             ST_IPMODULE_IND_MEMPOOL_NSEG * eth_dev_count(),
-            32,
+            ST_IPMODULE_IND_MP_CACHESIZ,
             0,
             0,
             cpu_socket_id());

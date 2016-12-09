@@ -20,7 +20,7 @@ void tcp_module::init()
     mp = pool_create(
             "TCP Mem Pool",
             ST_TCPMODULE_MEMPOOL_NSEG * eth_dev_count(),
-            250,
+            ST_TCPMODULE_MP_CACHESIZ,
             0,
             MBUF_DEFAULT_BUF_SIZE,
             cpu_socket_id());
