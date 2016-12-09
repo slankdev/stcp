@@ -106,11 +106,11 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
         tih->tcp.urp      = 0x0000;
 
         tih->tcp.cksum = cksum_tih(tih);
-        core::tcp.tx_push(msg, src);
-        return;
+        core::tcp.tx_push(mbuf_clone(msg, core::tcp.mp), src);
     }
     mbuf_free(msg);
     pool_dump(mp);
+    return;
 }
 
 
