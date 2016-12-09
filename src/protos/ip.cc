@@ -11,6 +11,7 @@
 #include <stcp/util.h>
 #include <stcp/mempool.h>
 #include <stcp/arch/dpdk/device.h>
+#include <stcp/tuning.h>
 
 namespace slank {
 
@@ -26,7 +27,7 @@ void ip_module::init()
 
     direct_pool = pool_create(
             "IP Direct Pool",
-            8192 * eth_dev_count(),
+            ST_IPMODULE_DIR_MEMPOOL_NSEG * eth_dev_count(),
             250,
             0,
             MBUF_DEFAULT_BUF_SIZE,
@@ -35,7 +36,7 @@ void ip_module::init()
 
     indirect_pool = pool_create(
             "IP Indirect Pool",
-            8192 * eth_dev_count(),
+            ST_IPMODULE_IND_MEMPOOL_NSEG * eth_dev_count(),
             32,
             0,
             0,

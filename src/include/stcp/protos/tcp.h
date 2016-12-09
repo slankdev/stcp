@@ -10,6 +10,7 @@
 #include <stcp/protos/tcp_var.h>
 #include <stcp/protos/tcp_socket.h>
 #include <vector>
+#include <stcp/tuning.h>
 
 
 
@@ -29,7 +30,7 @@ private:
     std::vector<stcp_tcp_sock> socks;
 
 public:
-    tcp_module() : mp(nullptr), socks(5) {}
+    tcp_module() : mp(nullptr), socks(ST_NB_TCPSOCKET_ALLOC) {}
     void init();
     void rx_push(mbuf* msg, stcp_sockaddr_in* src);
     void tx_push(mbuf* msg, const stcp_sockaddr_in* dst);

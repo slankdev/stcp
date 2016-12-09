@@ -4,6 +4,7 @@
 #include <stcp/dataplane.h>
 #include <stcp/config.h>
 #include <stcp/util.h>
+#include <stcp/tuning.h>
 
 
 
@@ -92,7 +93,7 @@ enum ip_l4_protos : uint8_t {
 
 class ip_module {
 private:
-    static const uint32_t mtu        = ETHER_MTU;
+    static const uint32_t mtu        = ST_ETHER_MTU;
     static const uint8_t ttl_default      = 0x40;
     static const size_t  num_max_fragment = 10;
     size_t not_to_me;

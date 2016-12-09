@@ -12,6 +12,7 @@
 
 #include <stcp/ifnet.h>
 #include <stcp/config.h>
+#include <stcp/tuning.h>
 #include <stcp/arch/dpdk/rte.h>
 
 
@@ -34,7 +35,7 @@ public:
         rte::eth_dev_init(argc, argv);
         mp = rte::pktmbuf_pool_create(
                 "Dataplane Mem Pool",
-                4192 * rte::eth_dev_count(), // num_mbufs
+                ST_DATAPLANE_MEMPOOL_NSEG * rte::eth_dev_count(),
                 250,                         // cache_size
                 0,
                 RTE_MBUF_DEFAULT_BUF_SIZE,

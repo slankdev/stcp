@@ -7,7 +7,7 @@
 #include <stcp/util.h>
 #include <stcp/mempool.h>
 #include <stcp/arch/dpdk/device.h>
-
+#include <stcp/tuning.h>
 
 
 namespace slank {
@@ -19,7 +19,7 @@ void arp_module::init()
 {
     mp = pool_create(
             "ARP Mem Pool",
-            8192 * eth_dev_count(),
+            ST_ARPMODULE_MEMPOOL_NSEG * eth_dev_count(),
             250,
             0,
             MBUF_DEFAULT_BUF_SIZE, // TODO KOKOKARA

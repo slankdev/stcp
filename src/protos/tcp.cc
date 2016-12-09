@@ -6,6 +6,7 @@
 #include <stcp/config.h>
 #include <stcp/arch/dpdk/device.h>
 #include <stcp/protos/tcp_util.h>
+#include <stcp/tuning.h>
 #define UNUSED(x) (void)(x)
 
 namespace slank {
@@ -18,7 +19,7 @@ void tcp_module::init()
 {
     mp = pool_create(
             "TCP Mem Pool",
-            8192 * eth_dev_count(),
+            ST_TCPMODULE_MEMPOOL_NSEG * eth_dev_count(),
             250,
             0,
             MBUF_DEFAULT_BUF_SIZE,
