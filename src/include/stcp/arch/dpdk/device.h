@@ -3,7 +3,7 @@
 
 #include <stcp/arch/dpdk/rte.h>
 
-namespace slank {
+namespace stcp {
 
 inline size_t eth_dev_count()
 {
@@ -16,4 +16,4 @@ inline uint16_t cpu_socket_id()
 }
 
 
-} /* namespace slank */
+} /* namespace stcp */

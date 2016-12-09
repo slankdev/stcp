@@ -7,7 +7,7 @@
 #include <stcp/config.h>
 
 
-namespace slank {
+namespace stcp {
 
 
 struct stcp_icmp_header {
@@ -77,4 +77,4 @@ public:
 
 
 
-} /* namespace slank */
+} /* namespace stcp */

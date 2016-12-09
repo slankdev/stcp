@@ -15,7 +15,7 @@ enum {
 };
 
 
-namespace slank {
+namespace stcp {
 
 
 

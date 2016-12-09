@@ -6,7 +6,7 @@
 #include <stcp/filefd.h>
 
 
-namespace slank {
+namespace stcp {
 
 
 const stcp_ether_addr stcp_ether_addr::broadcast(0xff, 0xff, 0xff, 0xff, 0xff, 0xff);
@@ -250,7 +250,7 @@ void core::ifs_proc()
 
 void core::run()
 {
-    slank::screen.init();
+    stcp::screen.init();
 
     for (stcp_usrapp_info& app : lapps) {
         rte::eal_remote_launch(

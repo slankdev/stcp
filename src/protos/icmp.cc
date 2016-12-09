@@ -5,7 +5,7 @@
 #include <stcp/stcp.h>
 #include <stcp/util.h>
 
-namespace slank {
+namespace stcp {
 
 
 
@@ -96,4 +96,4 @@ void icmp_module::print_stat() const
     screen.printwln("ICMP module");
 }
 
-} /* namespace slank */
+} /* namespace stcp */

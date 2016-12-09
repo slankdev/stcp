@@ -13,7 +13,7 @@
 
 
 
-namespace slank {
+namespace stcp {
 
 
 
@@ -369,4 +369,4 @@ struct stcp_ifreq {
 
 
 
-} /* namespace slank */
+} /* namespace stcp */

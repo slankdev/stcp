@@ -6,7 +6,7 @@
 #include <stcp/config.h>
 #include <stcp/arch/dpdk/rte.h>
 
-namespace slank {
+namespace stcp {
 
 
 inline void mbuf_pull(mbuf* msg, size_t len)

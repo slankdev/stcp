@@ -5,7 +5,7 @@
 #include <stcp/config.h>
 
 
-namespace slank {
+namespace stcp {
 
 
 
@@ -119,4 +119,4 @@ void udp_module::proc()
 
 
 
-} /* namespace slank */
+} /* namespace stcp */

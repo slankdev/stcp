@@ -10,7 +10,7 @@
 #include <stcp/tuning.h>
 
 
-namespace slank {
+namespace stcp {
 
 
 

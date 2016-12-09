@@ -4,7 +4,7 @@
 #include <unistd.h> // for sleep()
 #define UNUSED(x) (void)(x)
 
-using namespace slank;
+using namespace stcp;
 
 
 #if 0

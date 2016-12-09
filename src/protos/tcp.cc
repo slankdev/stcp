@@ -9,7 +9,7 @@
 #include <stcp/tuning.h>
 #define UNUSED(x) (void)(x)
 
-namespace slank {
+namespace stcp {
 
 size_t tcp_module::mss = 1460;
 
@@ -120,4 +120,4 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
 
 
 
-} /* namespace slank */
+} /* namespace stcp */

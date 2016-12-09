@@ -6,7 +6,7 @@
 #include <string>
 #include <stcp/mbuf.h>
 
-namespace slank {
+namespace stcp {
 
 
 
@@ -68,7 +68,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
             if (ah->hwdst == stcp_ether_addr::zero || ah->hwdst == stcp_ether_addr::broadcast) {
                 ether_dst = stcp_ether_addr::broadcast;
             } else {
-                slank::memcpy(&ether_dst, &ah->hwdst, sizeof ether_dst);
+                stcp::memcpy(&ether_dst, &ah->hwdst, sizeof ether_dst);
             }
 
             break;
@@ -132,4 +132,4 @@ void ether_module::rx_push(mbuf* msg)
 
 
 
-} /* namespace slank */
+} /* namespace stcp */

@@ -13,7 +13,7 @@
 #include <stcp/socket.h>
 
 
-namespace slank {
+namespace stcp {
 
 
 

@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stcp/config.h>
 
-namespace slank {
+namespace stcp {
 
 inline mempool* pool_create(
         const char* name,
@@ -42,4 +42,4 @@ inline uint32_t pool_size(mempool* mp)
 }
 
 
-} /* namespace slank */
+} /* namespace stcp */

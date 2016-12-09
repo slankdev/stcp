@@ -18,7 +18,7 @@
 
 
 
-namespace slank {
+namespace stcp {
 
 
 

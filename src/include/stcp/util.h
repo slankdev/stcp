@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stcp/arch/dpdk/rte.h>
 
-namespace slank {
+namespace stcp {
 
 struct stcp_ip_header;
 
@@ -134,4 +134,4 @@ inline void *memcpy (void *dst, const void *src, size_t n)
 
 
 
-} /* namespace slank */
+} /* namespace stcp */

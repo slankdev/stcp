@@ -12,7 +12,7 @@
 #include <stcp/mbuf.h>
 
 
-namespace slank {
+namespace stcp {
 
 
 struct stcp_ether_header {
@@ -40,4 +40,4 @@ public:
 };
 
 
-} /* namespace slank */
+} /* namespace stcp */

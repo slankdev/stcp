@@ -7,7 +7,7 @@
 #include <stcp/mempool.h>
 
 
-namespace slank {
+namespace stcp {
 
 void dataplane::print_stat() const
 {
@@ -28,4 +28,4 @@ void dataplane::print_stat() const
 
 
 
-} /* namespace slank */
+} /* namespace stcp */

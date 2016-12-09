@@ -15,7 +15,7 @@
 
 
 
-namespace slank {
+namespace stcp {
 
 
 
@@ -325,5 +325,5 @@ void ifnet::ioctl_siocgifhwaddr(stcp_ifreq* ifr)
 
 
 
-} /* slank */
+} /* stcp */
 

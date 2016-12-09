@@ -2,7 +2,7 @@
 #pragma once
 #include <ncurses.h>
 
-namespace slank {
+namespace stcp {
 
 
 
@@ -77,4 +77,4 @@ public:
 
 
 
-} /* namespace slank */
+} /* namespace stcp */

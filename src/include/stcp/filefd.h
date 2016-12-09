@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string>
 
-namespace slank {
+namespace stcp {
 
 class filefd {
     private:
@@ -81,6 +81,6 @@ class filefd {
 };
 
 
-} /* namespace slank */
+} /* namespace stcp */
 
 

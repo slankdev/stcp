@@ -14,7 +14,7 @@
 
 
 
-namespace slank {
+namespace stcp {
 
 
 
@@ -105,6 +105,6 @@ private:
 
 
 
-} /* namespace slank */
+} /* namespace stcp */
 
 

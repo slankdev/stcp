@@ -10,7 +10,7 @@
 
 
 
-namespace slank {
+namespace stcp {
 
 
 
@@ -79,4 +79,4 @@ inline const char* sockstate2str(socketstate state)
 
 
 
-} /* namespace slank */
+} /* namespace stcp */

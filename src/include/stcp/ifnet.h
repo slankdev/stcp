@@ -5,7 +5,7 @@
 #include <stcp/ifaddr.h>
 
 
-namespace slank {
+namespace stcp {
 
 
 

@@ -8,7 +8,7 @@
 #include <stcp/util.h>
 
 
-namespace slank {
+namespace stcp {
 
 
 enum tcpflag : uint8_t {
@@ -167,4 +167,4 @@ public:
 };
 
 
-} /* namespace slank */
+} /* namespace stcp */

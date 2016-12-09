@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 
-namespace slank {
+namespace stcp {
 
 
 void ncurses::printframe()
@@ -137,4 +137,4 @@ void ncurses::init()
     refresh();
 }
 
-} /* namespace slank */
+} /* namespace stcp */

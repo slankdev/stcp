@@ -11,7 +11,7 @@
 #include <mutex>
 
 
-namespace slank {
+namespace stcp {
 
 
 
@@ -80,4 +80,4 @@ public:
 };
 
 
-} /* namespace slank */
+} /* namespace stcp */

@@ -10,7 +10,7 @@
 #include <stcp/protos/tcp_util.h>
 #define UNUSED(x) (void)(x)
 
-namespace slank {
+namespace stcp {
 
 
 stcp_tcp_sock::stcp_tcp_sock() :
@@ -1048,4 +1048,4 @@ void stcp_tcp_sock::print_stat(size_t rootx, size_t rooty) const
             break;
     }
 }
-} /* namespace slank */
+} /* namespace stcp */

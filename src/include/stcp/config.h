@@ -11,7 +11,7 @@
 #include <stcp/filefd.h>
 
 
-namespace slank {
+namespace stcp {
 
 extern ncurses screen;
 extern filefd stcp_stdout;

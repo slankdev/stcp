@@ -13,7 +13,7 @@
 #include <stcp/arch/dpdk/device.h>
 #include <stcp/tuning.h>
 
-namespace slank {
+namespace stcp {
 
 
 

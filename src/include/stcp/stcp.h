@@ -18,7 +18,7 @@
 #include <vector>
 
 
-namespace slank {
+namespace stcp {
 
 
 
@@ -27,6 +27,7 @@ class stcp_tcp_sock;
 
 
 
+#if 0
 class stcp_cyclic_func {
 public:
     uint64_t prev;
@@ -34,6 +35,7 @@ public:
     stcp_cyclic_func(uint64_t ms) : interval_ms(ms) {}
     virtual void exec() = 0;
 };
+#endif
 
 
 using stcp_usrapp = int (*)(void*);
@@ -81,8 +83,10 @@ private:
 
 public:
     static void init(int argc, char** argv);
-    static void add_cyclic(stcp_cyclic_func* f);
     static void run();
+#if 0
+    static void add_cyclic(stcp_cyclic_func* f);
+#endif
 
 private:
     static void ifs_proc();

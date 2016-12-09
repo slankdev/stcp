@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-namespace slank {
+namespace stcp {
 
 
 #define ST_TCPMODULE_MEMPOOL_NSEG    8192
@@ -31,4 +31,4 @@ namespace slank {
 #define ST_IPFRAG_MAX_ENT_PER_BUCKET 0x1000
 
 
-} /* namespace slank */
+} /* namespace stcp */
