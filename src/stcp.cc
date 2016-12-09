@@ -50,7 +50,7 @@ void core::set_app(stcp_usrapp func_ptr, void* func_arg)
     static uint32_t c = 0;
 
     stcp_usrapp_info a;
-    a.lcore_id = c++;
+    a.lcore_id = ++c;
     a.func = func_ptr;
     a.func_arg  = func_arg;
 
