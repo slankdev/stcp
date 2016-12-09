@@ -73,6 +73,10 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
     uint16_t dst_port = th->dport;
     for (stcp_tcp_sock& sock : socks) {
         if (sock.port == dst_port) {
+            if (sock.rxq.size() > 1000) { // TODO super hardcode
+                for (int i=0; i<100; i++) // TODO super hardcode
+                    mbuf_free(sock.rxq.pop());
+            }
             mbuf* m = mbuf_clone(msg, core::tcp.mp);
             mbuf_push(m, sizeof(stcp_ip_header));
             sock.rx_push(m, src);
@@ -109,7 +113,6 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
         core::tcp.tx_push(mbuf_clone(msg, core::tcp.mp), src);
     }
     mbuf_free(msg);
-    pool_dump(mp);
     return;
 }
 
