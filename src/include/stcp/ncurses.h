@@ -10,6 +10,9 @@ class ncurses_native {
 private:
     size_t scrn_width;
     size_t scrn_height;
+
+    size_t cur_x;
+    size_t cur_y;
 public:
     ncurses_native() {}
     ~ncurses_native()
@@ -26,14 +29,35 @@ public:
     size_t getw() const { return scrn_width ; }
     size_t geth() const { return scrn_height; }
 
+    static void refresh() { ::refresh(); }
+    static char getchar() { return ::getch(); }
+    void move(size_t y, size_t x)
+    {
+        cur_y = y;
+        cur_x = x;
+        ::move(y, x);
+    }
+    void indention()
+    {
+        cur_y++;
+        ::move(cur_y, cur_x);
+    }
     template<class... Args>
-    static void mvprintw(size_t y, size_t x, const char* fmt, Args... args)
+    void mvprintw(size_t y, size_t x, const char* fmt, Args... args)
     {
         ::mvprintw(y, x, fmt, args...);
     }
-    static void refresh() { ::refresh(); }
-    static char getchar() { return ::getch(); }
-
+    template<class... Args>
+    void printw(const char* fmt, Args... args)
+    {
+        ::printw(fmt, args...);
+    }
+    template<class... Args>
+    void printwln(const char* fmt, Args... args)
+    {
+        ::printw(fmt, args...);
+        indention();
+    }
 };
 
 struct position {
