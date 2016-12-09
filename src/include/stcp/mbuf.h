@@ -54,9 +54,9 @@ inline void mbuf_trim(mbuf* m, uint16_t len)
     rte::pktmbuf_trim(m, len);
 }
 
-inline void mbuf_dump(FILE* f,const mbuf* m, unsigned dump_len)
+inline void mbuf_dump(const mbuf* m, unsigned dump_len)
 {
-    rte::pktmbuf_dump(f, m, dump_len);
+    rte::pktmbuf_dump(stcp_stdout.getfp(), m, dump_len);
 }
 
 inline bool mbuf_is_contiguous(const mbuf* msg)

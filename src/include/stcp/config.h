@@ -8,24 +8,28 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stcp/ncurses.h>
+#include <slankdev/filefd.h>
 
 
 namespace slank {
 
 extern ncurses screen;
+extern slankdev::filefd stcp_stdout;
 
 #define DEBUG
 
 #ifdef DEBUG
 #define DPRINT(...) \
   { \
-      char str[10000]; \
-      sprintf(str, __VA_ARGS__); \
-      screen.debugprintw("%-15s:%4d: %s", __FILE__, __LINE__, str); \
+      stcp_stdout.fprintf("%-15s:%4d: ", __FILE__, __LINE__); \
+      stcp_stdout.fprintf(__VA_ARGS__); \
+      stcp_stdout.fflush(); \
   }
 #else
 #define DPRINT(...)
 #endif
+
+
 
 using eth_conf = struct rte_eth_conf;
 using mbuf = struct rte_mbuf;
@@ -33,22 +37,12 @@ using mempool = struct rte_mempool;
 using ip_frag_death_row = struct rte_ip_frag_death_row;
 using ip_frag_tbl       = struct rte_ip_frag_tbl;
 
-inline int stcp_printf(const char* format, ...)
+template <class... Args>
+inline int stcp_printf(const char* format, Args... args)
 {
-    size_t rootx = screen.POS_STDO.x;
-    size_t rooty = screen.POS_STDO.y;
-
-    static int cur = 0;
-    if (cur > 10) cur = 0;
-    else cur++;
-
-    char str[1000];
-    va_list arg;
-    va_start(arg, format);
-    int ret = vsprintf(str, format, arg);
-    va_end(arg);
-
-    screen.mvprintw(rooty+cur, rootx, "%-15s %4s: %s", "STCP_PRINTF", "", str);
+    stcp_stdout.fprintf("%-15s:%4s: ", "STCP_PRINTF", "");
+    int ret = stcp_stdout.fprintf(format, args...);
+    stcp_stdout.fflush();
     return ret;
 }
 

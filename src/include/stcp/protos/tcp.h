@@ -64,15 +64,15 @@ struct stcp_tcp_header {
 
     void print() const
     {
-        printf("TCP header \n");
-        printf("+ sport    : %u 0x%04x \n", ntoh16(sport), ntoh16(sport));
-        printf("+ dport    : %u 0x%04x \n", ntoh16(dport), ntoh16(dport));
-        printf("+ seq num  : %u 0x%08x \n", ntoh32(seq  ), ntoh32(seq  ));
-        printf("+ ack num  : %u 0x%08x \n", ntoh32(ack  ), ntoh32(ack  ));
-        printf("+ data off : 0x%02x \n"   , data_off      );
-        printf("+ tcp flags: 0x%02x \n"   , flags         );
-        printf("+ rx win   : 0x%04x \n"   , ntoh16(rx_win)  );
-        printf("+ cksum    : 0x%04x \n"   , ntoh16(cksum )  );
+        stcp_printf("TCP header \n");
+        stcp_printf("+ sport    : %u 0x%04x \n", ntoh16(sport), ntoh16(sport));
+        stcp_printf("+ dport    : %u 0x%04x \n", ntoh16(dport), ntoh16(dport));
+        stcp_printf("+ seq num  : %u 0x%08x \n", ntoh32(seq  ), ntoh32(seq  ));
+        stcp_printf("+ ack num  : %u 0x%08x \n", ntoh32(ack  ), ntoh32(ack  ));
+        stcp_printf("+ data off : 0x%02x \n"   , data_off      );
+        stcp_printf("+ tcp flags: 0x%02x \n"   , flags         );
+        stcp_printf("+ rx win   : 0x%04x \n"   , ntoh16(rx_win)  );
+        stcp_printf("+ cksum    : 0x%04x \n"   , ntoh16(cksum )  );
     }
 };
 

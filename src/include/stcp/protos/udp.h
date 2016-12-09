@@ -23,11 +23,11 @@ struct stcp_udp_header {
 
     void print() const
     {
-        printf("UDP header \n");
-        printf("+ sport    : %u 0x%04x \n", ntoh16(sport), ntoh16(sport));
-        printf("+ dport    : %u 0x%04x \n", ntoh16(dport), ntoh16(dport));
-        printf("+ len      : %u 0x%08x \n", ntoh16(len  ), ntoh16(len  ));
-        printf("+ cksum    : 0x%04x \n"   , ntoh16(cksum)  );
+        stcp_printf("UDP header \n");
+        stcp_printf("+ sport    : %u 0x%04x \n", ntoh16(sport), ntoh16(sport));
+        stcp_printf("+ dport    : %u 0x%04x \n", ntoh16(dport), ntoh16(dport));
+        stcp_printf("+ len      : %u 0x%08x \n", ntoh16(len  ), ntoh16(len  ));
+        stcp_printf("+ cksum    : 0x%04x \n"   , ntoh16(cksum)  );
     }
 };
 

@@ -40,7 +40,7 @@ int user_main1(void* arg)
     sock->bind(&addr, sizeof(addr));
     sock->listen(5);
 
-#if 1
+#if 0
     while (true);
 #else
     std::vector<stcp_tcp_sock*> fds;
@@ -55,7 +55,7 @@ int user_main1(void* arg)
             }
             if (fds[i]->readable()) {
                 mbuf* msg = fds[i]->read();
-                mbuf_dump(stdout, msg, mbuf_pkt_len(msg));
+                mbuf_dump(msg, mbuf_pkt_len(msg));
                 fds[i]->write(msg);
             }
             if (fds[i]->sockdead()) {

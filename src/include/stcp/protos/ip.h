@@ -36,22 +36,22 @@ struct stcp_ip_header {
 
     void print() const
     {
-        printf("IP header \n");
-        printf("+ version_ihl    : 0x%02x    \n", version_ihl         );
-        printf("+ type_of_service: 0x%02x    \n", type_of_service     );
-        printf("+ total_length   : %u 0x%04x \n",
+        stcp_printf("IP header \n");
+        stcp_printf("+ version_ihl    : 0x%02x    \n", version_ihl         );
+        stcp_printf("+ type_of_service: 0x%02x    \n", type_of_service     );
+        stcp_printf("+ total_length   : %u 0x%04x \n",
                 ntoh16(total_length), ntoh16(total_length)       );
-        printf("+ packet_id      : %u 0x%04x \n",
+        stcp_printf("+ packet_id      : %u 0x%04x \n",
                 ntoh16(packet_id), ntoh16(packet_id)             );
-        printf("+ fragment_offset: %u 0x%04x \n",
+        stcp_printf("+ fragment_offset: %u 0x%04x \n",
                 ntoh16(fragment_offset), ntoh16(fragment_offset) );
-        printf("+ time_to_live   : 0x%02x \n"   , time_to_live        );
-        printf("+ next_proto_id  : 0x%02x \n"   , next_proto_id       );
-        printf("+ hdr_checksum   : 0x%04x \n"   , ntoh16(hdr_checksum));
-        printf("+ src address    : %s \n"       , src.c_str()         );
-        printf("+ dst address    : %s \n"       , dst.c_str()         );
+        stcp_printf("+ time_to_live   : 0x%02x \n"   , time_to_live        );
+        stcp_printf("+ next_proto_id  : 0x%02x \n"   , next_proto_id       );
+        stcp_printf("+ hdr_checksum   : 0x%04x \n"   , ntoh16(hdr_checksum));
+        stcp_printf("+ src address    : %s \n"       , src.c_str()         );
+        stcp_printf("+ dst address    : %s \n"       , dst.c_str()         );
     }
-} ;
+};
 
 
 

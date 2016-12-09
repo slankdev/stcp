@@ -3,6 +3,7 @@
 
 #include <stcp/stcp.h>
 #include <stcp/socket.h>
+#include <slankdev/filefd.h>
 
 
 namespace slank {
@@ -23,8 +24,8 @@ arp_module   core::arp;
 ether_module core::ether;
 dpdk_core    core::dpdk;
 
-
 ncurses screen;
+slankdev::filefd stcp_stdout;
 
 static int usrapp_wrap(void* arg)
 {
@@ -218,6 +219,8 @@ void core::set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o
 
 void core::init(int argc, char** argv)
 {
+    stcp_stdout.fopen("stdout.log", "w");
+
     dpdk.init(argc, argv);
     arp.init();
     ip.init();

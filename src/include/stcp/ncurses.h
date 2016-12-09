@@ -51,7 +51,7 @@ public:
     const position POS_IP    = {0 , 20};
     const position POS_ICMP  = {0 , 28};
     const position POS_UDP   = {0 , 30};
-    const position POS_TCP   = {80, 0 };
+    const position POS_TCP   = {70, 0 };
     const position POS_STDO  = {0 , 52};
     const position POS_DEBUG = {0 , 62};
 
