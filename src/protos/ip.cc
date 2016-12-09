@@ -30,7 +30,7 @@ void ip_module::init()
             ST_IPMODULE_DIR_MEMPOOL_NSEG * eth_dev_count(),
             ST_IPMODULE_DIR_MP_CACHESIZ,
             0,
-            MBUF_DEFAULT_BUF_SIZE,
+            ST_MBUF_BUFSIZ,
             cpu_socket_id());
 
 
@@ -39,7 +39,7 @@ void ip_module::init()
             ST_IPMODULE_IND_MEMPOOL_NSEG * eth_dev_count(),
             ST_IPMODULE_IND_MP_CACHESIZ,
             0,
-            0,
+            0, // TODO MARKED
             cpu_socket_id());
 
     frag_tbl = ip_frag_table_create(

@@ -38,7 +38,7 @@ public:
                 ST_DATAPLANE_MEMPOOL_NSEG * rte::eth_dev_count(),
                 ST_DATAPLANE_MP_CACHESIZ,
                 0,
-                RTE_MBUF_DEFAULT_BUF_SIZE,
+                ST_MBUF_BUFSIZ,
                 rte::socket_id()
                 );
 

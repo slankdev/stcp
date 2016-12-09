@@ -8,9 +8,6 @@
 
 namespace slank {
 
-enum {
-    MBUF_DEFAULT_BUF_SIZE = RTE_MBUF_DEFAULT_BUF_SIZE,
-};
 
 inline void mbuf_pull(mbuf* msg, size_t len)
 {

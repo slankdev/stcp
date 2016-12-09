@@ -24,6 +24,7 @@ namespace slank {
 #define ST_ETHER_MTU 1500
 
 #define ST_NB_TCPSOCKET_ALLOC 5
+#define ST_MBUF_BUFSIZ 2176 // include headroom
 
 
 } /* namespace slank */
