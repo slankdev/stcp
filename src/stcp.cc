@@ -47,11 +47,10 @@ static int usrapp_wrap(void* arg)
 
 void core::set_app(stcp_usrapp func_ptr, void* func_arg)
 {
-    static uint32_t c = 0; // TODO hardcode
-    c++;
+    static uint32_t c = 0;
 
     stcp_usrapp_info a;
-    a.lcore_id = c;
+    a.lcore_id = c++;
     a.func = func_ptr;
     a.func_arg  = func_arg;
 
@@ -193,7 +192,7 @@ void core::set_ip_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t c
         uint8_t u8[4];
         uint32_t u32;
     } U;
-    U.u32 = 0xffffffff; // TODO hardcode
+    U.u32 = 0xffffffff;
     U.u32 >>= (num_bit - cidr);
 
     memset(&ifr, 0, sizeof ifr);

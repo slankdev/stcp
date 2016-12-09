@@ -118,11 +118,6 @@ class tcp_stream_info {
     uint32_t rcv_nxt_; /* next receive                      */
     uint16_t rcv_wnd_; /* receive window size               */
 
-#if 0
-    uint16_t snd_up ; /* send urgent pointer               */
-    uint16_t rcv_up ; /* receive urgent pointer            */
-#endif
-
 public:
     tcp_stream_info(uint32_t iss, uint32_t irs)
         : iss_(iss), irs_(irs), snd_win_(512) {}

@@ -132,8 +132,8 @@ void stcp_tcp_sock::proc()
         tih->tcp.data_off = sizeof(stcp_tcp_header) >> 2 << 4;
         tih->tcp.flags    = TCPF_PSH|TCPF_ACK;
         tih->tcp.rx_win   = si.snd_win_N();
+        tih->tcp.urp      = 0x0000;
         tih->tcp.cksum    = 0x0000;
-        tih->tcp.urp      = 0; // TODO hardcode
 
         tih->tcp.cksum    = cksum_tih(tih);
 
@@ -452,10 +452,9 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
      */
     if (HAVE(tih, TCPF_SYN)) {
         /*
-         * Be not implemented
+         * Unsupport belows
          *  - Securty Check
          *  - Priority Check
-         * TODO: imple
          */
         stcp_tcp_sock* newsock = core::create_tcp_socket();
         newsock->tcp_state = TCPS_SYN_RCVD;
@@ -479,7 +478,7 @@ void stcp_tcp_sock::rx_push_LISTEN(mbuf* msg, stcp_sockaddr_in* src)
         tih->tcp.ack     = newsock->si.rcv_nxt_N();
         tih->tcp.flags   = TCPF_SYN|TCPF_ACK;
         tih->tcp.rx_win  = newsock->si.snd_win_N();
-        tih->tcp.urp     = 0x0000; // TODO hardcode
+        tih->tcp.urp     = 0x0000;
         tih->tcp.cksum   = 0x0000;
 
         tih->tcp.cksum   = cksum_tih(tih);

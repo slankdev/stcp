@@ -100,10 +100,6 @@ private:
     bool rx_push_ES_ackchk(mbuf* msg, stcp_sockaddr_in* src);
     bool rx_push_ES_textseg(mbuf* msg, stcp_sockaddr_in* src);
     bool rx_push_ES_finchk(mbuf* msg, stcp_sockaddr_in* src);
-#if 0
-    bool rx_push_ES_secprcchk(mbuf* msg, stcp_sockaddr_in* src);
-    bool rx_push_ES_urgchk(mbuf* msg, stcp_sockaddr_in* src);
-#endif
 };
 
 
