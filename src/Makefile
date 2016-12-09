@@ -6,8 +6,8 @@ prefix = ..
 # INTERFACE  = wlp3s0
 # INTERFACE  = enp0s20u2
 # INTERFACE  = eth1
-INTERFACE  = lo
-# INTERFACE = vboxnet1
+# INTERFACE  = lo
+INTERFACE = vboxnet1
 # INTERFACE = vboxnet0
 
 TMUXSPLIT  = tmux split-window -v

@@ -92,7 +92,8 @@ void icmp_module::print_stat() const
 {
     size_t rootx = screen.POS_ICMP.x;
     size_t rooty = screen.POS_ICMP.y;
-    screen.mvprintw(rooty, rootx, "ICMP module");
+    screen.move(rooty, rootx);
+    screen.printwln("ICMP module");
 }
 
 } /* namespace slank */

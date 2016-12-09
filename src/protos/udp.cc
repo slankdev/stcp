@@ -89,17 +89,18 @@ void udp_module::print_stat() const
 {
     size_t rootx = screen.POS_UDP.x;
     size_t rooty = screen.POS_UDP.y;
+    screen.move(rooty, rootx);
 
-    screen.mvprintw(rooty, rootx, "UDP module");
+    screen.printwln("UDP module");
 
     if (!socks.empty()) {
-        screen.mvprintw(rooty+1, rootx, "");
-        screen.mvprintw(rooty+2, rootx, "\tNetStat");
+        screen.printwln("");
+        screen.printwln("\tNetStat");
     }
     size_t i = 0;
     for (const stcp_udp_sock* sock : socks) {
 
-        screen.mvprintw(rooty+3+i, rootx, "\t%u/udp rxq=%zd txq=%zd",
+        screen.printwln("\t%u/udp rxq=%zd txq=%zd",
                 hton16(sock->port),
                 sock->rxq.size(),
                 sock->txq.size());

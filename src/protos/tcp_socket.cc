@@ -1019,30 +1019,31 @@ bool stcp_tcp_sock::rx_push_ES_finchk(mbuf* msg, stcp_sockaddr_in* src)
 
 void stcp_tcp_sock::print_stat(size_t rootx, size_t rooty) const
 {
-    screen.mvprintw(rooty+0, rootx, " sock/tcp=%s/%s [this=%p]",
+    screen.move(rooty, rootx);
+
+    screen.printwln(" sock/tcp=%s/%s [this=%p]",
             sockstate2str(sock_state),
             tcpstate2str(tcp_state),
             this);
 
     switch (tcp_state) {
         case TCPS_LISTEN:
-            screen.mvprintw(rooty+1, rootx,  "  - local  port: %u", ntoh16(port));
-            screen.mvprintw(rooty+2, rootx,  "  - wait accept count: %zd", wait_accept_count);
+            screen.printwln("  - local  port: %u", ntoh16(port));
+            screen.printwln("  - wait accept count: %zd", wait_accept_count);
             break;
         case TCPS_ESTABLISHED:
-            screen.mvprintw(rooty+1 , rootx, "  - local/remote: %s:%u/%s:%u",
+            screen.printwln("  - local/remote: %s:%u/%s:%u",
                     addr.c_str(), ntoh16(port), pair.c_str(), ntoh16(pair_port));
-            screen.mvprintw(rooty+2 , rootx, "  - txq/rxq: %zd/%zd",rxq.size(), txq.size());
-            screen.mvprintw(rooty+3 , rootx, "  - iss/irs        : %u/%u", si.iss_H(), si.irs_H());
-            screen.mvprintw(rooty+4 , rootx, "  - snd_una        : %u", si.snd_una_H());
-            screen.mvprintw(rooty+5 , rootx, "  - snd_nxt/rcv_nxt: %u/%u", si.snd_nxt_H(), si.rcv_nxt_H());
-            screen.mvprintw(rooty+6 , rootx, "  - snd_win/rcv_win: %u/%u", si.snd_win_H(), si.rcv_win_H());
-            screen.mvprintw(rooty+7 , rootx, "  - snd_wl1/wl2    : %u/%u", si.snd_wl1_H(), si.snd_wl2_H());
+            screen.printwln("  - txq/rxq: %zd/%zd",rxq.size(), txq.size());
+            screen.printwln("  - iss/irs        : %u/%u", si.iss_H(), si.irs_H());
+            screen.printwln("  - snd_una        : %u", si.snd_una_H());
+            screen.printwln("  - snd_nxt/rcv_nxt: %u/%u", si.snd_nxt_H(), si.rcv_nxt_H());
+            screen.printwln("  - snd_win/rcv_win: %u/%u", si.snd_win_H(), si.rcv_win_H());
+            screen.printwln("  - snd_wl1/wl2    : %u/%u", si.snd_wl1_H(), si.snd_wl2_H());
             break;
         case TCPS_CLOSED:
             for (size_t i=1; i<=7; i++)
-                screen.mvprintw(rooty+i, rootx,
-                    "                                                                ");
+                screen.printwln("                                                                ");
             break;
         default:
             break;

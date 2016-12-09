@@ -271,7 +271,6 @@ void core::run()
 
 void core::stat_all()
 {
-
     size_t i=0;
     for (ifnet& dev : dpdk.devices) {
         size_t rooty = screen.POS_PORT.y;
@@ -286,6 +285,8 @@ void core::stat_all()
     icmp.print_stat();
     udp.print_stat();
     tcp.print_stat();
+
+    screen.refresh();
 }
 
 
