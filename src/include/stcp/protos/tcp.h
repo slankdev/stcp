@@ -4,7 +4,7 @@
 
 #include <stcp/config.h>
 #include <stcp/socket.h>
-#include <stcp/arch/dpdk/dpdk.h>
+#include <stcp/dataplane.h>
 #include <stcp/stcp.h>
 #include <stcp/util.h>
 #include <stcp/protos/tcp_var.h>

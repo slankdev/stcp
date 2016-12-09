@@ -20,8 +20,7 @@ inline mempool* pool_create(
 }
 
 
-// inline void pool_dump(mempool* mp)// TODO
-inline void pool_dump(rte_mempool* mp)
+inline void pool_dump(mempool* mp)
 {
     DPRINT("Mempool\n");
     DPRINT(" name         : %s \n", mp->name);

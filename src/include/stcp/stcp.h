@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 
-#include <stcp/arch/dpdk/dpdk.h>
+#include <stcp/dataplane.h>
 #include <stcp/config.h>
 #include <stcp/mbuf.h>
 #include <stcp/log.h>
@@ -79,7 +79,7 @@ private:
     static ip_module     ip;
     static arp_module    arp;
     static ether_module  ether;
-    static dpdk_core     dpdk;
+    static dataplane     dplane;
 
 public:
     static void init(int argc, char** argv);

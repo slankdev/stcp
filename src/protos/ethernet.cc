@@ -86,7 +86,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
         reinterpret_cast<stcp_ether_header*>(mbuf_push(msg, sizeof(stcp_ether_header)));
 
     memset(&ether_src, 0, sizeof(ether_src));
-    for (ifaddr& ifa : core::dpdk.devices[port].addrs) {
+    for (ifaddr& ifa : core::dplane.devices[port].addrs) {
         if (ifa.family == STCP_AF_LINK) {
             for (size_t i=0; i<stcp_ether_addr::addrlen; i++)
                 ether_src.addr_bytes[i] = ifa.raw.sa_data[i];
@@ -99,7 +99,7 @@ void ether_module::tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst)
     }
     eh->type = ether_type;
 
-    for (ifnet& dev : core::dpdk.devices) {
+    for (ifnet& dev : core::dplane.devices) {
         dev.tx_push(msg);
     }
 }

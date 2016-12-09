@@ -3,7 +3,7 @@
 
 #include <stcp/config.h>
 #include <stcp/socket.h>
-#include <stcp/arch/dpdk/dpdk.h>
+#include <stcp/dataplane.h>
 #include <stcp/util.h>
 
 #include <vector>

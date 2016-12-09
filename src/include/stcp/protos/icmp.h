@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <stcp/arch/dpdk/dpdk.h>
+#include <stcp/dataplane.h>
 #include <stcp/config.h>
 
 

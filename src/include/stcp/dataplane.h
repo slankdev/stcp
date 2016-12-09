@@ -20,30 +20,22 @@ namespace slank {
 
 
 
-class dpdk_core {
+class dataplane {
     friend class ifnet;
-private:
-    static std::string mp_name;       /* memory pool name                        */
-    struct rte_mempool* mempool;
-
+    mempool* mp;
 public:
 
-    static uint32_t num_mbufs;        /* num of mbuf that allocated in a mempool */
-    static uint32_t mbuf_cache_size;  /* packet cache size in each mbufs         */
-    static uint32_t ipv4_mtu_default;
-
-    dpdk_core() : mempool(nullptr) {}
-    ~dpdk_core() {}
+    dataplane() : mp(nullptr) {}
+    ~dataplane() {}
 
     std::vector<ifnet> devices;
     void init(int argc, char** argv)
     {
-
         rte::eth_dev_init(argc, argv);
-        mempool = rte::pktmbuf_pool_create(
-                mp_name.c_str(),
-                num_mbufs * rte::eth_dev_count(),
-                mbuf_cache_size,
+        mp = rte::pktmbuf_pool_create(
+                "Dataplane Mem Pool",
+                4192 * rte::eth_dev_count(), // num_mbufs
+                250,                         // cache_size
                 0,
                 RTE_MBUF_DEFAULT_BUF_SIZE,
                 rte::socket_id()
@@ -55,6 +47,7 @@ public:
             devices.push_back(dev);
         }
     }
+    void print_stat() const;
 };
 
 } /* namespace */

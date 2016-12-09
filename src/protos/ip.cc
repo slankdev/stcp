@@ -203,7 +203,7 @@ void ip_module::ioctl_siocgetrts(std::vector<stcp_rtentry>** table)
 
 void ip_module::route_resolv(const stcp_sockaddr_in* dst, stcp_sockaddr_in* next, uint8_t* port)
 {
-    dpdk_core& dpdk = core::dpdk;
+    dataplane& dpdk = core::dplane;
 
     for (size_t i=0; i<dpdk.devices.size(); i++) {
         if (is_linklocal(i, dst)) {
@@ -226,7 +226,7 @@ void ip_module::route_resolv(const stcp_sockaddr_in* dst, stcp_sockaddr_in* next
 
 bool ip_module::is_linklocal(uint8_t port, const stcp_sockaddr_in* addr)
 {
-    dpdk_core& dpdk = core::dpdk;
+    dataplane& dpdk = core::dplane;
     stcp_sockaddr inaddr(STCP_AF_INET);
     stcp_sockaddr inmask(STCP_AF_INET);
     stcp_sockaddr innet(STCP_AF_INET);
@@ -277,7 +277,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
     ih->total_length      = hton16(mbuf_pkt_len(msg));
     ih->packet_id         = hton16(rand() % 0xffff);
 
-    if (mbuf_pkt_len(msg) > core::dpdk.ipv4_mtu_default) {
+    if (mbuf_pkt_len(msg) > ip_module::mtu) {
         ih->fragment_offset = hton16(0x0000);
     } else {
         ih->fragment_offset   = hton16(0x4000);
@@ -294,7 +294,7 @@ void ip_module::tx_push(mbuf* msg, const stcp_sockaddr_in* dst, ip_l4_protos pro
     mbuf* msgs[ip_module::num_max_fragment];
     memset(msgs, 0, sizeof msgs);
     uint32_t nb = ipv4_fragment_packet(msg, &msgs[0], 10,
-            core::dpdk.ipv4_mtu_default,
+            ip_module::mtu,
             direct_pool, indirect_pool);
 
     stcp_sockaddr_in next;

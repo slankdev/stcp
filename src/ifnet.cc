@@ -11,7 +11,7 @@
 #include <stcp/stcp.h>
 #include <stcp/socket.h>
 #include <stcp/arch/dpdk/rte.h>
-#include <stcp/arch/dpdk/dpdk.h>
+#include <stcp/dataplane.h>
 
 
 
@@ -26,10 +26,10 @@ void ifnet::init()
     port_conf.rxmode.max_rx_pkt_len = ETHER_MAX_LEN;
     rte::eth_dev_configure(port_id, num_rx_rings, num_tx_rings, &port_conf);
 
-    dpdk_core& d = core::dpdk;
+    dataplane& d = core::dplane;
     for (uint16_t ring=0; ring<num_rx_rings; ring++) {
         rte::eth_rx_queue_setup(port_id, ring, rx_ring_size,
-                rte::eth_dev_socket_id(port_id), NULL, d.mempool);
+                rte::eth_dev_socket_id(port_id), NULL, d.mp);
     }
     for (uint16_t ring=0; ring<num_tx_rings; ring++) {
         rte::eth_tx_queue_setup(port_id, ring, tx_ring_size,
@@ -114,12 +114,12 @@ static const char* af2str(stcp_sa_family af)
 void ifnet::print_stat(size_t rootx, size_t rooty) const
 {
     screen.move(rooty, rootx);
-    screen.printwln("%s: %s", name.c_str(), promiscuous_mode?"PROMISC":"");
+    screen.printwln(" %s: %s", name.c_str(), promiscuous_mode?"PROMISC":"");
 
     for (const ifaddr& ifa : addrs) {
         if (ifa.family == STCP_AF_LINK) {
             screen.printwln(
-                    " %-10s %02x:%02x:%02x:%02x:%02x:%02x "
+                    "  %-10s %02x:%02x:%02x:%02x:%02x:%02x "
                 , af2str(ifa.family)
                 , ifa.raw.sa_data[0], ifa.raw.sa_data[1]
                 , ifa.raw.sa_data[2], ifa.raw.sa_data[3]
@@ -127,12 +127,12 @@ void ifnet::print_stat(size_t rootx, size_t rooty) const
         } else if (ifa.family == STCP_AF_INET || ifa.family == STCP_AF_INMASK) {
             const struct stcp_sockaddr_in* sin =
                 reinterpret_cast<const stcp_sockaddr_in*>(&ifa.raw);
-            screen.printwln(" %-10s %d.%d.%d.%d "
+            screen.printwln("  %-10s %d.%d.%d.%d "
                 , af2str(ifa.family)
                 , sin->sin_addr.addr_bytes[0], sin->sin_addr.addr_bytes[1]
                 , sin->sin_addr.addr_bytes[2], sin->sin_addr.addr_bytes[3]);
         } else {
-            screen.printwln(" unknown ");
+            screen.printwln("  unknown ");
         }
     }
 }

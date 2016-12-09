@@ -17,7 +17,7 @@ LOGNAME = log.log
 SRCS   = \
 		ifnet.cc \
 		ncurses.cc \
-		arch/dpdk/dpdk.cc \
+		dataplane.cc \
 		protos/ethernet.cc \
 		protos/arp.cc \
 		protos/ip.cc \
