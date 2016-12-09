@@ -21,9 +21,9 @@ extern slankdev::filefd stcp_stdout;
 #ifdef DEBUG
 #define DPRINT(...) \
   { \
-      stcp_stdout.fprintf("%-15s:%4d: ", __FILE__, __LINE__); \
-      stcp_stdout.fprintf(__VA_ARGS__); \
-      stcp_stdout.fflush(); \
+      stcp_stddbg.fprintf("%-15s:%4d: ", __FILE__, __LINE__); \
+      stcp_stddbg.fprintf(__VA_ARGS__); \
+      stcp_stddbg.fflush(); \
   }
 #else
 #define DPRINT(...)

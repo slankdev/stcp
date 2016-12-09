@@ -20,4 +20,15 @@ inline mempool* pool_create(
 }
 
 
+inline void pool_dump(mempool* mp)
+{
+#if 0
+    rte_mempool_dump(stcp_stdout.getfp(), mp);
+#else
+    stcp_printf("Mempool: name=%s\n", mp->name);
+    stcp_printf(" size: %u\n", mp->size);
+#endif
+}
+
+
 } /* namespace slank */

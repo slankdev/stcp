@@ -157,7 +157,7 @@ mbuf* stcp_tcp_sock::read()
     }
 
     mbuf* m = rxq.pop();
-    DPRINT("[%15p] READ datalen=%zd\n", this, mbuf_pkt_len(m));
+    stcp_printf("[%15p] READ datalen=%zd\n", this, mbuf_pkt_len(m));
     return m;
 }
 
@@ -173,7 +173,7 @@ stcp_tcp_sock* stcp_tcp_sock::accept(struct stcp_sockaddr_in* addr)
     for (;;) {
         for (stcp_tcp_sock& s : core::tcp.socks) {
             if ((s.parent == this) && (s.sock_state == SOCKS_WAITACCEPT)) {
-                DPRINT("[%15p] ACCEPT return new socket [%p]\n", this, &s);
+                stcp_printf("[%15p] ACCEPT return new socket [%p]\n", this, &s);
                 s.sock_state = SOCKS_USE;
                 wait_accept_count--;
                 return &s;
@@ -189,7 +189,7 @@ void stcp_tcp_sock::proc()
     while (!txq.empty()) {
         mbuf* msg = txq.pop();
         size_t datalen = mbuf_pkt_len(msg);
-        DPRINT("[%15p] proc_ESTABLISHED send(txq.pop(), %zd)\n",
+        stcp_printf("[%15p] proc_ESTABLISHED send(txq.pop(), %zd)\n",
                 this, mbuf_pkt_len(msg));
 
         mbuf_push(msg, sizeof(stcp_ip_header));
@@ -253,7 +253,7 @@ void stcp_tcp_sock::listen(size_t backlog)
 
 void stcp_tcp_sock::move_state(tcpstate next_state)
 {
-    DPRINT("[%15p] %s -> %s \n", this,
+    stcp_printf("[%15p] %s -> %s \n", this,
             tcpstate2str(tcp_state),
             tcpstate2str(next_state) );
 
@@ -601,7 +601,7 @@ void stcp_tcp_sock::rx_push_SYN_SEND(mbuf* msg, stcp_sockaddr_in* src)
             } else {
                 mbuf_free(msg);
             }
-            DPRINT("SLANKDEVSLANKDEV error: connection reset\n");
+            stcp_printf("error: connection reset\n");
             move_state(TCPS_CLOSED);
             return;
         }
@@ -771,7 +771,7 @@ bool stcp_tcp_sock::rx_push_ES_rstchk(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_SYN_RCVD:
         {
             if (HAVE(tih, TCPF_RST)) {
-                DPRINT("SLANKDEVSLANKDEV conection reset\n");
+                stcp_printf("conection reset\n");
                 mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;
@@ -785,7 +785,7 @@ bool stcp_tcp_sock::rx_push_ES_rstchk(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_CLOSE_WAIT:
         {
             if (HAVE(tih, TCPF_RST)) {
-                DPRINT("SLANKDEVSLANKDEV conection reset\n");
+                stcp_printf("conection reset\n");
                 mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;
@@ -834,7 +834,7 @@ bool stcp_tcp_sock::rx_push_ES_synchk(mbuf* msg, stcp_sockaddr_in* src)
         case TCPS_TIME_WAIT:
         {
             if (HAVE(tih, TCPF_SYN)) {
-                DPRINT("SLANKDEVSLANKDEV conection reset\n");
+                stcp_printf("conection reset\n");
                 mbuf_free(msg);
                 move_state(TCPS_CLOSED);
                 return false;

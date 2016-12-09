@@ -26,6 +26,7 @@ dpdk_core    core::dpdk;
 
 ncurses screen;
 slankdev::filefd stcp_stdout;
+slankdev::filefd stcp_stddbg;
 
 static int usrapp_wrap(void* arg)
 {
@@ -220,6 +221,7 @@ void core::set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o
 void core::init(int argc, char** argv)
 {
     stcp_stdout.fopen("stdout.log", "w");
+    stcp_stddbg.fopen("stddbg.log", "w");
 
     dpdk.init(argc, argv);
     arp.init();
@@ -234,6 +236,7 @@ void core::ifs_proc()
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
 
         if (num_tx != num_reqest_to_send) {
+            // TODO Fix this
             DPRINT("core::ifs_proc(): num_tx!=num_reqest_to_send, Oh yeah!");
         }
 
