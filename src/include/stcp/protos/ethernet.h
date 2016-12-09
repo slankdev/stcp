@@ -37,7 +37,6 @@ public:
     void rx_push(mbuf* msg);
     void tx_push(uint8_t port, mbuf* msg, const stcp_sockaddr* dst);
     void proc();
-    void print_stat() const; // TODO ERASE
 };
 
 

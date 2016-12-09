@@ -279,7 +279,6 @@ void core::stat_all()
         i++;
     }
 
-    ether.print_stat();
     arp.print_stat();
     ip.print_stat();
     icmp.print_stat();

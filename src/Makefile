@@ -16,6 +16,7 @@ TARGET = a.out
 LOGNAME = log.log
 SRCS   = \
 		ifnet.cc \
+		ncurses.cc \
 		arch/dpdk/dpdk.cc \
 		protos/ethernet.cc \
 		protos/arp.cc \
