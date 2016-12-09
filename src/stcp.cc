@@ -236,8 +236,7 @@ void core::ifs_proc()
         uint16_t num_tx = dev.io_tx(num_reqest_to_send);
 
         if (num_tx != num_reqest_to_send) {
-            // TODO Fix this
-            DPRINT("core::ifs_proc(): num_tx!=num_reqest_to_send, Oh yeah!");
+            throw exception("core::ifs_proc(): num_tx!=num_reqest_to_send, Oh yeah!");
         }
 
         uint16_t num_rx = dev.io_rx();
