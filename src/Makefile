@@ -23,6 +23,7 @@ SRCS   = \
 		protos/icmp.cc \
 		protos/udp.cc \
 		protos/tcp.cc \
+		protos/tcp_socket.cc \
 		stcp.cc \
 		main.cc
 
