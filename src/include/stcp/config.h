@@ -15,6 +15,7 @@ namespace slank {
 
 extern ncurses screen;
 extern slankdev::filefd stcp_stdout;
+extern slankdev::filefd stcp_stddbg;
 
 #define DEBUG
 

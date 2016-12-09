@@ -24,10 +24,33 @@
 #include <rte_ip.h>
 #include <rte_ip_frag.h>
 #include <stcp/config.h>
+#include <slankdev/filefd.h>
 
-
+// TODO ERASE
+#if 0
+namespace slank {
+extern slankdev::filefd stcp_stddbg;
+}
+#endif
 
 namespace rte {
+
+
+// TODO ERASE
+#if 0
+inline void POOL_DUMP(rte_mempool* mp)
+{
+    FILE* fp = slank::stcp_stddbg.getfp();
+    fprintf(fp, "Mempool\n");
+    fprintf(fp, " name         : %s \n", mp->name);
+    fprintf(fp, " size         : %u \n", mp->size);
+    fprintf(fp, " cache        : %u \n", mp->cache_size);
+    fprintf(fp, " nb_mem_chunks: %u \n", mp->nb_mem_chunks);
+
+    fprintf(fp, " avail/in_use : %u/%u \n",
+        rte_mempool_avail_count(mp), rte_mempool_in_use_count(mp));
+}
+#endif
 
 class exception : public std::exception {
     private:
@@ -204,6 +227,10 @@ inline rte_mbuf* pktmbuf_clone(rte_mbuf* md, struct rte_mempool* mp)
 {
     rte_mbuf* buf = rte_pktmbuf_clone(md, mp);
     if (buf == nullptr) {
+// TODO ERASE
+#if 0
+        POOL_DUMP(mp);
+#endif
         throw rte::exception("rte_pktmbuf_clone");
     }
     return buf;

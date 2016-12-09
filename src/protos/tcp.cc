@@ -1116,13 +1116,15 @@ void tcp_module::print_stat() const
     size_t rootx = screen.POS_TCP.x;
     size_t rooty = screen.POS_TCP.y;
     screen.mvprintw(rooty, rootx, "TCP module");
+    screen.mvprintw(rooty+1, rootx, " Pool: %u/%u",
+            rte_mempool_in_use_count(mp), mp->size);
 
     if (!socks.empty()) {
-        screen.mvprintw(rooty+1, rootx, " NetStat %zd ports", socks.size());
+        screen.mvprintw(rooty+2, rootx, " NetStat %zd ports", socks.size());
     }
 
     for (size_t i=0; i<socks.size(); i++) {
-        socks[i].print_stat(rootx, 8*i + rooty+2);
+        socks[i].print_stat(rootx, 8*i + rooty+3);
     }
 }
 
@@ -1173,6 +1175,7 @@ void tcp_module::rx_push(mbuf* msg, stcp_sockaddr_in* src)
         return;
     }
     mbuf_free(msg);
+    pool_dump(mp);
 }
 
 
