@@ -253,7 +253,12 @@ void core::ifs_proc()
 
 void core::run()
 {
+#if ST_RUNLEVEL==RUNLEV_DEBUG
     screen.init();
+#elif ST_RUNLEVEL==RUNLEV_SPEED
+#else
+# error "unknown runlevel"
+#endif
 
     for (stcp_usrapp_info& app : lapps) {
         rte::eal_remote_launch(
@@ -266,12 +271,18 @@ void core::run()
         tcp.proc();
         udp.proc();
 
-        core::stat_all(); // TODO ERASE
+#if ST_RUNLEVEL==RUNLEV_DEBUG
+        core::stat_all();
+#elif ST_RUNLEVEL==RUNLEV_SPEED
+#else
+# error "unknown runlevel"
+#endif
     }
 }
 
 void core::stat_all()
 {
+    screen.print_frame();
     dplane.print_stat();
 
     arp.print_stat();

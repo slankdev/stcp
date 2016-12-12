@@ -12,6 +12,7 @@
 #include <stcp/mempool.h>
 #include <stcp/arch/dpdk/device.h>
 #include <stcp/tuning.h>
+#include <stcp/debug.h>
 
 namespace stcp {
 

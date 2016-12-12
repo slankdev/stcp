@@ -56,11 +56,15 @@ public:
         cur_y++;
         ::move(cur_y, cur_x);
     }
+
+#if 0
     template<class... Args>
     void mvprintw(size_t y, size_t x, const char* fmt, Args... args)
     {
         ::mvprintw(y, x, fmt, args...);
     }
+#endif
+
     template<class... Args>
     void printw(const char* fmt, Args... args)
     {
@@ -69,10 +73,10 @@ public:
     template<class... Args>
     void printwln(const char* fmt, Args... args)
     {
-        ::printw(fmt, args...);
+        printw(fmt, args...);
         indention();
     }
-    void printframe();
+    void print_frame();
 };
 
 

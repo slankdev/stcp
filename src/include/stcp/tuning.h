@@ -31,4 +31,20 @@ namespace stcp {
 #define ST_IPFRAG_MAX_ENT_PER_BUCKET 0x1000
 
 
+/*
+ * RUNLEV_SPEED:
+ *    stdout      -> NONE
+ *    stcp_stdout -> stdout.log
+ *    stcp_stddbg -> stddbg.log
+ *
+ * RUNLEV_DEBUG:
+ *    stdout      -> ncurses
+ *    stcp_stdout -> stdout.log
+ *    stcp_stddbg -> stddbg.log
+ */
+#define RUNLEV_SPEED 1
+#define RUNLEV_DEBUG 2
+#define ST_RUNLEVEL RUNLEV_SPEED
+
+
 } /* namespace stcp */

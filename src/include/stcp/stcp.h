@@ -139,14 +139,13 @@ private:
 };
 
 
-template <class... Args>
-inline int stcp_printf(const char* format, Args... args)
-{
-    core::stcp_stdout.fprintf("%-15s:%4s: ", "STCP_PRINTF", "");
-    int ret = core::stcp_stdout.fprintf(format, args...);
-    core::stcp_stdout.fflush();
-    return ret;
-}
+// template <class... Args>
+// inline int stcp_printf(const char* format, Args... args)
+// {
+//     int ret = core::stcp_stdout.fprintf(format, args...);
+//     core::stcp_stdout.fflush();
+//     return ret;
+// }
 
 
 } /* namespace */

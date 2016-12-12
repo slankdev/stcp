@@ -13,7 +13,7 @@ INTERFACE = vboxnet1
 TMUXSPLIT  = tmux split-window -v
 TMUXVSPLIT = tmux split-window -h
 TARGET = a.out
-LOGNAME = log.log
+LOGNAME = *.log
 SRCS   = \
 		ifnet.cc \
 		ncurses.cc \

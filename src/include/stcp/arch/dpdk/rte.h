@@ -184,7 +184,6 @@ inline uint32_t socket_id()
 inline void pktmbuf_dump(FILE* f,const rte_mbuf* m, unsigned dump_len)
 {
     rte_pktmbuf_dump(f, m, dump_len);
-    fprintf(f, "\n\n");
 }
 
 inline int eth_dev_socket_id(uint8_t port_id)

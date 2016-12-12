@@ -20,15 +20,15 @@ inline mempool* pool_create(
 }
 
 
-inline void pool_dump(mempool* mp)
+inline void pool_dump(FILE* fp, mempool* mp)
 {
-    DPRINT("Mempool\n");
-    DPRINT(" name         : %s \n", mp->name);
-    DPRINT(" size         : %u \n", mp->size);
-    DPRINT(" cache        : %u \n", mp->cache_size);
-    DPRINT(" nb_mem_chunks: %u \n", mp->nb_mem_chunks);
+    fprintf(fp, "Mempool\n");
+    fprintf(fp, " name         : %s \n", mp->name);
+    fprintf(fp, " size         : %u \n", mp->size);
+    fprintf(fp, " cache        : %u \n", mp->cache_size);
+    fprintf(fp, " nb_mem_chunks: %u \n", mp->nb_mem_chunks);
 
-    DPRINT(" avail/in_use : %u/%u \n",
+    fprintf(fp, " avail/in_use : %u/%u \n",
         rte_mempool_avail_count(mp), rte_mempool_in_use_count(mp));
 }
 
