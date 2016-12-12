@@ -8,6 +8,7 @@ namespace stcp {
 
 struct stcp_ip_header;
 
+
 inline uint32_t ntoh32(uint32_t n) noexcept {return rte::bswap32(n);}
 inline uint16_t ntoh16(uint16_t n) noexcept {return rte::bswap16(n);}
 inline uint32_t hton32(uint32_t n) noexcept {return rte::bswap32(n);}
@@ -131,6 +132,11 @@ inline void *memcpy (void *dst, const void *src, size_t n)
 }
 
 
+inline void delay_clk(uint64_t clk)
+{
+    uint64_t before = rdtsc();
+    while (rdtsc() - before < clk) ;
+}
 
 
 } /* namespace stcp */

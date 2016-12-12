@@ -93,7 +93,10 @@ void ip_module::rx_push(mbuf* msg)
     switch (protocol) {
         case STCP_IPPROTO_ICMP:
         {
+            // MARKED
+            uint64_t before = rdtsc();
             core::icmp.rx_push(msg, &src);
+            printf("latency: %lu \n", rdtsc() - before);
             break;
         }
         case STCP_IPPROTO_TCP:
