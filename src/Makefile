@@ -45,17 +45,20 @@ runc:
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=$(INTERFACE)
 
-run:
-	$(TMUXSPLIT) \
-	sudo ./$(TARGET) \
-		--vdev=eth_pcap0,iface=$(INTERFACE)
-
 runall:
 	$(TMUXSPLIT) \
 	sudo ./$(TARGET) \
 		--vdev=eth_pcap0,iface=eth0 \
 		--vdev=eth_pcap1,iface=eth1 \
 		--vdev=eth_pcap2,iface=lo
+
+perf:
+	sudo perf record ./$(TARGET) \
+		--vdev=eth_pcap0,iface=$(INTERFACE)
+
+perfrep:
+	sudo perf report
+
 
 gdb:
 	sudo gdb -q --args \
