@@ -222,8 +222,13 @@ void core::set_hw_addr(uint8_t o1, uint8_t o2, uint8_t o3, uint8_t o4, uint8_t o
 
 void core::init(int argc, char** argv)
 {
+#if ST_RUNLEVEL==RUNLEV_SPEED
+#elif ST_RUNLEVEL==RUNLEV_DEBUG
     stcp_stdout.fopen("stdout.log", "w");
     stcp_stddbg.fopen("stddbg.log", "w");
+#else
+# error "unknown runlevel"
+#endif
 
     dplane.init(argc, argv);
     arp.init();

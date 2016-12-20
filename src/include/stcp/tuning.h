@@ -44,7 +44,7 @@ namespace stcp {
  */
 #define RUNLEV_SPEED 1
 #define RUNLEV_DEBUG 2
-#define ST_RUNLEVEL RUNLEV_SPEED
+#define ST_RUNLEVEL RUNLEV_DEBUG
 
 
 } /* namespace stcp */
