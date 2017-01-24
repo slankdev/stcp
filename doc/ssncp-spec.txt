@@ -18,3 +18,12 @@ Header format
   |                                                               |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
+
+Command Type
+
+Command Code
+
+Data Length
+
+Data
+
