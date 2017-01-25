@@ -9,14 +9,23 @@
 #include <stddef.h>
 
 #include <vector>
+#include <string>
 
-#include <slankdev/util.h>
+// #include <slankdev/util.h>
 #include <slankdev/exception.h>
+#include <susanoo_log.h>
 
 #include "mempool.h"
 #include "cpu.h"
 #include "port.h"
-#include "log.h"
+
+
+/* for susanoo_shell */
+#include <stdio.h>
+#include <stdlib.h>
+#include <susanoo_shell.h>
+#include <dpdk/system.h>
+
 
 #define MESGTYPE 5
 
@@ -27,6 +36,22 @@ void print_message();
 
 
 class System {
+    class ssnt_sush : public ssn_thread {
+        dpdk::System* sys;
+        sush sush0;
+    public:
+        ssnt_sush(dpdk::System* s) : sys(s) {}
+        void add_cmd(Command* t)
+        {
+            sush0.add_cmd(t);
+        }
+        void operator()()
+        {
+            printf("\n\n");
+            sush0.main_loop();
+            return;
+        }
+    };
 
 public:
     static size_t rx_ring_size;
@@ -36,8 +61,9 @@ public:
 	std::vector<Cpu>  cpus;
 	std::vector<Port> ports;
 	dpdk::Mempool    mp;
+    ssnt_sush        shell;
 
-	System(int argc, char** argv)
+	System(int argc, char** argv) : shell(this)
 	{
         /*
          * Boot DPDK System.
@@ -90,16 +116,12 @@ public:
 		 */
         kernel_log(SYSTEM, "launch thread to each-cores \n");
 		for (size_t i=1; i<cpus.size(); i++) {
-			if (cpus[i].thrd.func) {
-                kernel_log(SYSTEM, "%s lanching ... \n",
-                        cpus[i].name.c_str());
-            }
+            kernel_log(SYSTEM, "%s lanching ... \n", cpus[i].name.c_str());
 		}
         sleep(1);
 
 		for (size_t i=1; i<cpus.size(); i++) {
-			if (cpus[i].thrd.func)
-				cpus[i].launch();
+            cpus[i].launch();
 		}
 		rte_eal_mp_wait_lcore();
 	}

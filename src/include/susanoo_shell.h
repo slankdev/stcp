@@ -1,5 +1,4 @@
 
-
 #pragma once
 
 #include <vector>
@@ -8,7 +7,6 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include "command.h"
 
 
 static inline char* Readline(const char* p)
@@ -18,11 +16,18 @@ static inline char* Readline(const char* p)
     return line;
 }
 
+class Command {
+public:
+    std::string name;
+    virtual void operator()(const std::vector<std::string>& args) = 0;
+    virtual ~Command() {}
+};
+
 
 class sush {
-    friend class Command;
     std::vector<Command*> cmds;
 public:
+
     ~sush() { for (Command* cmd : cmds) delete(cmd); }
     void add_cmd(Command* newcmd)
     {
@@ -50,5 +55,12 @@ public:
         return 0;
     }
 };
+
+
+
+
+
+
+
 
 

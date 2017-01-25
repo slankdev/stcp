@@ -14,16 +14,13 @@ DPDK_SRC = \
 	dpdk/port.h  \
 	dpdk/cpu.h \
 	dpdk/ring.h \
-	dpdk/log.h \
 	dpdk/struct_utils.h
 
 
 THRD_SRC = \
 	thread/txrx.h \
 	thread/worker.h \
-	thread/omake.h \
-	thread/rtc.h \
-	sush/sush.h
+	thread/omake.h
 
 
 FUNC_SRC =
@@ -56,14 +53,14 @@ run_vagrant:
 
 gdb:
 	sudo gdb \
-		--args a.out
+		--args a.out \
+		--vdev=eth_null0  \
+		--vdev=eth_null1
 
 		# --vdev=eth_pcap0,iface=vboxnet2 \
 		# --vdev=eth_pcap1,iface=vboxnet3
 		# --args a.out \
 		# --args a.out
-		# --vdev=eth_null0  \
-		# --vdev=eth_null1
 
 # run:
 # 	sudo ./a.out \

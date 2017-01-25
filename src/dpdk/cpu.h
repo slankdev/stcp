@@ -3,41 +3,52 @@
 
 #pragma once
 #include <string>
+
 #include "mempool.h"
-#include "log.h"
+#include <susanoo_log.h>
+
+
+class ssn_thread {
+public:
+    virtual void operator()()
+    {
+        printf("not set thread \n");
+    }
+};
 
 
 namespace dpdk {
 
 
+int Exe(void* arg);
 
-using function = int(*)(void*);
-using func_arg = void*;
-
-struct Thrd {
-	function func;
-	func_arg arg;
-};
 
 class Cpu {
 public:
 	const uint8_t lcore_id;
     const std::string name;
-    Thrd thrd;
+    ssn_thread* thrd;
 
 	Cpu(uint8_t id) :
         lcore_id(id),
         name("lcore" + std::to_string(id)),
-        thrd({nullptr, nullptr})
+        thrd(nullptr)
     {
         kernel_log(SYSTEM, "boot  %s ... done\n", name.c_str());
     }
     ~Cpu() { rte_eal_wait_lcore(lcore_id); }
 	void launch()
 	{
-		rte_eal_remote_launch(thrd.func, thrd.arg, lcore_id);
+        if (thrd) rte_eal_remote_launch(Exe, this, lcore_id);
 	}
 };
+
+int Exe(void* arg)
+{
+    dpdk::Cpu* cpu = reinterpret_cast<dpdk::Cpu*>(arg);
+    (*cpu->thrd)();
+    return 0;
+}
 
 
 } /* namespace dpdk */

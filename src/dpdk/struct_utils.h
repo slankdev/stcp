@@ -14,6 +14,8 @@
 #include <rte_ip.h>
 #include <rte_ip_frag.h>
 
+#include <slankdev/util.h>
+
 
 namespace dpdk {
 namespace util {

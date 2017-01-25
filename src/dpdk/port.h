@@ -3,7 +3,7 @@
 #pragma once
 #include "mempool.h"
 #include "ring.h"
-#include "log.h"
+#include <susanoo_log.h>
 #include "struct_utils.h"
 
 
