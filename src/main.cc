@@ -8,7 +8,7 @@
 #include "thread/rtc.h"
 #include "thread/omake.h"
 #include "thread/viewer.h"
-#include "sush/sush.h"
+#include "sush/sush_main.h"
 
 
 /*
@@ -78,8 +78,8 @@ int main(int argc, char** argv)
     dpdk::System sys(argc, argv);
     if (sys.ports.size()%2 != 0) return -1;
 
-    configure(&sys, TXRX_WK);
-    sys.cpus[10].thrd = {thread_sush, nullptr};
+    configure(&sys, TXRXWK);
+    sys.cpus[1].thrd = {thread_sush, &sys};
 
     sys.launch();
 }

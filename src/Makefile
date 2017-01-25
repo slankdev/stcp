@@ -6,7 +6,7 @@ SRCS   = main.cc
 OBJS   = $(SRCS:.cc=.o)
 include $(prefix)/mk/vars.mk
 CXXFLAGS += -Wno-format-security
-LDFLAGS +=
+LDFLAGS += -lreadline
 
 DPDK_SRC = \
 	dpdk/system.h \
@@ -23,7 +23,9 @@ THRD_SRC = \
 	thread/worker.h \
 	thread/viewer.h \
 	thread/omake.h \
-	thread/rtc.h
+	thread/rtc.h \
+	sush/sush.h
+
 
 FUNC_SRC =
 
@@ -35,7 +37,7 @@ main.o: main.cc  $(DPDK_SRC) $(THRD_SRC) $(FUNC_SRC)
 clean:
 	$(RM) $(TARGET) $(OBJS)
 
-run: run_native
+run: run_dummy
 
 run_native:
 	sudo ./a.out
