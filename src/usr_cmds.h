@@ -5,8 +5,7 @@
 #include <vector>
 #include <string>
 
-
-
+#include <susanoo.h>
 
 static void ifconfig(System* sys)
 {
@@ -26,38 +25,15 @@ static void ifconfig(System* sys)
         printf("  RX ring:%zd/%zd TX ring:%zd/%zd\n",
                 port.rxq[0].count(), port.rxq[0].size(),
                 port.txq[0].count(), port.txq[0].size());
-
     }
 }
 
 
-class Cmd_version : public Command {
-public:
-    Cmd_version() { name = "version"; }
-    void operator()(const std::vector<std::string>& args)
-    {
-        UNUSED(args);
-        printf("Susanoo version 0.0 \n");
-    }
-};
 
-
-class Cmd_quit : public Command {
+class Cmd_ifconfig : public System::Command {
     System* sys;
 public:
-    Cmd_quit(System* s) : sys(s) { name = "quit"; }
-    void operator()(const std::vector<std::string>& args)
-    {
-        UNUSED(args);
-        sys->halt();
-    }
-};
-
-
-class Cmd_ifconfig : public Command {
-    System* sys;
-public:
-    Cmd_ifconfig(System* s) :sys(s) { name = "ifconfig"; }
+    Cmd_ifconfig(System* s) : sys(s) { name = "ifconfig"; }
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);
@@ -66,10 +42,10 @@ public:
 };
 
 
-class Cmd_test : public Command {
+class Cmd_test : public System::Command {
     System* sys;
 public:
-    Cmd_test(System* s) :sys(s) { name = "test"; }
+    Cmd_test(System* s) : sys(s) { name = "test"; }
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);

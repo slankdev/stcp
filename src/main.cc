@@ -2,9 +2,8 @@
 
 #include <stdio.h>
 #include <susanoo.h>
-#include <susanoo_shell.h>
-#include <usr_cmds.h>
-#include <usr_thrds.h>
+#include "usr_thrds.h"
+#include "usr_cmds.h"
 
 
 int main(int argc, char** argv)
@@ -16,8 +15,6 @@ int main(int argc, char** argv)
     System sys(argc, argv);
     if (sys.ports.size()%2 != 0) return -1;
 
-    sys.shell.add_cmd(new Cmd_version ()   );
-    sys.shell.add_cmd(new Cmd_quit    (&sys));
     sys.shell.add_cmd(new Cmd_ifconfig(&sys));
     sys.shell.add_cmd(new Cmd_test    (&sys));
 

@@ -15,21 +15,11 @@ DPDK_SRC = \
 	dpdk/ring.h \
 	dpdk/struct_utils.h
 
-
-THRD_SRC = \
-	thread/txrx.h \
-	thread/worker.h \
-	thread/omake.h
-
-
-FUNC_SRC =
-
-# 	include/api.h
-
+SUSANOO_SRC =
 
 
 all: $(TARGET)
-main.o: main.cc  $(DPDK_SRC) $(THRD_SRC) $(FUNC_SRC)
+main.o: main.cc  $(DPDK_SRC) $(THRD_SRC) $(SUSANOO_SRC)
 
 clean:
 	$(RM) $(TARGET) $(OBJS)

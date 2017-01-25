@@ -13,6 +13,8 @@
 #include <string>
 
 #include <slankdev/exception.h>
+#include <slankdev/util.h>
+
 #include <susanoo_log.h>
 #include <susanoo_misc.h>
 
@@ -24,24 +26,87 @@
 /* for susanoo_shell */
 #include <stdio.h>
 #include <stdlib.h>
-#include <susanoo_shell.h>
+#include <vector>
+#include <string>
+#include <readline/readline.h>
+#include <readline/history.h>
+
+
+static inline char* Readline(const char* p)
+{
+    char* line = readline(p);
+    add_history(line);
+    return line;
+}
+
 
 
 
 class System {
-    class ssnt_sush : public ssn_thread {
-        System* sys;
-        sush sush0;
+public:
+    class Command {
     public:
-        ssnt_sush(System* s) : sys(s) {}
-        void add_cmd(Command* t)
+        std::string name;
+        virtual void operator()(const std::vector<std::string>& args) = 0;
+        virtual ~Command() {}
+    };
+
+    class Cmd_version : public Command {
+    public:
+        Cmd_version() { name = "version"; }
+        void operator()(const std::vector<std::string>& args)
         {
-            sush0.add_cmd(t);
+            UNUSED(args);
+            printf("Susanoo version 0.0 \n");
+        }
+    };
+
+    class Cmd_quit : public Command {
+        System* sys;
+    public:
+        Cmd_quit(System* s) : sys(s) { name = "quit"; }
+        void operator()(const std::vector<std::string>& args)
+        {
+            UNUSED(args);
+            sys->halt();
+        }
+    };
+
+    class ssnt_sush : public ssn_thread {
+        std::vector<Command*> cmds;
+        System* sys;
+    public:
+
+        ssnt_sush(System* s) : sys(s)
+        {
+            add_cmd(new Cmd_version()   );
+            add_cmd(new Cmd_quit   (sys));
+        }
+        ~ssnt_sush() { for (Command* cmd : cmds) delete(cmd); }
+        void add_cmd(Command* newcmd)
+        {
+            cmds.push_back(newcmd);
+        }
+        void exe_cmd(const char* cmd_str)
+        {
+            if (strlen(cmd_str) == 0) return;
+            std::vector<std::string> args = slankdev::split(cmd_str, ' ');
+            for (Command* cmd : cmds) {
+                if (cmd->name == args[0]) {
+                    (*cmd)(args);
+                    return;
+                }
+            }
+            printf("SUSH: command not found: %s\n", args[0].c_str());
         }
         void operator()()
         {
             printf("\n\n");
-            sush0.main_loop();
+            const char* prmpt = "SUSANOO$ ";
+            while (char* line = Readline(prmpt)) {
+                exe_cmd(line);
+                free(line);
+            }
             return;
         }
     };
