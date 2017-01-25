@@ -72,17 +72,17 @@ public:
         }
     };
 
-    class ssnt_sush : public ssn_thread {
+    class Shell : public ssn_thread {
         std::vector<Command*> cmds;
         System* sys;
     public:
 
-        ssnt_sush(System* s) : sys(s)
+        Shell(System* s) : sys(s)
         {
             add_cmd(new Cmd_version()   );
             add_cmd(new Cmd_quit   (sys));
         }
-        ~ssnt_sush() { for (Command* cmd : cmds) delete(cmd); }
+        ~Shell() { for (Command* cmd : cmds) delete(cmd); }
         void add_cmd(Command* newcmd)
         {
             cmds.push_back(newcmd);
@@ -118,8 +118,8 @@ public:
 
 	std::vector<dpdk::Cpu>  cpus;
 	std::vector<dpdk::Port> ports;
-	dpdk::Mempool    mp;
-    ssnt_sush        shell;
+	dpdk::Mempool           mp;
+    Shell                   shell;
 
 	System(int argc, char** argv) : shell(this)
 	{
