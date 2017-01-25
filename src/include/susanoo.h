@@ -29,11 +29,11 @@
 
 
 class System {
-    class ssnt_sush : public ssn_thread {
+    class Shell : public ssn_thread {
         System* sys;
         sush sush0;
     public:
-        ssnt_sush(System* s) : sys(s) {}
+        Shell(System* s) : sys(s) {}
         void add_cmd(Command* t)
         {
             sush0.add_cmd(t);
@@ -53,8 +53,8 @@ public:
 
 	std::vector<dpdk::Cpu>  cpus;
 	std::vector<dpdk::Port> ports;
-	dpdk::Mempool    mp;
-    ssnt_sush        shell;
+	dpdk::Mempool           mp;
+    Shell                   shell;
 
 	System(int argc, char** argv) : shell(this)
 	{

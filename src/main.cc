@@ -21,10 +21,9 @@ int main(int argc, char** argv)
     sys.shell.add_cmd(new Cmd_ifconfig(&sys));
     sys.shell.add_cmd(new Cmd_test    (&sys));
 
-    ssnt_txrxwk t2(&sys);
+    ssnt_txrxwk txrxwk(&sys);
     sys.cpus[1].thrd = &sys.shell;
-    sys.cpus[2].thrd = &t2;
-
+    sys.cpus[2].thrd = &txrxwk;
     sys.launch();
 }
 
