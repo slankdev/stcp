@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 
-namespace dpdk {
 
 enum LOG_LEVEL {
     SYSTEM,
@@ -35,5 +34,3 @@ inline void kernel_log(LOG_LEVEL level, const char* fmt, Args... args)
     printf(fmt, args...);
 }
 
-
-} /* namespace dpdk */

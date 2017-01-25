@@ -9,7 +9,6 @@ CXXFLAGS += -Wno-format-security
 LDFLAGS += -lreadline
 
 DPDK_SRC = \
-	dpdk/system.h \
 	dpdk/mempool.h  \
 	dpdk/port.h  \
 	dpdk/cpu.h \

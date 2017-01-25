@@ -8,7 +8,7 @@
 
 
 
-static void ifconfig(dpdk::System* sys)
+static void ifconfig(System* sys)
 {
     for (dpdk::Port& port : sys->ports) {
         port.stats.update();
@@ -43,9 +43,9 @@ public:
 
 
 class Cmd_quit : public Command {
-    dpdk::System* sys;
+    System* sys;
 public:
-    Cmd_quit(dpdk::System* s) : sys(s) { name = "quit"; }
+    Cmd_quit(System* s) : sys(s) { name = "quit"; }
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);
@@ -55,9 +55,9 @@ public:
 
 
 class Cmd_ifconfig : public Command {
-    dpdk::System* sys;
+    System* sys;
 public:
-    Cmd_ifconfig(dpdk::System* s) :sys(s) { name = "ifconfig"; }
+    Cmd_ifconfig(System* s) :sys(s) { name = "ifconfig"; }
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);
@@ -67,9 +67,9 @@ public:
 
 
 class Cmd_test : public Command {
-    dpdk::System* sys;
+    System* sys;
 public:
-    Cmd_test(dpdk::System* s) :sys(s) { name = "test"; }
+    Cmd_test(System* s) :sys(s) { name = "test"; }
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);

@@ -1,7 +1,7 @@
 
 
 #include <stdio.h>
-#include <dpdk/system.h>
+#include <susanoo.h>
 #include <susanoo_shell.h>
 #include <usr_cmds.h>
 #include <usr_thrds.h>
@@ -9,11 +9,11 @@
 
 int main(int argc, char** argv)
 {
-    dpdk::System::rx_ring_size   = 128;
-    dpdk::System::tx_ring_size   = 512;
-    dpdk::System::port_bulk_size = 32;
+    System::rx_ring_size   = 128;
+    System::tx_ring_size   = 512;
+    System::port_bulk_size = 32;
 
-    dpdk::System sys(argc, argv);
+    System sys(argc, argv);
     if (sys.ports.size()%2 != 0) return -1;
 
     sys.shell.add_cmd(new Cmd_version ()   );

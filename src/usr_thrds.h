@@ -1,13 +1,12 @@
 
 #pragma once
 
-#include <dpdk/system.h>
 
 
 class ssnt_txrxwk : public ssn_thread {
-    dpdk::System* sys;
+    System* sys;
 public:
-    ssnt_txrxwk(dpdk::System* s) : sys(s) {}
+    ssnt_txrxwk(System* s) : sys(s) {}
     void operator()()
     {
         const uint8_t nb_ports = sys->ports.size();
