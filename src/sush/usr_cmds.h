@@ -4,36 +4,57 @@
 
 #include <vector>
 #include <string>
+
 #include "command.h"
+#include <dpdk/api.h>
 
 
 class Cmd_version : public Command {
 public:
     Cmd_version() { name = "version"; }
-    void operator()()
+    void operator()(const std::vector<std::string>& args)
     {
+        UNUSED(args);
         printf("Susanoo version 0.0 \n");
     }
 };
 
 
 class Cmd_quit : public Command {
+    dpdk::System* sys;
 public:
-    Cmd_quit() { name = "quit"; }
-    void operator()()
+    Cmd_quit(dpdk::System* s) : sys(s) { name = "quit"; }
+    void operator()(const std::vector<std::string>& args)
     {
-        exit(-1);
+        UNUSED(args);
+        sys->halt();
     }
 };
 
 
 class Cmd_ifconfig : public Command {
+    dpdk::System* sys;
 public:
-    Cmd_ifconfig() { name = "ifconfig"; }
-    void operator()()
+    Cmd_ifconfig(dpdk::System* s) :sys(s) { name = "ifconfig"; }
+    void operator()(const std::vector<std::string>& args)
     {
-        printf("PORT0 \n");
+        UNUSED(args);
+        api::ifconfig(sys);
     }
 };
 
 
+class Cmd_test : public Command {
+    dpdk::System* sys;
+public:
+    Cmd_test(dpdk::System* s) :sys(s) { name = "test"; }
+    void operator()(const std::vector<std::string>& args)
+    {
+        UNUSED(args);
+        for (;;) {
+            slankdev::clear_screen();
+            api::ifconfig(sys);
+            usleep(50000);
+        }
+    }
+};

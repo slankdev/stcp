@@ -10,7 +10,7 @@
 class Command {
 public:
     std::string name;
-    virtual void operator()() = 0;
+    virtual void operator()(const std::vector<std::string>& args) = 0;
     virtual ~Command() {}
 };
 

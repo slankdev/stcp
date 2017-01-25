@@ -6,7 +6,9 @@ endif
 include $(prefix)/mk/commands.mk
 include $(prefix)/mk/rules.mk
 
-INCLUDES   += -I$(prefix)/src/include \
+INCLUDES   += \
+			 -I$(prefix)/src \
+			 -I$(prefix)/src/include \
 			 -I$(RTE_SDK)/$(RTE_TARGET)/include \
 			 -I/home/slank/git/libslankdev/include \
 			 -include $(RTE_SDK)/$(RTE_TARGET)/include/rte_config.h
