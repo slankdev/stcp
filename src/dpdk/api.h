@@ -1,6 +1,11 @@
 
 #pragma once
 
+#include <dpdk/system.h>
+
+
+namespace api {
+
 static void ifconfig(dpdk::System* sys)
 {
     for (dpdk::Port& port : sys->ports) {
@@ -22,14 +27,6 @@ static void ifconfig(dpdk::System* sys)
 
     }
 }
-int thread_viewer(void* arg)
-{
-    dpdk::System* sys = reinterpret_cast<dpdk::System*>(arg);
-	for (;;) {
-        slankdev::clear_screen();
-        ifconfig(sys);
-		usleep(50000);
-	}
-	return 0;
-}
 
+
+} /* namespace api */

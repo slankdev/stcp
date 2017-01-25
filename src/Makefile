@@ -21,13 +21,14 @@ DPDK_SRC = \
 THRD_SRC = \
 	thread/txrx.h \
 	thread/worker.h \
-	thread/viewer.h \
 	thread/omake.h \
 	thread/rtc.h \
 	sush/sush.h
 
 
 FUNC_SRC =
+
+# 	include/api.h
 
 
 

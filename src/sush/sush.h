@@ -1,15 +1,17 @@
 
+
 #pragma once
 
 #include <vector>
 #include <string>
+#include <slankdev/util.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
 #include "command.h"
 
 
-char* Readline(const char* p)
+static inline char* Readline(const char* p)
 {
     char* line = readline(p);
     add_history(line);
@@ -29,13 +31,14 @@ public:
     void exe_cmd(const char* cmd_str)
     {
         if (strlen(cmd_str) == 0) return;
+        std::vector<std::string> args = slankdev::split(cmd_str, ' ');
         for (Command* cmd : cmds) {
-            if (cmd->name == cmd_str) {
-                (*cmd)();
+            if (cmd->name == args[0]) {
+                (*cmd)(args);
                 return;
             }
         }
-        printf("SUSH: command not found: %s\n", cmd_str);
+        printf("SUSH: command not found: %s\n", args[0].c_str());
     }
     int main_loop()
     {
@@ -47,4 +50,5 @@ public:
         return 0;
     }
 };
+
 

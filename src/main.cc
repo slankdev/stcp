@@ -7,8 +7,7 @@
 #include "thread/worker.h"
 #include "thread/rtc.h"
 #include "thread/omake.h"
-#include "thread/viewer.h"
-#include "sush/sush_main.h"
+#include "thread/sush.h"
 
 
 /*
