@@ -21,9 +21,12 @@ rte_pktmbuf_free_bulk(struct rte_mbuf *m_list[], int16_t npkts)
 class Ring {
     struct rte_ring* ring_;
 	size_t ring_depth;
+    const size_t port_id;
+    const size_t queue_id;
 public:
-    Ring(const char* n, size_t count, uint16_t socket_id)
-        : ring_depth(count)
+    Ring(const char* n, size_t count, uint16_t socket_id,
+            size_t p, size_t q)
+        : ring_depth(count), port_id(p), queue_id(q)
     {
         ring_ = rte_ring_create(n, count, socket_id, 0);
         if (!ring_) {
@@ -40,6 +43,26 @@ public:
     {
         if (!ring_)
             rte_ring_free(ring_);
+    }
+    void rx_burst_bulk()
+    {
+        size_t bulk_size = 32;
+        struct rte_mbuf* rx_pkts[bulk_size];
+        uint16_t nb_rx = rte_eth_rx_burst(port_id, queue_id, rx_pkts, bulk_size);
+        if (nb_rx == 0) return;
+        push_bulk(rx_pkts, nb_rx);
+    }
+    void tx_burst_bulk()
+    {
+        size_t bulk_size = 32;
+        struct rte_mbuf* pkts[bulk_size];
+        bool ret = pop_bulk(pkts, bulk_size);
+        if (ret == true) {
+            uint16_t nb_tx = rte_eth_tx_burst(port_id, queue_id, pkts, bulk_size);
+            if (nb_tx != bulk_size) {
+                rte_pktmbuf_free_bulk(&pkts[nb_tx], bulk_size-nb_tx);
+            }
+        }
     }
 
 #if 0

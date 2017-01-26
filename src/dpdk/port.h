@@ -229,7 +229,7 @@ public:
 
             std::string ringname = "PORT" + std::to_string(id);
             ringname += "RX" + std::to_string(qid);
-            rxq.push_back(Ring(ringname.c_str(), rx_ring_size, socket_id));
+            rxq.push_back(Ring(ringname.c_str(), rx_ring_size, socket_id, id, qid));
         }
 
         /*
@@ -243,35 +243,12 @@ public:
 
             std::string ringname = "PORT" + std::to_string(id);
             ringname += "TX" + std::to_string(qid);
-            txq.push_back(Ring(ringname.c_str(), tx_ring_size, socket_id));
+            txq.push_back(Ring(ringname.c_str(), tx_ring_size, socket_id, id, qid));
         }
 
         kernel_log(SYSTEM, "%s configure \n", name.c_str());
         kernel_log(SYSTEM, "  nb_rx_rings=%zd size=%zd\n", nb_rx_rings, rx_ring_size);
         kernel_log(SYSTEM, "  nb_tx_rings=%zd size=%zd\n", nb_tx_rings, tx_ring_size);
-    }
-
-    /*
-     * TODO:
-     * These functions will be moved to ring-class
-     * */
-    void rx_burst_bulk(size_t qid)
-    {
-        struct rte_mbuf* rx_pkts[bulk_size];
-        uint16_t nb_rx = rte_eth_rx_burst(id, qid, rx_pkts, bulk_size);
-        if (nb_rx == 0) return;
-        rxq[qid].push_bulk(rx_pkts, nb_rx);
-    }
-    void tx_burst_bulk(size_t qid)
-    {
-        struct rte_mbuf* pkts[bulk_size];
-        bool ret = txq[qid].pop_bulk(pkts, bulk_size);
-        if (ret == true) {
-            uint16_t nb_tx = rte_eth_tx_burst(id, qid, pkts, bulk_size);
-            if (nb_tx != bulk_size) {
-                rte_pktmbuf_free_bulk(&pkts[nb_tx], bulk_size-nb_tx);
-            }
-        }
     }
 };
 
