@@ -7,6 +7,8 @@
 #include "struct_utils.h"
 
 
+volatile size_t cnt_q0 = 0;
+volatile size_t cnt_q1 = 0;
 
 
 
@@ -151,6 +153,7 @@ public:
     Mempool*          mempool;
 
     Port(uint8_t pid, size_t bs, dpdk::Mempool* mp,
+            size_t nb_rx_rings , size_t nb_tx_rings,
             size_t rx_ring_size, size_t tx_ring_size) :
         name     ("port" + std::to_string(pid)),
         bulk_size(bs),
@@ -173,8 +176,6 @@ public:
         /*
          * Configure the Ethernet device.
          */
-        size_t nb_rx_rings = 1;
-        size_t nb_tx_rings = 1;
         configure(nb_rx_rings, nb_tx_rings, rx_ring_size, tx_ring_size);
 
         /*
@@ -209,6 +210,10 @@ public:
     void configure(size_t nb_rx_rings, size_t nb_tx_rings,
             size_t rx_ring_size, size_t tx_ring_size)
     {
+        conf.raw.rxmode.mq_mode = ETH_MQ_RX_RSS;
+        conf.raw.rx_adv_conf.rss_conf.rss_key = nullptr;
+        conf.raw.rx_adv_conf.rss_conf.rss_hf  = ETH_RSS_IP;
+
         int retval = rte_eth_dev_configure(id, nb_rx_rings, nb_tx_rings, &conf.raw);
         if (retval != 0)
             throw slankdev::exception("rte_eth_dev_configure failed");
@@ -248,27 +253,27 @@ public:
         kernel_log(SYSTEM, "  nb_tx_rings=%zd size=%zd\n", nb_tx_rings, tx_ring_size);
     }
 
-    void rx_burst()
+    /*
+     * TODO:
+     * These functions will be moved to ring-class
+     * */
+    void rx_burst_bulk(size_t qid)
     {
-        const size_t queue_id   = 0;
         struct rte_mbuf* rx_pkts[bulk_size];
-        uint16_t nb_rx = rte_eth_rx_burst(id, queue_id, rx_pkts, bulk_size);
+        uint16_t nb_rx = rte_eth_rx_burst(id, qid, rx_pkts, bulk_size);
         if (nb_rx == 0) return;
-        rxq[queue_id].push_bulk(rx_pkts, nb_rx);
+        rxq[qid].push_bulk(rx_pkts, nb_rx);
     }
-    void tx_burst()
+    void tx_burst_bulk(size_t qid)
     {
-        const size_t queue_id   = 0;
         struct rte_mbuf* pkts[bulk_size];
-
-        bool  ret = txq[queue_id].pop_bulk(pkts, bulk_size);
+        bool ret = txq[qid].pop_bulk(pkts, bulk_size);
         if (ret == true) {
-            uint16_t nb_tx = rte_eth_tx_burst(id, queue_id, pkts, bulk_size);
+            uint16_t nb_tx = rte_eth_tx_burst(id, qid, pkts, bulk_size);
             if (nb_tx != bulk_size) {
                 rte_pktmbuf_free_bulk(&pkts[nb_tx], bulk_size-nb_tx);
             }
         }
-
     }
 };
 

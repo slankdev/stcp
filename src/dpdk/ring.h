@@ -108,7 +108,7 @@ public:
     /*
      * If ring is empty, *data = nullptr;
      */
-    void pop(rte_mbuf** data)
+    bool pop(rte_mbuf** data)
     {
         int ret = rte_ring_dequeue(ring_, reinterpret_cast<void**>(data));
         if (ret < 0) {
@@ -118,10 +118,11 @@ public:
                  * no object is dequeued.
                  */
                 *data = nullptr;
-			} else {
-				throw slankdev::exception("rte_ring_dequeue: unknown");
 			}
+            return false;
 		}
+        return true;
+
     }
 #endif
 

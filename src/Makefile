@@ -44,9 +44,10 @@ re: clean all
 
 gdb:
 	sudo gdb \
-		--args a.out \
-		--vdev=eth_null0  \
-		--vdev=eth_null1
+		--args a.out
+
+		# --vdev=eth_null0  \
+		# --vdev=eth_null1
 
 		# --vdev=eth_pcap0,iface=vboxnet2 \
 		# --vdev=eth_pcap1,iface=vboxnet3

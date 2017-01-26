@@ -112,6 +112,8 @@ public:
     };
 
 public:
+    static size_t nb_rx_rings;
+    static size_t nb_tx_rings;
     static size_t rx_ring_size;
     static size_t tx_ring_size;
     static size_t port_bulk_size;
@@ -156,8 +158,13 @@ public:
 
         for (size_t i=0; i<nb_cpus; i++)
             cpus.push_back(dpdk::Cpu(i));
-        for (size_t i=0; i<nb_ports; i++)
-            ports.push_back(dpdk::Port(i, port_bulk_size, &mp, rx_ring_size, tx_ring_size));
+        for (size_t i=0; i<nb_ports; i++) {
+            ports.push_back(
+                    dpdk::Port(i, port_bulk_size, &mp,
+                        nb_rx_rings,  nb_tx_rings,
+                        rx_ring_size, tx_ring_size)
+            );
+        }
 
         kernel_log(SYSTEM, "[+] DPDK boot Done! \n");
 	}
@@ -186,6 +193,8 @@ public:
 	}
 };
 
+size_t System::nb_rx_rings    = 1;
+size_t System::nb_tx_rings    = 1;
 size_t System::rx_ring_size   = 128;
 size_t System::tx_ring_size   = 512;
 size_t System::port_bulk_size = 32;
