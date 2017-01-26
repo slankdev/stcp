@@ -161,6 +161,7 @@ public:
 
         kernel_log(SYSTEM, "[+] DPDK boot Done! \n");
 	}
+    ~System() { rte_eal_mp_wait_lcore(); }
     void halt()
     {
         kernel_log(SYSTEM, "[+] System Halt ...\n");
@@ -181,7 +182,7 @@ public:
 		for (size_t i=1; i<cpus.size(); i++) {
             cpus[i].launch();
 		}
-		rte_eal_mp_wait_lcore();
+        cpus[0].launch();
 	}
 };
 

@@ -39,6 +39,8 @@ run_vagrant:
 		--vdev=eth_pcap0,iface=vboxnet2 \
 		--vdev=eth_pcap1,iface=lo
 
+re: clean all
+
 
 gdb:
 	sudo gdb \

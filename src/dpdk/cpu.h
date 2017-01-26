@@ -39,7 +39,14 @@ public:
     ~Cpu() { rte_eal_wait_lcore(lcore_id); }
 	void launch()
 	{
-        if (thrd) rte_eal_remote_launch(Exe, this, lcore_id);
+        if (thrd) {
+            if (lcore_id == 0) {
+                (*thrd)();
+            } else {
+                rte_eal_remote_launch(Exe, this, lcore_id);
+            }
+        }
+
 	}
 };
 
