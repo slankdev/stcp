@@ -7,8 +7,6 @@
 #include "struct_utils.h"
 
 
-volatile size_t cnt_q0 = 0;
-volatile size_t cnt_q1 = 0;
 
 
 

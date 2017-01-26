@@ -28,14 +28,14 @@ static void ifconfig(System* sys)
         size_t nb_rxq = port.rxq.size();
         size_t nb_txq = port.txq.size();
         for (uint8_t qid=0; qid<nb_rxq; qid++) {
-            printf("  RXQ%u packets:%lu errors:%lu ", qid,
+            printf("  RX%u packets:%lu errors:%lu ", qid,
                     stats.raw.q_ipackets[qid], stats.raw.q_errors[qid]);
             printf("  RX ring%u:%zd/%zd \n", qid,
                     port.rxq[qid].count(), port.rxq[qid].size());
         }
         printf("\n");
         for (uint8_t qid=0; qid<nb_txq; qid++) {
-            printf("  TXQ%u packets:%lu ", qid, stats.raw.q_opackets[qid]);
+            printf("  TX%u packets:%lu ", qid, stats.raw.q_opackets[qid]);
             printf("  TX ring%u:%zd/%zd \n", qid,
                     port.txq[qid].count(), port.txq[qid].size());
         }
