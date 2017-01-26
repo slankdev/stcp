@@ -6,17 +6,6 @@
 #include "usr_cmds.h"
 
 
-// class debug_thrd : public ssn_thread {
-// public:
-//     void operator()()
-//     {
-//         while (1) {
-//             printf("SLANKDEV q0=%zd q1=%zd\n", cnt_q0, cnt_q1);
-//             sleep(1);
-//         }
-//     }
-// };
-
 
 int main(int argc, char** argv)
 {

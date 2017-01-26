@@ -141,8 +141,8 @@ public:
     const uint8_t     id;
     ether_addr        addr;
 
-    std::vector<Ring> rxq;
-    std::vector<Ring> txq;
+    std::vector<Rxq> rxq;
+    std::vector<Txq> txq;
 
     port_conf         conf;
     port_stats        stats;
@@ -229,7 +229,7 @@ public:
 
             std::string ringname = "PORT" + std::to_string(id);
             ringname += "RX" + std::to_string(qid);
-            rxq.push_back(Ring(ringname.c_str(), rx_ring_size, socket_id, id, qid));
+            rxq.push_back(Rxq(ringname.c_str(), rx_ring_size, socket_id, id, qid));
         }
 
         /*
@@ -243,7 +243,7 @@ public:
 
             std::string ringname = "PORT" + std::to_string(id);
             ringname += "TX" + std::to_string(qid);
-            txq.push_back(Ring(ringname.c_str(), tx_ring_size, socket_id, id, qid));
+            txq.push_back(Txq(ringname.c_str(), tx_ring_size, socket_id, id, qid));
         }
 
         kernel_log(SYSTEM, "%s configure \n", name.c_str());

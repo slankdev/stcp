@@ -40,14 +40,14 @@ public:
                     dpdk::Port& in_port  = sys->ports[pid];
                     dpdk::Port& out_port = sys->ports[pid^1];
 
-                    in_port.rxq[qid].rx_burst_bulk();
+                    in_port.rxq[qid].burst_bulk();
 
                     const size_t burst_size = 32;
                     rte_mbuf* pkts[burst_size];
                     bool ret = in_port.rxq[qid].pop_bulk(pkts, burst_size);
                     if (ret) out_port.txq[qid].push_bulk(pkts, burst_size);
 
-                    out_port.txq[qid].tx_burst_bulk();
+                    out_port.txq[qid].burst_bulk();
                 }
 
             } // for port
@@ -71,7 +71,7 @@ public:
             for (uint8_t pid = 0; pid < nb_ports; pid++) {
                 uint8_t nb_rxq = sys->ports[pid].rxq.size();
                 for (uint8_t qid=0; qid<nb_rxq; qid++) {
-                    sys->ports[pid].rxq[qid].rx_burst_bulk();
+                    sys->ports[pid].rxq[qid].burst_bulk();
                 }
             }
         }
@@ -91,7 +91,7 @@ public:
             for (uint8_t pid = 0; pid < nb_ports; pid++) {
                 uint8_t nb_txq = sys->ports[pid].txq.size();
                 for (uint8_t qid=0; qid<nb_txq; qid++) {
-                    sys->ports[pid].txq[qid].tx_burst_bulk();
+                    sys->ports[pid].txq[qid].burst_bulk();
                 }
             }
         }
