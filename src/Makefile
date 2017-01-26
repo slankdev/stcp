@@ -24,7 +24,7 @@ main.o: main.cc  $(DPDK_SRC) $(THRD_SRC) $(SUSANOO_SRC)
 clean:
 	$(RM) $(TARGET) $(OBJS)
 
-run: run_dummy
+run: run_native
 
 run_native:
 	sudo ./a.out
