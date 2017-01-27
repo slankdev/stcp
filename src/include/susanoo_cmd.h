@@ -51,7 +51,6 @@ class Cmd_lscpu : public Command {
         else                 return S_BIG_ENDIAN;
     }
 public:
-public:
     Cmd_lscpu(System* s) : sys(s) { name = "lscpu"; }
     void operator()(const std::vector<std::string>& args)
     {
@@ -90,6 +89,35 @@ public:
         printf("\n");
     }
 };
+
+// class Cmd_ : public Command {
+//     System* sys;
+// public:
+//     Cmd_quit(System* s) : sys(s) { name = "quit"; }
+//     void operator()(const std::vector<std::string>& args)
+//     {
+//         UNUSED(args);
+//         sys->halt();
+//     }
+// };
+// class Cmd_reboot
+// class Cmd_show
+//    show config
+//    show route
+//    show stats
+//    show statistic
+// class Cmd_port
+//    port 0 linkdown
+//    port 0 linkup
+//    port 0 blink
+// class Cmd_commit
+// class Cmd_export
+// class Cmd_inport
+
+
+
+
+
 
 
 static inline char* Readline(const char* p)
