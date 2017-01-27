@@ -6,7 +6,7 @@
 
 #define MESGTYPE 5
 
-void print_message()
+inline void print_message()
 {
     switch (MESGTYPE) {
         case 1:

@@ -6,16 +6,21 @@
 
 #include "mempool.h"
 #include <susanoo_log.h>
+#include <susanoo_thread.h>
 
 
-class ssn_thread {
-public:
-    virtual void operator()()
-    {
-        printf("not set thread \n");
-    }
+enum byteorder {
+    S_BIG_ENDIAN,
+    S_LITTLE_ENDIAN,
 };
-
+inline const char* byteorder2str(byteorder o)
+{
+    switch (o) {
+        case S_BIG_ENDIAN   : return "big endian   ";
+        case S_LITTLE_ENDIAN: return "little endian";
+        default: return "UNKNOWN_ERROR";
+    }
+}
 
 namespace dpdk {
 
@@ -50,7 +55,7 @@ public:
 	}
 };
 
-int Exe(void* arg)
+inline int Exe(void* arg)
 {
     dpdk::Cpu* cpu = reinterpret_cast<dpdk::Cpu*>(arg);
     (*cpu->thrd)();
@@ -59,5 +64,4 @@ int Exe(void* arg)
 
 
 } /* namespace dpdk */
-
 

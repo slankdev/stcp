@@ -6,6 +6,7 @@
 #include <string>
 
 #include <susanoo.h>
+#include <susanoo_cmd.h>
 
 static void ifconfig(System* sys)
 {
@@ -45,7 +46,7 @@ static void ifconfig(System* sys)
 
 
 
-class Cmd_ifconfig : public System::Command {
+class Cmd_ifconfig : public Command {
     System* sys;
 public:
     Cmd_ifconfig(System* s) : sys(s) { name = "ifconfig"; }
@@ -57,7 +58,7 @@ public:
 };
 
 
-class Cmd_test : public System::Command {
+class Cmd_test : public Command {
     System* sys;
 public:
     Cmd_test(System* s) : sys(s) { name = "test"; }

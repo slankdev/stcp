@@ -2,7 +2,9 @@
 
 prefix = ../
 TARGET = a.out
-SRCS   = main.cc
+SRCS   = \
+	susanoo.cc \
+	app/main.cc
 OBJS   = $(SRCS:.cc=.o)
 include $(prefix)/mk/vars.mk
 CXXFLAGS += -Wno-format-security
@@ -19,7 +21,7 @@ SUSANOO_SRC =
 
 
 all: $(TARGET)
-main.o: main.cc  $(DPDK_SRC) $(THRD_SRC) $(SUSANOO_SRC)
+# main.o: main.cc  $(DPDK_SRC) $(THRD_SRC) $(SUSANOO_SRC)
 
 clean:
 	$(RM) $(TARGET) $(OBJS)

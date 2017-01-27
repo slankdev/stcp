@@ -1,10 +1,12 @@
 
 
 #pragma once
+
 #include "mempool.h"
 #include "ring.h"
-#include <susanoo_log.h>
 #include "struct_utils.h"
+
+#include <susanoo_log.h>
 
 
 
