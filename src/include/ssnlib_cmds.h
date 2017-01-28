@@ -26,36 +26,6 @@ public:
 };
 
 
-class Cmd_kill : public Command {
-    System* sys;
-public:
-    Cmd_kill(System* s) : sys(s) { name = "kill"; }
-    void operator()(const std::vector<std::string>& args)
-    {
-        if (args.size() < 2) {
-            fprintf(stderr, "Usage: %s lcore_id \n", args[0].c_str());
-            return ;
-        }
-
-        uint8_t lcore_id = atoi(args[1].c_str());
-        printf("kill lcore%d ... ", lcore_id);
-        fflush(stdout);
-
-        rte_lcore_state_t state = sys->cpus[lcore_id].get_state();
-        if (state != RUNNING) {
-            fprintf(stderr, "Error: lcore%d is not runnning \n", lcore_id);
-            return ;
-        }
-
-        bool ret = sys->cpus[lcore_id].thrd->kill();
-        if (ret) {
-            rte_eal_wait_lcore(lcore_id);
-            printf("done \n");
-        } else {
-            printf("can't killed \n");
-        }
-    }
-};
 
 
 
@@ -142,13 +112,6 @@ public:
     {
         printf("Susanoo version 0.0 \n");
     }
-    void show_thread()
-    {
-        for (ssnlib::Cpu& cpu : sys->cpus) {
-            printf("lcore%u thread status: %s \n", cpu.lcore_id,
-                ssnlib::util::rte_lcore_state_t2str(rte_eal_get_lcore_state(cpu.lcore_id)));
-        }
-    }
     void usage(const std::string& s)
     {
         printf("Usage: %s COMMAND \n", s.c_str());
@@ -167,19 +130,80 @@ public:
             show_cpu();
         } else if (args[1] == "version") {
             show_version();
-        } else if (args[1] == "thread") {
-            show_thread();
         } else {
             usage(args[0]);
         }
     }
 };
 
-
-class Cmd_launch : public Command {
+class Cmd_thrdctl : public  Command {
     System* sys;
 public:
-    Cmd_launch(System* s) : sys(s) { name = "launch"; }
+    Cmd_thrdctl(System* s) : sys(s) { name = "thrdctl"; }
+    void launch(size_t lcore_id)
+    {
+        rte_lcore_state_t state = sys->cpus[lcore_id].get_state();
+        if (state == RUNNING) {
+            fprintf(stderr, "Error: lcore%zd was already launched \n", lcore_id);
+            return ;
+        }
+        sys->cpus[lcore_id].launch();
+    }
+    void kill(size_t lcore_id)
+    {
+        rte_lcore_state_t state = sys->cpus[lcore_id].get_state();
+        if (state != RUNNING) {
+            fprintf(stderr, "Error: lcore%zd is not runnning \n", lcore_id);
+            return ;
+        }
+        bool ret = sys->cpus[lcore_id].thrd->kill();
+        if (ret) {
+            rte_eal_wait_lcore(lcore_id);
+            printf("done \n");
+        } else {
+            printf("can't killed \n");
+        }
+    }
+    void show()
+    {
+        for (ssnlib::Cpu& cpu : sys->cpus) {
+            printf("lcore%u thread status: %s \n", cpu.lcore_id,
+                ssnlib::util::rte_lcore_state_t2str(rte_eal_get_lcore_state(cpu.lcore_id)));
+        }
+    }
+    void usage(const std::string s)
+    {
+        fprintf(stderr, "Usage: %s { launch id | kill id | show } \n", s.c_str());
+    }
+    void operator()(const std::vector<std::string>& args)
+    {
+        if (args.size() >= 3) {
+            uint8_t lcore_id = atoi(args[2].c_str());
+            if (args[1] == "launch") {
+                launch(lcore_id);
+            } else if (args[1] == "kill") {
+                kill(lcore_id);
+            } else {
+                usage(args[0]);
+            }
+            return ;
+        } else if (args.size() >= 2) {
+            if (args[1] == "show") {
+                show();
+                return ;
+            }
+        }
+        usage(args[0]);
+        return ;
+    }
+
+};
+
+
+class Cmd_kill : public Command {
+    System* sys;
+public:
+    Cmd_kill(System* s) : sys(s) { name = "kill"; }
     void operator()(const std::vector<std::string>& args)
     {
         if (args.size() < 2) {
@@ -188,15 +212,9 @@ public:
         }
 
         uint8_t lcore_id = atoi(args[1].c_str());
+        printf("kill lcore%d ... ", lcore_id);
         fflush(stdout);
 
-        rte_lcore_state_t state = sys->cpus[lcore_id].get_state();
-        if (state == RUNNING) {
-            fprintf(stderr, "Error: lcore%d was already launched \n", lcore_id);
-            return ;
-        }
-
-        sys->cpus[lcore_id].launch();
     }
 };
 

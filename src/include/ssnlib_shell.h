@@ -46,8 +46,7 @@ public:
     {
         add_cmd(new Cmd_clear  ()   );
         add_cmd(new Cmd_quit   (sys));
-        add_cmd(new Cmd_launch (sys));
-        add_cmd(new Cmd_kill   (sys));
+        add_cmd(new Cmd_thrdctl(sys));
         add_cmd(new Cmd_show   (sys));
         add_cmd(new Cmd_help   (this));
     }
