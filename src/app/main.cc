@@ -22,9 +22,7 @@ int main(int argc, char** argv)
     if (sys.ports.size()%2 != 0) return -1;
 
     Shell shell(&sys);
-    shell.add_cmd(new Cmd_ifconfig(&sys));
-    shell.add_cmd(new Cmd_test    (&sys));
-    shell.add_cmd(new Cmd_state   (&sys));
+    shell.add_cmd(new Cmd_test    (&sys, &shell));
 
 #if 0
     ssnt_txrxwk txrxwk(&sys);

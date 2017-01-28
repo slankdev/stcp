@@ -24,6 +24,20 @@ static inline char* Readline(const char* p)
 namespace ssnlib {
 
 class Shell : public ssnlib::ssn_thread {
+    class Cmd_help : public Command {
+        Shell* shell;
+    public:
+        Cmd_help(Shell* s) : shell(s) { name = "help"; }
+        void operator()(const std::vector<std::string>& args)
+        {
+            UNUSED(args);
+            printf("Commands: \n");
+            for (Command* c : shell->cmds) {
+                printf("  %s \n", c->name.c_str());
+            }
+        }
+    };
+
     std::vector<ssnlib::Command*> cmds;
     System* sys;
 public:
@@ -31,11 +45,11 @@ public:
     Shell(System* s) : sys(s)
     {
         add_cmd(new Cmd_clear  ()   );
-        add_cmd(new Cmd_version()   );
         add_cmd(new Cmd_quit   (sys));
-        add_cmd(new Cmd_lscpu  (sys));
         add_cmd(new Cmd_launch (sys));
         add_cmd(new Cmd_kill   (sys));
+        add_cmd(new Cmd_show   (sys));
+        add_cmd(new Cmd_help   (this));
     }
 
     ~Shell() { for (ssnlib::Command* cmd : cmds) delete(cmd); }

@@ -25,15 +25,6 @@ public:
     }
 };
 
-class Cmd_version : public Command {
-public:
-    Cmd_version() { name = "version"; }
-    void operator()(const std::vector<std::string>& args)
-    {
-        UNUSED(args);
-        printf("Susanoo version 0.0 \n");
-    }
-};
 
 class Cmd_kill : public Command {
     System* sys;
@@ -66,51 +57,51 @@ public:
     }
 };
 
-class Cmd_launch : public Command {
+
+
+
+class Cmd_show : public Command {
     System* sys;
 public:
-    Cmd_launch(System* s) : sys(s) { name = "launch"; }
-    void operator()(const std::vector<std::string>& args)
+    Cmd_show(System* s) : sys(s) { name = "show"; }
+
+    void show_port()
     {
-        if (args.size() < 2) {
-            fprintf(stderr, "Usage: %s lcore_id \n", args[0].c_str());
-            return ;
+        for (ssnlib::Port& port : sys->ports) {
+            port.stats.update();
+
+            printf("%s\n", port.name.c_str());
+            printf("  HWaddr %s \n", port.addr.toString().c_str());
+
+            auto& stats = port.stats;
+            printf("  RX packets:%lu errors:%lu dropped:%lu allocmiss:%lu \n",
+                        stats.raw.ipackets, stats.raw.ierrors,
+                        stats.raw.imissed, stats.raw.rx_nombuf);
+            printf("  TX packets:%lu errors:%lu  \n",
+                    stats.raw.opackets, stats.raw.oerrors);
+            printf("  RX bytes:%lu TX bytes:%lu \n", stats.raw.ibytes, stats.raw.obytes);
+
+
+
+            size_t nb_rxq = port.rxq.size();
+            size_t nb_txq = port.txq.size();
+            for (uint8_t qid=0; qid<nb_rxq; qid++) {
+                printf("  RX%u packets:%lu errors:%lu ", qid,
+                        stats.raw.q_ipackets[qid], stats.raw.q_errors[qid]);
+                printf("  RX ring%u:%zd/%zd \n", qid,
+                        port.rxq[qid].count(), port.rxq[qid].size());
+            }
+            printf("\n");
+            for (uint8_t qid=0; qid<nb_txq; qid++) {
+                printf("  TX%u packets:%lu ", qid, stats.raw.q_opackets[qid]);
+                printf("  TX ring%u:%zd/%zd \n", qid,
+                        port.txq[qid].count(), port.txq[qid].size());
+            }
+            printf("\n");
         }
-
-        uint8_t lcore_id = atoi(args[1].c_str());
-        fflush(stdout);
-
-        rte_lcore_state_t state = sys->cpus[lcore_id].get_state();
-        if (state == RUNNING) {
-            fprintf(stderr, "Error: lcore%d was already launched \n", lcore_id);
-            return ;
-        }
-
-        sys->cpus[lcore_id].launch();
     }
-};
-
-
-class Cmd_quit : public Command {
-    System* sys;
-public:
-    Cmd_quit(System* s) : sys(s) { name = "quit"; }
-    void operator()(const std::vector<std::string>& args)
+    void show_cpu()
     {
-        UNUSED(args);
-        sys->halt();
-    }
-};
-
-
-class Cmd_lscpu : public Command {
-    System* sys;
-public:
-    Cmd_lscpu(System* s) : sys(s) { name = "lscpu"; }
-    void operator()(const std::vector<std::string>& args)
-    {
-        UNUSED(args);
-
         printf("Architecture        : \n");
         printf("CPU op-mode(s)      : \n");
 
@@ -146,6 +137,78 @@ public:
                 printf("%s ", rte_cpu_get_flag_name(rte_cpu_flag_t(i)));
         }
         printf("\n");
+    }
+    void show_version()
+    {
+        printf("Susanoo version 0.0 \n");
+    }
+    void show_thread()
+    {
+        for (ssnlib::Cpu& cpu : sys->cpus) {
+            printf("lcore%u thread status: %s \n", cpu.lcore_id,
+                ssnlib::util::rte_lcore_state_t2str(rte_eal_get_lcore_state(cpu.lcore_id)));
+        }
+    }
+    void usage(const std::string& s)
+    {
+        printf("Usage: %s COMMAND \n", s.c_str());
+        printf(" COMMAND := { port | cpu | version | thread } \n");
+    }
+    void operator()(const std::vector<std::string>& args)
+    {
+        if (args.size() < 2) {
+            usage(args[0]);
+            return ;
+        }
+
+        if (args[1] == "port") {
+            show_port();
+        } else if (args[1] == "cpu") {
+            show_cpu();
+        } else if (args[1] == "version") {
+            show_version();
+        } else if (args[1] == "thread") {
+            show_thread();
+        } else {
+            usage(args[0]);
+        }
+    }
+};
+
+
+class Cmd_launch : public Command {
+    System* sys;
+public:
+    Cmd_launch(System* s) : sys(s) { name = "launch"; }
+    void operator()(const std::vector<std::string>& args)
+    {
+        if (args.size() < 2) {
+            fprintf(stderr, "Usage: %s lcore_id \n", args[0].c_str());
+            return ;
+        }
+
+        uint8_t lcore_id = atoi(args[1].c_str());
+        fflush(stdout);
+
+        rte_lcore_state_t state = sys->cpus[lcore_id].get_state();
+        if (state == RUNNING) {
+            fprintf(stderr, "Error: lcore%d was already launched \n", lcore_id);
+            return ;
+        }
+
+        sys->cpus[lcore_id].launch();
+    }
+};
+
+
+class Cmd_quit : public Command {
+    System* sys;
+public:
+    Cmd_quit(System* s) : sys(s) { name = "quit"; }
+    void operator()(const std::vector<std::string>& args)
+    {
+        UNUSED(args);
+        sys->halt();
     }
 };
 
