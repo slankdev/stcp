@@ -2,7 +2,7 @@
 
 
 #pragma once
-#include "mempool.h"
+#include <ssnlib_mempool.h>
 #include <susanoo_log.h>
 
 

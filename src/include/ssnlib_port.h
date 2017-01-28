@@ -2,9 +2,10 @@
 
 #pragma once
 
-#include "mempool.h"
-#include "ring.h"
-#include "struct_utils.h"
+#include <ssnlib_mempool.h>
+#include <ssnlib_ring.h>
+
+#include <dpdk_struct_utils.h>
 
 #include <susanoo_log.h>
 

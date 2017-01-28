@@ -12,9 +12,9 @@
 #include <vector>
 #include <string>
 
-#include <dpdk/mempool.h>
-#include <dpdk/cpu.h>
-#include <dpdk/port.h>
+#include <ssnlib_mempool.h>
+#include <ssnlib_cpu.h>
+#include <ssnlib_port.h>
 
 
 

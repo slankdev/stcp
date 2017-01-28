@@ -4,7 +4,7 @@
 #pragma once
 #include <string>
 
-#include "mempool.h"
+#include <ssnlib_mempool.h>
 #include <susanoo_log.h>
 #include <susanoo_thread.h>
 
