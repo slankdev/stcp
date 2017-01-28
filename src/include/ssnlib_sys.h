@@ -39,7 +39,7 @@ public:
 	System(int argc, char** argv);
     ~System() { rte_eal_mp_wait_lcore(); }
     void halt();
-	void launch();
+	void wait_all();
 };
 
 

@@ -39,6 +39,8 @@ public:
 
     ~Shell() { for (ssnlib::Command* cmd : cmds) delete(cmd); }
 
+    bool kill() { return false; }
+
     void add_cmd(ssnlib::Command* newcmd)
     {
         cmds.push_back(newcmd);
@@ -61,7 +63,6 @@ public:
 
     void operator()()
     {
-        printf("\n\n");
         const char* prmpt = "SUSANOO$ ";
         while (char* line = Readline(prmpt)) {
             exe_cmd(line);

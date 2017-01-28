@@ -41,7 +41,9 @@ public:
             if (lcore_id == 0) {
                 fprintf(stderr, "This is COM core. can not launch thread");
             } else {
+                kernel_log(SYSTEM, "%s lanching ... ", name.c_str());
                 rte_eal_remote_launch(Cpu::Exe, this, lcore_id);
+                printf("done \n");
             }
         }
 	}

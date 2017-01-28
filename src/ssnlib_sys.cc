@@ -76,21 +76,9 @@ void System::halt()
     rte_exit(0, "Bye...\n");
 }
 
-void System::launch()
+void System::wait_all()
 {
-    /*
-     * The lcore0 is com cpu core.
-     * So it must not launch that.
-     */
-    kernel_log(SYSTEM, "launch thread to each-cores \n");
-    for (size_t i=1; i<cpus.size(); i++) {
-        kernel_log(SYSTEM, "%s lanching ... \n", cpus[i].name.c_str());
-    }
     sleep(1);
-
-    for (size_t i=1; i<cpus.size(); i++) {
-        cpus[i].launch();
-    }
     rte_eal_mp_wait_lcore();
 }
 

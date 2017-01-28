@@ -39,6 +39,7 @@ int main(int argc, char** argv)
     sys.cpus[3].thrd = &wk;
 #endif
 
-    sys.launch();
+    sys.cpus[1].launch();
+    sys.wait_all();
 }
 

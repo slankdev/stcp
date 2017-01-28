@@ -43,9 +43,13 @@ public:
             return ;
         }
 
-        sys->cpus[lcore_id].thrd->kill();
-        rte_eal_wait_lcore(lcore_id);
-        printf("done \n");
+        bool ret = sys->cpus[lcore_id].thrd->kill();
+        if (ret) {
+            rte_eal_wait_lcore(lcore_id);
+            printf("done \n");
+        } else {
+            printf("can't killed \n");
+        }
     }
 };
 
@@ -61,7 +65,6 @@ public:
         }
 
         uint8_t lcore_id = atoi(args[1].c_str());
-        printf("luanch lcore%d ... ", lcore_id);
         fflush(stdout);
 
         rte_lcore_state_t state = sys->cpus[lcore_id].get_state();
@@ -71,7 +74,6 @@ public:
         }
 
         sys->cpus[lcore_id].launch();
-        printf("done \n");
     }
 };
 

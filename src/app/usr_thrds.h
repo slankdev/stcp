@@ -33,7 +33,7 @@ public:
         }
 
     }
-    void kill() { running=false; }
+    bool kill() { running=false; return true; }
 };
 
 
@@ -57,7 +57,7 @@ public:
             }
         }
     }
-    void kill() { running = false; }
+    bool kill() { running=false; return true; }
 };
 
 
@@ -80,7 +80,7 @@ public:
             }
         }
     }
-    void kill() { running = false; }
+    bool kill() { running=false; return true; }
 };
 
 
@@ -111,7 +111,7 @@ public:
             }
         }
     }
-    void kill() { running = false; }
+    bool kill() { running=false; return true; }
 };
 
 
