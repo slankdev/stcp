@@ -18,16 +18,6 @@ public:
 };
 
 
-// class Cmd_ : public Command {
-//     System* sys;
-// public:
-//     Cmd_quit(System* s) : sys(s) { name = "quit"; }
-//     void operator()(const std::vector<std::string>& args)
-//     {
-//         UNUSED(args);
-//         sys->halt();
-//     }
-// };
 // class Cmd_reboot
 // class Cmd_show
 //    show config

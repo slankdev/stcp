@@ -8,7 +8,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include <susanoo.h>
+#include <ssnlib_sys.h>
 #include <ssnlib_thread.h>
 #include <ssnlib_cmd.h>
 #include <ssnlib_cmds.h>

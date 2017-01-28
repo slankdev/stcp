@@ -1,7 +1,7 @@
 
 
 #include <stdio.h>
-#include <susanoo.h>
+#include <ssnlib_sys.h>
 #include <ssnlib_shell.h>
 #include "usr_thrds.h"
 #include "usr_cmds.h"
@@ -10,6 +10,8 @@
 
 int main(int argc, char** argv)
 {
+    using namespace ssnlib;
+
     System::nb_rx_rings    = 2;
     System::nb_tx_rings    = 2;
     System::rx_ring_size   = 128;
@@ -19,12 +21,12 @@ int main(int argc, char** argv)
     System sys(argc, argv);
     if (sys.ports.size()%2 != 0) return -1;
 
-    ssnlib::Shell shell(&sys);
+    Shell shell(&sys);
     shell.add_cmd(new Cmd_ifconfig(&sys));
     shell.add_cmd(new Cmd_test    (&sys));
     shell.add_cmd(new Cmd_state   (&sys));
 
-#if 1
+#if 0
     ssnt_txrxwk txrxwk(&sys);
     sys.cpus[0].thrd = &shell;
     sys.cpus[1].thrd = &txrxwk;

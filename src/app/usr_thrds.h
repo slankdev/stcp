@@ -3,9 +3,9 @@
 
 
 class ssnt_txrxwk : public ssnlib::ssn_thread {
-    System* sys;
+    ssnlib::System* sys;
 public:
-    ssnt_txrxwk(System* s) : sys(s) {}
+    ssnt_txrxwk(ssnlib::System* s) : sys(s) {}
     void operator()()
     {
         const uint8_t nb_ports = sys->ports.size();
@@ -61,9 +61,9 @@ public:
 
 
 class ssnt_rx : public ssnlib::ssn_thread {
-    System* sys;
+    ssnlib::System* sys;
 public:
-    ssnt_rx(System* s) : sys(s) {}
+    ssnt_rx(ssnlib::System* s) : sys(s) {}
     void operator()()
     {
         const uint8_t nb_ports = sys->ports.size();
@@ -81,9 +81,9 @@ public:
 
 
 class ssnt_tx : public ssnlib::ssn_thread {
-    System* sys;
+    ssnlib::System* sys;
 public:
-    ssnt_tx(System* s) : sys(s) {}
+    ssnt_tx(ssnlib::System* s) : sys(s) {}
     void operator()()
     {
         const uint8_t nb_ports = sys->ports.size();
@@ -100,9 +100,9 @@ public:
 
 
 class ssnt_wk : public ssnlib::ssn_thread {
-    System* sys;
+    ssnlib::System* sys;
 public:
-    ssnt_wk(System* s) : sys(s) {}
+    ssnt_wk(ssnlib::System* s) : sys(s) {}
     void operator()()
     {
         const uint8_t nb_ports = sys->ports.size();

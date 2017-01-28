@@ -4,7 +4,7 @@ prefix = ../
 
 TARGET = a.out
 SRCS   = \
-	susanoo.cc \
+	ssnlib_sys.cc \
 	app/main.cc
 OBJS   = $(SRCS:.cc=.o)
 

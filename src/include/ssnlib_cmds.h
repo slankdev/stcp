@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 
-#include <susanoo.h>
+#include <ssnlib_sys.h>
 #include <ssnlib_cmd.h>
 
 namespace ssnlib {

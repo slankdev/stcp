@@ -5,10 +5,10 @@
 #include <vector>
 #include <string>
 
-#include <susanoo.h>
+#include <ssnlib_sys.h>
 #include <ssnlib_cmd.h>
 
-static void ifconfig(System* sys)
+static void ifconfig(ssnlib::System* sys)
 {
     for (ssnlib::Port& port : sys->ports) {
         port.stats.update();
@@ -47,9 +47,9 @@ static void ifconfig(System* sys)
 
 
 class Cmd_ifconfig : public ssnlib::Command {
-    System* sys;
+    ssnlib::System* sys;
 public:
-    Cmd_ifconfig(System* s) : sys(s) { name = "ifconfig"; }
+    Cmd_ifconfig(ssnlib::System* s) : sys(s) { name = "ifconfig"; }
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);
@@ -59,9 +59,9 @@ public:
 
 
 class Cmd_test : public ssnlib::Command {
-    System* sys;
+    ssnlib::System* sys;
 public:
-    Cmd_test(System* s) : sys(s) { name = "test"; }
+    Cmd_test(ssnlib::System* s) : sys(s) { name = "test"; }
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);
@@ -75,9 +75,9 @@ public:
 
 
 class Cmd_state : public ssnlib::Command {
-    System* sys;
+    ssnlib::System* sys;
 public:
-    Cmd_state(System* s) : sys(s) { name = "state"; }
+    Cmd_state(ssnlib::System* s) : sys(s) { name = "state"; }
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);

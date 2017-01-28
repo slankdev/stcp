@@ -20,6 +20,8 @@
 
 
 
+namespace ssnlib {
+
 
 class System {
 public:
@@ -39,5 +41,8 @@ public:
     void halt();
 	void launch();
 };
+
+
+} /* namespace ssnlib */
 
 

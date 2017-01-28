@@ -1,7 +1,7 @@
 
 
 
-#include <susanoo.h>
+#include <ssnlib_sys.h>
 
 #include <ssnlib_cmd.h>
 #include <ssnlib_log.h>
@@ -11,7 +11,8 @@
 #include <slankdev/util.h>
 
 
-using ssnlib::SYSTEM;
+namespace ssnlib {
+
 
 size_t System::nb_rx_rings    = 1;
 size_t System::nb_tx_rings    = 1;
@@ -94,3 +95,4 @@ void System::launch()
 }
 
 
+} /* namespace ssnlib */
