@@ -91,7 +91,7 @@ void System::launch()
     for (size_t i=1; i<cpus.size(); i++) {
         cpus[i].launch();
     }
-    cpus[0].launch();
+    rte_eal_mp_wait_lcore();
 }
 
 

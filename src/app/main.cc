@@ -28,18 +28,17 @@ int main(int argc, char** argv)
 
 #if 0
     ssnt_txrxwk txrxwk(&sys);
-    sys.cpus[0].thrd = &shell;
-    sys.cpus[1].thrd = &txrxwk;
+    sys.cpus[1].thrd = &shell;
+    sys.cpus[2].thrd = &txrxwk;
 #else
     ssnt_rx rx(&sys);
     ssnt_tx tx(&sys);
     ssnt_wk wk(&sys);
-    sys.cpus[1].thrd = &rx;
-    sys.cpus[2].thrd = &tx;
+    sys.cpus[1].thrd = &shell;
+    sys.cpus[2].thrd = &rx;
     sys.cpus[3].thrd = &wk;
 #endif
 
-    shell();
-    // sys.launch();
+    sys.launch();
 }
 

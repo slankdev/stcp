@@ -39,7 +39,7 @@ public:
 	{
         if (thrd) {
             if (lcore_id == 0) {
-                (*thrd)();
+                fprintf(stderr, "This is COM core. can not launch thread");
             } else {
                 rte_eal_remote_launch(Cpu::Exe, this, lcore_id);
             }

@@ -34,6 +34,7 @@ public:
         add_cmd(new Cmd_quit   (sys));
         add_cmd(new Cmd_lscpu  (sys));
         add_cmd(new Cmd_launch (sys));
+        add_cmd(new Cmd_kill   (sys));
     }
 
     ~Shell() { for (ssnlib::Command* cmd : cmds) delete(cmd); }
