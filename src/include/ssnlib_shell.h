@@ -30,6 +30,7 @@ public:
 
     Shell(System* s) : sys(s)
     {
+        add_cmd(new Cmd_clear  ()   );
         add_cmd(new Cmd_version()   );
         add_cmd(new Cmd_quit   (sys));
         add_cmd(new Cmd_lscpu  (sys));

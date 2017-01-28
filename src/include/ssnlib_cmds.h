@@ -6,11 +6,24 @@
 #include <vector>
 #include <string>
 
+#include <slankdev/util.h>
+
 #include <ssnlib_sys.h>
 #include <ssnlib_cmd.h>
 
 namespace ssnlib {
 
+
+
+class Cmd_clear : public Command {
+public:
+    Cmd_clear() { name = "clear"; }
+    void operator()(const std::vector<std::string>& args)
+    {
+        UNUSED(args);
+        slankdev::clear_screen();
+    }
+};
 
 class Cmd_version : public Command {
 public:
