@@ -10,6 +10,7 @@ public:
     void operator()()
     {
         const uint8_t nb_ports = sys->ports.size();
+        running = true;
         while (running) {
             for (uint8_t pid = 0; pid < nb_ports; pid++) {
                 uint8_t nb_rxq = sys->ports[pid].rxq.size();

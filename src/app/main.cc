@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     Shell shell(&sys);
     shell.add_cmd(new Cmd_test    (&sys, &shell));
 
-#if 0
+#if 1
     ssnt_txrxwk txrxwk(&sys);
     sys.cpus[1].thrd = &shell;
     sys.cpus[2].thrd = &txrxwk;
