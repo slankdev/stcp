@@ -1,22 +1,16 @@
 
-
-#include <susanoo.h>
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
 #include <string>
-#include <readline/readline.h>
-#include <readline/history.h>
 
+#include <susanoo.h>
+#include <ssnlib_cmd.h>
 
+namespace ssnlib {
 
-class Command {
-public:
-    std::string name;
-    virtual void operator()(const std::vector<std::string>& args) = 0;
-    virtual ~Command() {}
-};
 
 class Cmd_version : public Command {
 public:
@@ -90,73 +84,11 @@ public:
     }
 };
 
-// class Cmd_ : public Command {
-//     System* sys;
-// public:
-//     Cmd_quit(System* s) : sys(s) { name = "quit"; }
-//     void operator()(const std::vector<std::string>& args)
-//     {
-//         UNUSED(args);
-//         sys->halt();
-//     }
-// };
-// class Cmd_reboot
-// class Cmd_show
-//    show config
-//    show route
-//    show stats
-//    show statistic
-// class Cmd_port
-//    port 0 linkdown
-//    port 0 linkup
-//    port 0 blink
-// class Cmd_commit
-// class Cmd_export
-// class Cmd_inport
+
+
+} /* namespace ssnlib */
 
 
 
 
 
-
-
-static inline char* Readline(const char* p)
-{
-    char* line = readline(p);
-    add_history(line);
-    return line;
-}
-
-inline Shell::Shell(System* s) : sys(s)
-{
-    add_cmd(new Cmd_version()   );
-    add_cmd(new Cmd_quit   (sys));
-    add_cmd(new Cmd_lscpu  (sys));
-}
-inline Shell::~Shell() { for (Command* cmd : cmds) delete(cmd); }
-inline void Shell::add_cmd(Command* newcmd)
-{
-    cmds.push_back(newcmd);
-}
-inline void Shell::exe_cmd(const char* cmd_str)
-{
-    if (strlen(cmd_str) == 0) return;
-    std::vector<std::string> args = slankdev::split(cmd_str, ' ');
-    for (Command* cmd : cmds) {
-        if (cmd->name == args[0]) {
-            (*cmd)(args);
-            return;
-        }
-    }
-    printf("SUSH: command not found: %s\n", args[0].c_str());
-}
-inline void Shell::operator()()
-{
-    printf("\n\n");
-    const char* prmpt = "SUSANOO$ ";
-    while (char* line = Readline(prmpt)) {
-        exe_cmd(line);
-        free(line);
-    }
-    return;
-}

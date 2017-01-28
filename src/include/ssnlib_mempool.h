@@ -22,7 +22,7 @@
 #include <slankdev/exception.h>
 
 
-namespace dpdk {
+namespace ssnlib {
 
 
 
@@ -72,4 +72,4 @@ public:
 
 
 
-} /* namespace dpdk */
+} /* namespace ssnlib */

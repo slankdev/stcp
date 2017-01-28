@@ -4,7 +4,7 @@
 
 int thread_txrx_AP(void* arg)
 {
-    dpdk::System* sys = reinterpret_cast<dpdk::System*>(arg);
+    susanoo::System* sys = reinterpret_cast<dpdk::System*>(arg);
 
     const uint8_t nb_ports = sys->ports.size();
 	for (;;) {

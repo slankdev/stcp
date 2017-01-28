@@ -12,26 +12,13 @@
 #include <vector>
 #include <string>
 
+#include <ssnlib_thread.h>
+#include <ssnlib_cmd.h>
 #include <ssnlib_mempool.h>
 #include <ssnlib_cpu.h>
 #include <ssnlib_port.h>
 
 
-
-class System;
-class Command;
-
-class Shell : public ssn_thread {
-    std::vector<Command*> cmds;
-    System* sys;
-public:
-
-    Shell(System* s);
-    ~Shell();
-    void add_cmd(Command* newcmd);
-    void exe_cmd(const char* cmd_str);
-    void operator()();
-};
 
 
 class System {
@@ -42,10 +29,9 @@ public:
     static size_t tx_ring_size;
     static size_t port_bulk_size;
 
-	std::vector<dpdk::Cpu>  cpus;
-	std::vector<dpdk::Port> ports;
-	dpdk::Mempool           mp;
-    Shell                   shell;
+	std::vector<ssnlib::Cpu>  cpus;
+	std::vector<ssnlib::Port> ports;
+	ssnlib::Mempool           mp;
     bool                    cpuflags[RTE_CPUFLAG_NUMFLAGS];
 
 	System(int argc, char** argv);

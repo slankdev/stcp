@@ -2,7 +2,7 @@
 #pragma once
 
 
-class ssnt_txrxwk : public ssn_thread {
+class ssnt_txrxwk : public ssnlib::ssn_thread {
     System* sys;
 public:
     ssnt_txrxwk(System* s) : sys(s) {}
@@ -17,8 +17,8 @@ public:
                 assert(nb_txq == nb_rxq);
 
                 for (uint8_t qid=0; qid<nb_rxq; qid++) {
-                    dpdk::Port& in_port  = sys->ports[pid];
-                    dpdk::Port& out_port = sys->ports[pid^1];
+                    ssnlib::Port& in_port  = sys->ports[pid];
+                    ssnlib::Port& out_port = sys->ports[pid^1];
 
                     in_port.rx_burst_bulk(qid);
 
@@ -37,8 +37,8 @@ public:
                 assert(nb_txq == nb_rxq);
 
                 for (uint8_t qid=0; qid<nb_rxq; qid++) {
-                    dpdk::Port& in_port  = sys->ports[pid];
-                    dpdk::Port& out_port = sys->ports[pid^1];
+                    ssnlib::Port& in_port  = sys->ports[pid];
+                    ssnlib::Port& out_port = sys->ports[pid^1];
 
                     in_port.rxq[qid].burst_bulk();
 
@@ -60,7 +60,7 @@ public:
 
 
 
-class ssnt_rx : public ssn_thread {
+class ssnt_rx : public ssnlib::ssn_thread {
     System* sys;
 public:
     ssnt_rx(System* s) : sys(s) {}
@@ -80,7 +80,7 @@ public:
 
 
 
-class ssnt_tx : public ssn_thread {
+class ssnt_tx : public ssnlib::ssn_thread {
     System* sys;
 public:
     ssnt_tx(System* s) : sys(s) {}
@@ -99,7 +99,7 @@ public:
 };
 
 
-class ssnt_wk : public ssn_thread {
+class ssnt_wk : public ssnlib::ssn_thread {
     System* sys;
 public:
     ssnt_wk(System* s) : sys(s) {}
@@ -113,8 +113,8 @@ public:
                 assert(nb_rxq == nb_txq);
 
                 for (uint8_t qid=0; qid<nb_rxq; qid++) {
-                    dpdk::Port& in_port  = sys->ports[pid];
-                    dpdk::Port& out_port = sys->ports[pid^1];
+                    ssnlib::Port& in_port  = sys->ports[pid];
+                    ssnlib::Port& out_port = sys->ports[pid^1];
 
                     const size_t burst_size = 32;
                     rte_mbuf* pkts[burst_size];

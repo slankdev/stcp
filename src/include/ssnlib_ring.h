@@ -2,11 +2,11 @@
 
 
 #pragma once
+#include <ssnlib_log.h>
 #include <ssnlib_mempool.h>
-#include <susanoo_log.h>
 
 
-namespace dpdk {
+namespace ssnlib {
 
 static inline void __attribute__((always_inline))
 rte_pktmbuf_free_bulk(struct rte_mbuf *m_list[], int16_t npkts)
@@ -183,4 +183,4 @@ public:
 
 
 
-} /* namespace dpdk */
+} /* namespace ssnlib */

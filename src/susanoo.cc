@@ -2,14 +2,16 @@
 
 
 #include <susanoo.h>
-#include <susanoo_cmd.h>
-#include <susanoo_log.h>
-#include <susanoo_misc.h>
+
+#include <ssnlib_cmd.h>
+#include <ssnlib_log.h>
+#include <ssnlib_misc.h>
 
 #include <slankdev/exception.h>
 #include <slankdev/util.h>
 
 
+using ssnlib::SYSTEM;
 
 size_t System::nb_rx_rings    = 1;
 size_t System::nb_tx_rings    = 1;
@@ -18,13 +20,13 @@ size_t System::tx_ring_size   = 512;
 size_t System::port_bulk_size = 32;
 
 
-System::System(int argc, char** argv) : shell(this)
+System::System(int argc, char** argv)
 {
     /*
      * Boot DPDK System.
      */
     kernel_log(SYSTEM, "[+] Booting ...\n");
-    print_message();
+    ssnlib::print_message();
 
     /*
      * DPDK init
@@ -52,10 +54,10 @@ System::System(int argc, char** argv) : shell(this)
     );
 
     for (size_t i=0; i<nb_cpus; i++)
-        cpus.push_back(dpdk::Cpu(i));
+        cpus.push_back(ssnlib::Cpu(i));
     for (size_t i=0; i<nb_ports; i++) {
         ports.push_back(
-                dpdk::Port(i, port_bulk_size, &mp,
+                ssnlib::Port(i, port_bulk_size, &mp,
                     nb_rx_rings,  nb_tx_rings,
                     rx_ring_size, tx_ring_size)
         );

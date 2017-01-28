@@ -2,18 +2,14 @@
 
 #pragma once
 
+#include <dpdk.h>
 #include <ssnlib_mempool.h>
 #include <ssnlib_ring.h>
-
-#include <dpdk_struct_utils.h>
-
-#include <susanoo_log.h>
+#include <ssnlib_log.h>
 
 
 
-
-
-namespace dpdk {
+namespace ssnlib {
 
 
 
@@ -153,7 +149,7 @@ public:
 
     Mempool*          mempool;
 
-    Port(uint8_t pid, size_t bs, dpdk::Mempool* mp,
+    Port(uint8_t pid, size_t bs, ssnlib::Mempool* mp,
             size_t nb_rx_rings , size_t nb_tx_rings,
             size_t rx_ring_size, size_t tx_ring_size) :
         name     ("port" + std::to_string(pid)),
@@ -258,6 +254,6 @@ public:
 
 
 
-} /* namespace dpdk */
+} /* namespace ssnlib */
 
 

@@ -4,6 +4,8 @@
 #include <rte_cfgfile.h>
 
 
+namespace ssnlib {
+
 
 struct Entry {
     std::string name;
@@ -87,3 +89,4 @@ public:
 
 
 
+} /* namespace ssnlib */

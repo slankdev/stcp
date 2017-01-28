@@ -6,6 +6,9 @@
 
 
 
+namespace ssnlib {
+
+
 enum LOG_LEVEL {
     SYSTEM,
     DEBUG,
@@ -34,3 +37,6 @@ inline void kernel_log(LOG_LEVEL level, const char* fmt, Args... args)
     printf(fmt, args...);
 }
 
+
+
+} /* namespace ssnlib */

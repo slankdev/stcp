@@ -4,15 +4,16 @@
 #pragma once
 #include <string>
 
+#include <ssnlib_log.h>
 #include <ssnlib_mempool.h>
-#include <susanoo_log.h>
-#include <susanoo_thread.h>
+#include <ssnlib_thread.h>
 
 
 enum byteorder {
     S_BIG_ENDIAN,
     S_LITTLE_ENDIAN,
 };
+
 inline const char* byteorder2str(byteorder o)
 {
     switch (o) {
@@ -22,7 +23,7 @@ inline const char* byteorder2str(byteorder o)
     }
 }
 
-namespace dpdk {
+namespace ssnlib {
 
 
 int Exe(void* arg);
@@ -60,11 +61,11 @@ public:
 
 inline int Exe(void* arg)
 {
-    dpdk::Cpu* cpu = reinterpret_cast<dpdk::Cpu*>(arg);
+    ssnlib::Cpu* cpu = reinterpret_cast<ssnlib::Cpu*>(arg);
     (*cpu->thrd)();
     return 0;
 }
 
 
-} /* namespace dpdk */
+} /* namespace ssnlib */
 

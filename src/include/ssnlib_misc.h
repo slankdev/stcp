@@ -1,10 +1,14 @@
 
 #pragma once
 
-#include <susanoo_log.h>
-
-
+#include <ssnlib_log.h>
 #define MESGTYPE 5
+
+
+
+namespace ssnlib {
+
+
 
 inline void print_message()
 {
@@ -57,3 +61,6 @@ inline void print_message()
         default: throw slankdev::exception("not found");
     }
 }
+
+
+} /* ssnlib */

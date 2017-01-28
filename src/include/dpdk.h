@@ -17,7 +17,7 @@
 #include <slankdev/util.h>
 
 
-namespace dpdk {
+namespace ssnlib {
 namespace util {
 
 #define DEPTHSTR "    "
@@ -864,7 +864,7 @@ inline void print(const struct rte_eth_fc_conf* raw, const char* name="", size_t
 
 
 } /* namespace util */
-} /* namespace dpdk */
+} /* namespace ssnlib */
 
 
 // inline void print(const struct SLANKDEV* raw, const char* name="", size_t depth=0)

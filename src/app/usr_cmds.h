@@ -6,11 +6,11 @@
 #include <string>
 
 #include <susanoo.h>
-#include <susanoo_cmd.h>
+#include <ssnlib_cmd.h>
 
 static void ifconfig(System* sys)
 {
-    for (dpdk::Port& port : sys->ports) {
+    for (ssnlib::Port& port : sys->ports) {
         port.stats.update();
 
         printf("%s\n", port.name.c_str());
@@ -46,7 +46,7 @@ static void ifconfig(System* sys)
 
 
 
-class Cmd_ifconfig : public Command {
+class Cmd_ifconfig : public ssnlib::Command {
     System* sys;
 public:
     Cmd_ifconfig(System* s) : sys(s) { name = "ifconfig"; }
@@ -58,7 +58,7 @@ public:
 };
 
 
-class Cmd_test : public Command {
+class Cmd_test : public ssnlib::Command {
     System* sys;
 public:
     Cmd_test(System* s) : sys(s) { name = "test"; }
@@ -74,16 +74,16 @@ public:
 };
 
 
-class Cmd_state : public Command {
+class Cmd_state : public ssnlib::Command {
     System* sys;
 public:
     Cmd_state(System* s) : sys(s) { name = "state"; }
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);
-        for (dpdk::Cpu& cpu : sys->cpus) {
+        for (ssnlib::Cpu& cpu : sys->cpus) {
             printf("lcore[%u]: %s \n", cpu.lcore_id,
-                dpdk::util::rte_lcore_state_t2str(rte_eal_get_lcore_state(cpu.lcore_id)));
+                ssnlib::util::rte_lcore_state_t2str(rte_eal_get_lcore_state(cpu.lcore_id)));
         }
 
     }
