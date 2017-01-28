@@ -36,14 +36,6 @@ public:
 
 class Cmd_lscpu : public Command {
     System* sys;
-
-    byteorder get_byteorder()
-    {
-        uint16_t before = 0x1234;
-        uint16_t after  = rte_le_to_cpu_16(before);
-        if (before == after) return S_LITTLE_ENDIAN;
-        else                 return S_BIG_ENDIAN;
-    }
 public:
     Cmd_lscpu(System* s) : sys(s) { name = "lscpu"; }
     void operator()(const std::vector<std::string>& args)
@@ -52,7 +44,11 @@ public:
 
         printf("Architecture        : \n");
         printf("CPU op-mode(s)      : \n");
-        printf("Byte Order          : %s \n",byteorder2str(get_byteorder()));
+
+        uint16_t before = 0x1234;
+        uint16_t after  = rte_le_to_cpu_16(before);
+        printf("Byte Order          : %s \n",before==after?"Little Endian":"Big Endian");
+
         printf("CPU(s):             : \n");
         printf("On-line CPU(s) list : \n");
         printf("Thread(s) per core  : \n");

@@ -9,27 +9,19 @@
 #include <ssnlib_thread.h>
 
 
-enum byteorder {
-    S_BIG_ENDIAN,
-    S_LITTLE_ENDIAN,
-};
-
-inline const char* byteorder2str(byteorder o)
-{
-    switch (o) {
-        case S_BIG_ENDIAN   : return "big endian   ";
-        case S_LITTLE_ENDIAN: return "little endian";
-        default: return "UNKNOWN_ERROR";
-    }
-}
 
 namespace ssnlib {
 
 
-int Exe(void* arg);
-
 
 class Cpu {
+    static int Exe(void* arg)
+    {
+        ssnlib::Cpu* cpu = reinterpret_cast<ssnlib::Cpu*>(arg);
+        (*cpu->thrd)();
+        return 0;
+    }
+
 public:
 	const uint8_t lcore_id;
     const std::string name;
@@ -49,7 +41,7 @@ public:
             if (lcore_id == 0) {
                 (*thrd)();
             } else {
-                rte_eal_remote_launch(Exe, this, lcore_id);
+                rte_eal_remote_launch(Cpu::Exe, this, lcore_id);
             }
         }
 	}
@@ -59,12 +51,6 @@ public:
     }
 };
 
-inline int Exe(void* arg)
-{
-    ssnlib::Cpu* cpu = reinterpret_cast<ssnlib::Cpu*>(arg);
-    (*cpu->thrd)();
-    return 0;
-}
 
 
 } /* namespace ssnlib */
