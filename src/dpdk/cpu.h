@@ -51,8 +51,11 @@ public:
                 rte_eal_remote_launch(Exe, this, lcore_id);
             }
         }
-
 	}
+    rte_lcore_state_t get_state()
+    {
+        return rte_eal_get_lcore_state(lcore_id);
+    }
 };
 
 inline int Exe(void* arg)

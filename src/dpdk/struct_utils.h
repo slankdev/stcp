@@ -32,6 +32,17 @@ inline void printf_depth(size_t depth, const char* const fmt, Args... args)
     printf(fmt, args...);
 }
 
+inline const char* rte_lcore_state_t2str(rte_lcore_state_t e)
+{
+    switch (e) {
+        case WAIT:     return "WAIT"    ;
+        case RUNNING : return "RUNNING";
+        case FINISHED: return "FINISHED";
+        default: return "UNKNOWN_ERROR";
+    }
+}
+
+
 
 inline const char* rte_eth_fc_mode2str(rte_eth_fc_mode e)
 {

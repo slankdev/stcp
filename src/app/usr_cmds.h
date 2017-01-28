@@ -74,3 +74,19 @@ public:
 };
 
 
+class Cmd_state : public Command {
+    System* sys;
+public:
+    Cmd_state(System* s) : sys(s) { name = "state"; }
+    void operator()(const std::vector<std::string>& args)
+    {
+        UNUSED(args);
+        for (dpdk::Cpu& cpu : sys->cpus) {
+            printf("lcore[%u]: %s \n", cpu.lcore_id,
+                dpdk::util::rte_lcore_state_t2str(rte_eal_get_lcore_state(cpu.lcore_id)));
+        }
+
+    }
+};
+
+

@@ -20,6 +20,7 @@ int main(int argc, char** argv)
 
     sys.shell.add_cmd(new Cmd_ifconfig(&sys));
     sys.shell.add_cmd(new Cmd_test    (&sys));
+    sys.shell.add_cmd(new Cmd_state   (&sys));
 
 #if 1
     ssnt_txrxwk txrxwk(&sys);
