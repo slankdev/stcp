@@ -28,18 +28,12 @@ class Shell : public ssnlib::ssn_thread {
     System* sys;
 public:
 
-    // Shell(System* s);
-    // ~Shell();
-    // void add_cmd(ssnlib::Command* newcmd);
-    // void exe_cmd(const char* cmd_str);
-    // void operator()();
-
-
     Shell(System* s) : sys(s)
     {
-        add_cmd(new ssnlib::Cmd_version()   );
-        add_cmd(new ssnlib::Cmd_quit   (sys));
-        add_cmd(new ssnlib::Cmd_lscpu  (sys));
+        add_cmd(new Cmd_version()   );
+        add_cmd(new Cmd_quit   (sys));
+        add_cmd(new Cmd_lscpu  (sys));
+        add_cmd(new Cmd_launch (sys));
     }
 
     ~Shell() { for (ssnlib::Command* cmd : cmds) delete(cmd); }

@@ -22,6 +22,34 @@ public:
     }
 };
 
+
+class Cmd_launch : public Command {
+    System* sys;
+public:
+    Cmd_launch(System* s) : sys(s) { name = "launch"; }
+    void operator()(const std::vector<std::string>& args)
+    {
+        if (args.size() < 2) {
+            fprintf(stderr, "Usage: %s lcore_id \n", args[0].c_str());
+            return ;
+        }
+
+        uint8_t lcore_id = atoi(args[1].c_str());
+        printf("luanch lcore%d ... ", lcore_id);
+        fflush(stdout);
+
+        rte_lcore_state_t state = sys->cpus[lcore_id].get_state();
+        if (state == RUNNING) {
+            fprintf(stderr, "Error: lcore%d was already launched \n", lcore_id);
+            return ;
+        }
+
+        sys->cpus[lcore_id].launch();
+        printf("done \n");
+    }
+};
+
+
 class Cmd_quit : public Command {
     System* sys;
 public:

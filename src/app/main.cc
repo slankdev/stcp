@@ -34,12 +34,12 @@ int main(int argc, char** argv)
     ssnt_rx rx(&sys);
     ssnt_tx tx(&sys);
     ssnt_wk wk(&sys);
-    sys.cpus[0].thrd = &shell;
     sys.cpus[1].thrd = &rx;
     sys.cpus[2].thrd = &tx;
     sys.cpus[3].thrd = &wk;
 #endif
 
-    sys.launch();
+    shell();
+    // sys.launch();
 }
 
