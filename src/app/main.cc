@@ -23,18 +23,26 @@ int main(int argc, char** argv)
 
     Shell shell(&sys);
     shell.add_cmd(new Cmd_test    (&sys, &shell));
+    shell.add_cmd(new Cmd_run     (&sys, &shell));
 
-#if 1
+#if 0
     ssnt_txrxwk txrxwk(&sys);
     sys.cpus[1].thrd = &shell;
     sys.cpus[2].thrd = &txrxwk;
 #else
     ssnt_rx rx(&sys);
     ssnt_tx tx(&sys);
-    ssnt_wk wk(&sys);
+    ssnt_wk wk(&sys, 40000);
     sys.cpus[1].thrd = &shell;
     sys.cpus[2].thrd = &rx;
-    sys.cpus[3].thrd = &wk;
+    sys.cpus[3].thrd = &tx;
+    sys.cpus[4].thrd = &wk;
+    sys.cpus[5].thrd = &wk;
+    sys.cpus[6].thrd = &wk;
+    sys.cpus[8].thrd = &wk;
+    sys.cpus[9].thrd = &wk;
+    sys.cpus[10].thrd = &wk;
+    sys.cpus[11].thrd = &wk;
 #endif
 
     sys.cpus[1].launch();

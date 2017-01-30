@@ -18,7 +18,7 @@ all: $(TARGET)
 clean:
 	$(RM) $(TARGET) $(OBJS)
 
-run: run_dummy
+run: run_native
 
 run_native:
 	sudo ./a.out

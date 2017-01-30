@@ -136,10 +136,10 @@ public:
     }
 };
 
-class Cmd_thrdctl : public  Command {
+class Cmd_thrd : public  Command {
     System* sys;
 public:
-    Cmd_thrdctl(System* s) : sys(s) { name = "thrdctl"; }
+    Cmd_thrd(System* s) : sys(s) { name = "thrd"; }
     void launch(size_t lcore_id)
     {
         rte_lcore_state_t state = sys->cpus[lcore_id].get_state();

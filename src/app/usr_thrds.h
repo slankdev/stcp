@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <slankdev/system.h>
 
 class ssnt_txrxwk : public ssnlib::ssn_thread {
     ssnlib::System* sys;
@@ -88,8 +89,10 @@ public:
 class ssnt_wk : public ssnlib::ssn_thread {
     ssnlib::System* sys;
     bool running;
+    size_t nb_delay_clk;
 public:
-    ssnt_wk(ssnlib::System* s) : sys(s), running(false) {}
+    ssnt_wk(ssnlib::System* s) : sys(s), running(false), nb_delay_clk(0) {}
+    ssnt_wk(ssnlib::System* s, size_t d) : sys(s), running(false), nb_delay_clk(d) {}
     void operator()()
     {
         const uint8_t nb_ports = sys->ports.size();
@@ -107,7 +110,10 @@ public:
                     const size_t burst_size = 32;
                     rte_mbuf* pkts[burst_size];
                     bool ret = in_port.rxq[qid].pop_bulk(pkts, burst_size);
-                    if (ret) out_port.txq[qid].push_bulk(pkts, burst_size);
+                    if (ret) {
+                        slankdev::delay_clk(nb_delay_clk);
+                        out_port.txq[qid].push_bulk(pkts, burst_size);
+                    }
                 }
             }
         }
