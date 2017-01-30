@@ -1,16 +1,10 @@
 
 
-prefix = ../
 
 TARGET = a.out
-SRCS   = \
-	ssnlib_sys.cc \
-	app/main.cc
+SRCS   = main.cc
 OBJS   = $(SRCS:.cc=.o)
-
-include $(prefix)/mk/vars.mk
-CXXFLAGS += -Wno-format-security
-LDFLAGS += -lreadline
+include ../mk/vars.mk
 
 
 all: $(TARGET)

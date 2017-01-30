@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <dpdk.h>
+#include <ssnlib_dpdk.h>
 #include <ssnlib_mempool.h>
 #include <ssnlib_ring.h>
 #include <ssnlib_log.h>
