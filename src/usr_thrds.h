@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <ssnlib_thread.h>
 #include <slankdev/system.h>
 
 class ssnt_txrxwk : public ssnlib::ssn_thread {
