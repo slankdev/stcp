@@ -36,6 +36,17 @@ public:
 };
 
 /*
+ * This class has dynamically informations.
+ */
+class link_stats {
+public:
+    const size_t id;
+    struct rte_eth_link raw;
+    link_stats(size_t i) : id(i) {}
+    void update() { rte_eth_link_get_nowait(id, &raw); }
+};
+
+/*
  * This class has statically infomations.
  */
 class dev_info {

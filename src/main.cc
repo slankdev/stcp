@@ -129,7 +129,7 @@ public:
         UNUSED(args);
         for (;;) {
             slankdev::clear_screen();
-            shell->exe_cmd("show port");
+            shell->exe_cmd("port show");
             usleep(50000);
         }
     }
@@ -156,14 +156,13 @@ int main(int argc, char** argv)
 {
     using namespace ssnlib;
 
-    Port<>::nb_rx_rings    = 2;
-    Port<>::nb_tx_rings    = 2;
-    Port<>::rx_ring_size   = 128;
-    Port<>::tx_ring_size   = 512;
+    Port::nb_rx_rings    = 2;
+    Port::nb_tx_rings    = 2;
+    Port::rx_ring_size   = 128;
+    Port::tx_ring_size   = 512;
 
     System sys(argc, argv);
     if (sys.ports.size()%2 != 0) return -1;
-    for (auto& port : sys.ports) port.boot();
 
     Shell shell(&sys);
     shell.add_cmd(new Cmd_test    ("test", &sys, &shell));

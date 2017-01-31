@@ -36,9 +36,15 @@ public:
             throw slankdev::exception(errstr);
         }
 
-        kernel_log(SYSTEM, "init ring %s ... done\n", ring_->name);
+        kernel_log(SYSTEM, "Construct ring %s \n", ring_->name);
     }
-    ~Ring() { if (!ring_) rte_ring_free(ring_); }
+    ~Ring()
+    {
+        if (ring_) {
+            kernel_log(SYSTEM, "Destruct ring %s \n", ring_->name);
+            rte_ring_free(ring_);
+        }
+    }
     Ring(const Ring&) = default;
     Ring(Ring&&) = default;
 

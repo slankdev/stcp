@@ -14,10 +14,8 @@
 namespace ssnlib {
 
 
+template <class RXQ, class TXQ>
 class Port_interface {
-protected:
-    static size_t id_next;
-
 public:
     static size_t nb_rx_rings;
     static size_t nb_tx_rings;
@@ -27,23 +25,27 @@ public:
 public:
     const uint8_t     id;
     const std::string name;
-    const size_t      bulk_size = 32;
     ether_addr        addr;
 
     port_conf         conf;
     port_stats        stats;
+    link_stats        link;
     dev_info          info;
 
+    std::vector<RXQ> rxq;
+    std::vector<TXQ> txq;
+
 public:
-    Port_interface() :
-        id       (id_next++),
+    Port_interface(size_t port_id) :
+        id       (port_id),
         name     ("port" + std::to_string(id)),
         addr     (id),
         conf     (id),
         stats    (id),
+        link     (id),
         info     (id)
     {
-        if (id_next > rte_eth_dev_count()) {
+        if (id >= rte_eth_dev_count()) {
             throw slankdev::exception("invalid port id");
         }
 
@@ -57,7 +59,6 @@ public:
         if (id >= rte_eth_dev_count())
             throw slankdev::exception("port is not exist");
     }
-    // ~Port_interface() { throw slankdev::exception("YUAKDFDKFD\n"); } // TODO
     virtual void boot()
     {
         configure();
@@ -72,6 +73,7 @@ public:
             throw slankdev::exception("rte_eth_dev_link_up: failed");
         }
     }
+    virtual void linkdown() { rte_eth_dev_set_link_down(id); }
     virtual void start()
     {
         int ret = rte_eth_dev_start(id);
@@ -79,33 +81,13 @@ public:
             throw slankdev::exception("rte_eth_dev_start: failed");
         }
     }
+    virtual void stop () { rte_eth_dev_stop (id); }
     virtual void promiscuous_set(bool on)
     {
         if (on) rte_eth_promiscuous_enable(id);
         else    rte_eth_promiscuous_disable(id);
     }
-    virtual void configure() = 0;
-};
-size_t Port_interface::id_next = 0;
-size_t Port_interface::nb_rx_rings    = 1;
-size_t Port_interface::nb_tx_rings    = 1;
-size_t Port_interface::rx_ring_size   = 128;
-size_t Port_interface::tx_ring_size   = 512;
-
-
-
-template <class RXQ=Rxq, class TXQ=Txq>
-class Port : public Port_interface {
-
-public:
-    std::vector<RXQ> rxq;
-    std::vector<TXQ> txq;
-
-    void linkdown() { rte_eth_dev_set_link_down(id); }
-    void stop () { rte_eth_dev_stop (id); }
-
-
-    void configure() override
+    virtual void configure()
     {
         conf.raw.rxmode.mq_mode = ETH_MQ_RX_RSS;
         conf.raw.rx_adv_conf.rss_conf.rss_key = nullptr;
@@ -115,10 +97,12 @@ public:
         if (retval != 0)
             throw slankdev::exception("rte_eth_dev_configure failed");
 
+        rxq.clear();
         rxq.reserve(nb_tx_rings);
         for (uint16_t qid=0; qid<nb_rx_rings; qid++) {
             rxq.emplace_back(id, qid, rx_ring_size);
         }
+        txq.clear();
         txq.reserve(nb_tx_rings);
         for (uint16_t qid=0; qid<nb_tx_rings; qid++) {
             txq.emplace_back(id, qid, tx_ring_size);
@@ -129,7 +113,13 @@ public:
         kernel_log(SYSTEM, "  nb_tx_rings=%zd size=%zd\n", nb_tx_rings, tx_ring_size);
     }
 };
+template <class CPU, class PORT> size_t Port_interface<CPU, PORT>::nb_rx_rings    = 1;
+template <class CPU, class PORT> size_t Port_interface<CPU, PORT>::nb_tx_rings    = 1;
+template <class CPU, class PORT> size_t Port_interface<CPU, PORT>::rx_ring_size   = 128;
+template <class CPU, class PORT> size_t Port_interface<CPU, PORT>::tx_ring_size   = 512;
 
+
+using Port = Port_interface<Rxq, Txq>;
 
 
 

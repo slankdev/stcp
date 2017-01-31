@@ -1,4 +1,5 @@
 
+
 #pragma once
 
 #include <stdio.h>
@@ -33,43 +34,6 @@ class Cmd_show : public Command {
 public:
     Cmd_show(const char* n, System* s) : Command(n), sys(s) {}
 
-    void show_port()
-    {
-        for (auto& port : sys->ports) {
-            port.stats.update();
-
-            printf("%s\n", port.name.c_str());
-            printf("  HWaddr %s \n", port.addr.toString().c_str());
-
-            auto& stats = port.stats;
-            printf("  RX packets:%lu errors:%lu dropped:%lu allocmiss:%lu \n",
-                        stats.raw.ipackets, stats.raw.ierrors,
-                        stats.raw.imissed, stats.raw.rx_nombuf);
-            printf("  TX packets:%lu errors:%lu  \n",
-                    stats.raw.opackets, stats.raw.oerrors);
-            printf("  RX bytes:%lu TX bytes:%lu \n", stats.raw.ibytes, stats.raw.obytes);
-
-
-
-            size_t nb_rxq = port.rxq.size();
-            size_t nb_txq = port.txq.size();
-            for (uint8_t qid=0; qid<nb_rxq; qid++) {
-                printf("  RX%u packets:%lu errors:%lu ", qid,
-                        stats.raw.q_ipackets[qid], stats.raw.q_errors[qid]);
-                size_t rxqsize  = port.rxq[qid].size();
-                size_t rxqcount = port.rxq[qid].count();
-                printf("  RX ring%u:%zd/%zd \n", qid,
-                        rxqcount, rxqsize);
-            }
-            printf("\n");
-            for (uint8_t qid=0; qid<nb_txq; qid++) {
-                printf("  TX%u packets:%lu ", qid, stats.raw.q_opackets[qid]);
-                printf("  TX ring%u:%zd/%zd \n", qid,
-                        port.txq[qid].count(), port.txq[qid].size());
-            }
-            printf("\n");
-        }
-    }
     void show_cpu()
     {
         printf("Architecture        : \n");
@@ -115,7 +79,7 @@ public:
     void usage(const std::string& s)
     {
         printf("Usage: %s COMMAND \n", s.c_str());
-        printf(" COMMAND := { port | cpu | version | thread } \n");
+        printf(" COMMAND := { cpu | version | thread } \n");
     }
     void operator()(const std::vector<std::string>& args)
     {
@@ -124,15 +88,126 @@ public:
             return ;
         }
 
-        if (args[1] == "port") {
-            show_port();
-        } else if (args[1] == "cpu") {
+        if (args[1] == "cpu") {
             show_cpu();
         } else if (args[1] == "version") {
             show_version();
         } else {
             usage(args[0]);
         }
+    }
+};
+
+
+class Cmd_port : public Command {
+    System* sys;
+public:
+    Cmd_port(const char* n, System* s) : Command(n), sys(s) {}
+    void show()
+    {
+        for (auto& port : sys->ports) {
+            port.stats.update();
+            port.link.update();
+
+            auto& link = port.link;
+            printf("%s\n", port.name.c_str());
+            printf("  HWaddr %s \n", port.addr.toString().c_str());
+            printf("  LinkState: %s-%u-%s \n",
+                    link.raw.link_status==1?"Up":"Down",
+                    link.raw.link_speed,
+                    link.raw.link_duplex==1?"FD":"HD"
+            );
+
+            auto& stats = port.stats;
+            printf("  RX packets:%lu errors:%lu dropped:%lu allocmiss:%lu \n",
+                        stats.raw.ipackets, stats.raw.ierrors,
+                        stats.raw.imissed, stats.raw.rx_nombuf);
+            printf("  TX packets:%lu errors:%lu  \n",
+                    stats.raw.opackets, stats.raw.oerrors);
+            printf("  RX bytes:%lu TX bytes:%lu \n", stats.raw.ibytes, stats.raw.obytes);
+
+            size_t nb_rxq = port.rxq.size();
+            size_t nb_txq = port.txq.size();
+            for (uint8_t qid=0; qid<nb_rxq; qid++) {
+                printf("  RX%u packets:%lu errors:%lu ", qid,
+                        stats.raw.q_ipackets[qid], stats.raw.q_errors[qid]);
+                size_t rxqsize  = port.rxq[qid].size();
+                size_t rxqcount = port.rxq[qid].count();
+                printf("  RX ring%u:%zd/%zd \n", qid,
+                        rxqcount, rxqsize);
+            }
+            for (uint8_t qid=0; qid<nb_txq; qid++) {
+                printf("  TX%u packets:%lu ", qid, stats.raw.q_opackets[qid]);
+                printf("  TX ring%u:%zd/%zd \n", qid,
+                        port.txq[qid].count(), port.txq[qid].size());
+            }
+        }
+    }
+    void configure()
+    {
+        printf("configuring all port... \n");
+        for (auto& port : sys->ports) {
+            port.configure();
+        }
+        printf("configuring ... done \n");
+    }
+    void dev(const std::vector<std::string>& args)
+    {
+        if (args.size() < 3) {
+            printf("Usage: %s portid { start | stop } \n", args[0].c_str());
+            return;
+        }
+
+        size_t id = atoi(args[1].c_str());
+        if (args[2] == "start") {
+            sys->ports.at(id).start();
+        } else if (args[2] == "stop") {
+            sys->ports.at(id).stop();
+        } else {
+            printf("Usage: %s portid { start | stop } \n", args[0].c_str());
+        }
+    }
+    void usage() { fprintf(stderr, "Usage: %s { show | configure | dev | link } \n", name.c_str()); }
+    void link(const std::vector<std::string>& args)
+    {
+        if (args.size() < 3) {
+            printf("Usage: %s portid { up | down } \n", args[0].c_str());
+            return;
+        }
+
+        size_t id = atoi(args[1].c_str());
+        if (args[2] == "up") {
+            sys->ports.at(id).linkup();
+        } else if (args[2] == "down") {
+            sys->ports.at(id).linkdown();
+        } else {
+            printf("Usage: %s portid { up | down } \n", args[0].c_str());
+        }
+
+    }
+    void operator()(const std::vector<std::string>& args)
+    {
+        if (args.size() < 2) {
+            usage();
+            return;
+        }
+
+        if (args[1] == "show") {
+            show();
+        } else if (args[1] == "configure") {
+            configure();
+        } else if (args[1] == "dev") {
+            std::vector<std::string> vec;
+            std::copy(args.begin()+1, args.end(), std::back_inserter(vec));
+            dev(vec);
+        } else if (args[1] == "link") {
+            std::vector<std::string> vec;
+            std::copy(args.begin()+1, args.end(), std::back_inserter(vec));
+            link(vec);
+        } else {
+            usage();
+        }
+
     }
 };
 

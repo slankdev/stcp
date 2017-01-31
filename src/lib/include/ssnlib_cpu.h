@@ -16,8 +16,6 @@ namespace ssnlib {
 
 class Cpu {
 private:
-    static size_t id_next;
-
     static int Exe(void* arg)
     {
         ssnlib::Cpu* cpu = reinterpret_cast<ssnlib::Cpu*>(arg);
@@ -30,12 +28,12 @@ public:
     const std::string name;
     ssn_thread* thread;
 
-	Cpu() :
-        lcore_id(id_next++),
+	Cpu(size_t lid) :
+        lcore_id(lid),
         name("lcore" + std::to_string(lcore_id)),
         thread(nullptr)
     {
-        if (id_next > rte_lcore_count()) {
+        if (lid >= rte_lcore_count()) {
             throw slankdev::exception("invalid lcore id");
         }
 

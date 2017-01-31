@@ -34,6 +34,7 @@ public:
         add_cmd(new Cmd_quit   ("quit"  , s));
         add_cmd(new Cmd_thread ("thread", s));
         add_cmd(new Cmd_show   ("show"  , s));
+        add_cmd(new Cmd_port   ("port"  , s));
     }
 
     void help()

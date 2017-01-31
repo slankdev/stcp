@@ -12,6 +12,7 @@ namespace ssnlib {
 
 class Command {
     friend class Shell;
+protected:
     const std::string name;
 public:
     Command(const char* n) : name(n) {}
