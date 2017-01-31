@@ -34,8 +34,6 @@ public:
     {
         kernel_log(SYSTEM, "boot  %s ... done\n", name.c_str());
     }
-    Cpu(const Cpu& rhs) = delete;
-    Cpu& operator=(const Cpu& rhs) = delete;
     ~Cpu() { rte_eal_wait_lcore(lcore_id); }
 	void launch()
 	{

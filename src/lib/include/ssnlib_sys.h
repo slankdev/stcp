@@ -25,12 +25,6 @@ namespace ssnlib {
 
 class System {
 public:
-    static size_t nb_rx_rings;
-    static size_t nb_tx_rings;
-    static size_t rx_ring_size;
-    static size_t tx_ring_size;
-    static size_t port_bulk_size;
-
 	std::vector<ssnlib::Cpu>  cpus;
 	std::vector<ssnlib::Port*> ports;
 	ssnlib::Mempool           mp;

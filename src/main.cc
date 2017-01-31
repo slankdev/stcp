@@ -156,11 +156,10 @@ int main(int argc, char** argv)
 {
     using namespace ssnlib;
 
-    System::nb_rx_rings    = 2;
-    System::nb_tx_rings    = 2;
-    System::rx_ring_size   = 128;
-    System::tx_ring_size   = 512;
-    System::port_bulk_size = 32;
+    Port::nb_rx_rings    = 2;
+    Port::nb_tx_rings    = 2;
+    Port::rx_ring_size   = 128;
+    Port::tx_ring_size   = 512;
 
     System sys(argc, argv);
     if (sys.ports.size()%2 != 0) return -1;

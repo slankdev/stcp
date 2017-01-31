@@ -59,11 +59,8 @@ public:
             for (uint8_t qid=0; qid<nb_rxq; qid++) {
                 printf("  RX%u packets:%lu errors:%lu ", qid,
                         stats.raw.q_ipackets[qid], stats.raw.q_errors[qid]);
-                printf("BEFORE\n");
                 size_t rxqsize  = port.rxq[qid].size();
-                printf("BEFORE2\n");
                 size_t rxqcount = port.rxq[qid].count();
-                printf("AFTEER\n");
                 printf("  RX ring%u:%zd/%zd \n", qid,
                         rxqcount, rxqsize);
             }
