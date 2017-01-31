@@ -30,6 +30,8 @@ public:
     Mempool*          mempool;
 
     ~Port() { throw slankdev::exception("YUAKDFDKFD\n"); }
+    Port(const Port& rhs) = delete;
+    Port& operator=(const Port&) = delete;
     Port(uint8_t pid, size_t bs, ssnlib::Mempool* mp,
             size_t nb_rx_rings , size_t nb_tx_rings,
             size_t rx_ring_size, size_t tx_ring_size) :
