@@ -122,8 +122,8 @@ class Cmd_test : public ssnlib::Command {
     ssnlib::System* sys;
     ssnlib::Shell*  shell;
 public:
-    Cmd_test(ssnlib::System* s, ssnlib::Shell* sh)
-        : sys(s), shell(sh) { name = "test"; }
+    Cmd_test(const char* n, ssnlib::System* s, ssnlib::Shell* sh)
+        : Command(n), sys(s), shell(sh) {}
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);
@@ -138,8 +138,8 @@ class Cmd_run : public ssnlib::Command {
     ssnlib::System* sys;
     ssnlib::Shell*  shell;
 public:
-    Cmd_run(ssnlib::System* s, ssnlib::Shell* sh)
-        : sys(s), shell(sh) { name = "run"; }
+    Cmd_run(const char* n, ssnlib::System* s, ssnlib::Shell* sh)
+        : Command(n), sys(s), shell(sh) {}
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);
@@ -166,8 +166,8 @@ int main(int argc, char** argv)
     for (auto& port : sys.ports) port.boot();
 
     Shell shell(&sys);
-    shell.add_cmd(new Cmd_test    (&sys, &shell));
-    shell.add_cmd(new Cmd_run     (&sys, &shell));
+    shell.add_cmd(new Cmd_test    ("test", &sys, &shell));
+    shell.add_cmd(new Cmd_run     ("run" , &sys, &shell));
 
 #if 0
     ssnt_txrxwk txrxwk(&sys);
@@ -183,10 +183,7 @@ int main(int argc, char** argv)
     sys.cpus[4].thread = &wk;
     sys.cpus[5].thread = &wk;
     sys.cpus[6].thread = &wk;
-    sys.cpus[8].thread = &wk;
-    sys.cpus[9].thread = &wk;
-    sys.cpus[10].thread = &wk;
-    sys.cpus[11].thread = &wk;
+    sys.cpus[7].thread = &wk;
 #endif
 
     sys.cpus[1].launch();

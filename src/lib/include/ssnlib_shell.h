@@ -29,12 +29,11 @@ public:
 
     Shell(System* s)
     {
-        add_cmd(new Cmd_clear  () );
-        add_cmd(new Cmd_quit   (s));
-        add_cmd(new Cmd_thread (s));
-        add_cmd(new Cmd_show   (s));
+        add_cmd(new Cmd_clear  ("clear")    );
+        add_cmd(new Cmd_quit   ("quit"  , s));
+        add_cmd(new Cmd_thread ("thread", s));
+        add_cmd(new Cmd_show   ("show"  , s));
     }
-
     ~Shell() { for (ssnlib::Command* cmd : cmds) delete(cmd); } // TODO
 
     void help()

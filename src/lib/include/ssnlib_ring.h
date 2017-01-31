@@ -25,7 +25,7 @@ public:
             size_t p, size_t q, bool isRx)
         : ring_depth(count)
     {
-        std::string rn = "PORT" + std::to_string(p) += isRx?"RX":"TX" + std::to_string(q);
+        std::string rn = "PORT" + std::to_string(p) + (isRx?"RX":"TX") + std::to_string(q);
 
         ring_ = rte_ring_create(rn.c_str(), count, socket_id, 0);
         if (!ring_) {

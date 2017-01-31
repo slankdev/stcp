@@ -17,7 +17,7 @@ namespace ssnlib {
 
 class Cmd_clear : public Command {
 public:
-    Cmd_clear() { name = "clear"; }
+    Cmd_clear(const char* n) : Command(n) {}
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);
@@ -28,12 +28,10 @@ public:
 
 
 
-
-
 class Cmd_show : public Command {
     System* sys;
 public:
-    Cmd_show(System* s) : sys(s) { name = "show"; }
+    Cmd_show(const char* n, System* s) : Command(n), sys(s) {}
 
     void show_port()
     {
@@ -141,7 +139,7 @@ public:
 class Cmd_thread : public  Command {
     System* sys;
 public:
-    Cmd_thread(System* s) : sys(s) { name = "thread"; }
+    Cmd_thread(const char* n, System* s) : Command(n), sys(s) {}
     void launch(size_t lcore_id)
     {
         rte_lcore_state_t state = sys->cpus[lcore_id].get_state();
@@ -169,8 +167,12 @@ public:
     void show()
     {
         for (ssnlib::Cpu& cpu : sys->cpus) {
-            printf("lcore%u thread status: %s \n", cpu.lcore_id,
-                ssnlib::util::rte_lcore_state_t2str(rte_eal_get_lcore_state(cpu.lcore_id)));
+            if (cpu.lcore_id == 0) {
+                printf("lcore%u thread status: COM \n", cpu.lcore_id);
+            } else {
+                printf("lcore%u thread status: %s \n", cpu.lcore_id,
+                    ssnlib::util::rte_lcore_state_t2str(rte_eal_get_lcore_state(cpu.lcore_id)));
+            }
         }
     }
     void usage(const std::string s)
@@ -207,7 +209,7 @@ public:
 class Cmd_quit : public Command {
     System* sys;
 public:
-    Cmd_quit(System* s) : sys(s) { name = "quit"; }
+    Cmd_quit(const char* n, System* s) : Command(n), sys(s) {}
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);

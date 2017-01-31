@@ -11,8 +11,10 @@ namespace ssnlib {
 
 
 class Command {
+    friend class Shell;
+    const std::string name;
 public:
-    std::string name;
+    Command(const char* n) : name(n) {}
     virtual void operator()(const std::vector<std::string>& args) = 0;
     virtual ~Command() {}
 };
