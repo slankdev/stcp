@@ -12,7 +12,7 @@
 
 namespace ssnlib {
 
-
+template <class RXQ=Rxq<>, class TXQ=Txq<>>
 class Port {
 private:
     static size_t id_next;
@@ -29,8 +29,8 @@ public:
     const size_t      bulk_size = 32;
     ether_addr        addr;
 
-    std::vector<Rxq<Ring>> rxq;
-    std::vector<Txq<Ring>> txq;
+    std::vector<RXQ> rxq;
+    std::vector<TXQ> txq;
 
     port_conf         conf;
     port_stats        stats;
@@ -82,8 +82,6 @@ public:
         kernel_log(SYSTEM, "%s configure ... done\n", name.c_str());
     }
     ~Port() { throw slankdev::exception("YUAKDFDKFD\n"); }
-    Port(const Port& rhs) = delete;
-    Port& operator=(const Port&) = delete;
     void linkup  ()
     {
         int ret = rte_eth_dev_set_link_up  (id);
@@ -153,6 +151,11 @@ public:
 };
 
 
+template <class RXQ, class TXQ> size_t Port<RXQ, TXQ>::id_next = 0;
+template <class RXQ, class TXQ> size_t Port<RXQ, TXQ>::nb_rx_rings    = 1;
+template <class RXQ, class TXQ> size_t Port<RXQ, TXQ>::nb_tx_rings    = 1;
+template <class RXQ, class TXQ> size_t Port<RXQ, TXQ>::rx_ring_size   = 128;
+template <class RXQ, class TXQ> size_t Port<RXQ, TXQ>::tx_ring_size   = 512;
 
 
 } /* namespace ssnlib */

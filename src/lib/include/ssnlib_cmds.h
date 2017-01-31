@@ -37,8 +37,7 @@ public:
 
     void show_port()
     {
-        for (ssnlib::Port* port_ : sys->ports) {
-            ssnlib::Port& port = *port_;
+        for (auto& port : sys->ports) {
             port.stats.update();
 
             printf("%s\n", port.name.c_str());

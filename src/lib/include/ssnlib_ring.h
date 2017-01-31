@@ -83,21 +83,23 @@ public:
     bool   empty() const { return rte_ring_empty(ring_)==1; }
 };
 
+
+
 class ssn_ring {
-// public:
-//     virtual void push_bulk(rte_mbuf** obj_table, size_t n) {};
-//     virtual bool pop_bulk(rte_mbuf** obj_table, size_t n)  {};
-//     virtual size_t count() const {};
-//     virtual size_t size() const  {};
-//     virtual bool empty() const   {};
-//     virtual void burst_bulk()    {};
+public:
+    virtual void push_bulk(rte_mbuf** obj_table, size_t n) = 0;
+    virtual bool pop_bulk(rte_mbuf** obj_table, size_t n)  = 0;
+    virtual size_t count() const = 0;
+    virtual size_t size() const  = 0;
+    virtual bool empty() const   = 0;
+    virtual void burst_bulk()    = 0;
 };
 
 
 
 
-template <class RING>
-class Rxq {
+template <class RING=Ring>
+class Rxq : public ssn_ring {
     RING ring_impl;
 public:
 
@@ -120,8 +122,8 @@ public:
 };
 
 
-template <class RING>
-class Txq {
+template <class RING=Ring>
+class Txq : public ssn_ring {
     RING ring_impl;
 public:
     Txq(const char* n, size_t count, uint16_t socket_id, size_t p, size_t q)

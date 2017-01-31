@@ -18,13 +18,13 @@ public:
         running = true;
         while (running) {
             for (uint8_t pid = 0; pid < nb_ports; pid++) {
-                uint8_t nb_rxq = sys->ports[pid]->rxq.size();
-                uint8_t nb_txq = sys->ports[pid]->txq.size();
+                uint8_t nb_rxq = sys->ports[pid].rxq.size();
+                uint8_t nb_txq = sys->ports[pid].txq.size();
                 assert(nb_txq == nb_rxq);
 
                 for (uint8_t qid=0; qid<nb_rxq; qid++) {
-                    ssnlib::Port& in_port  = *sys->ports[pid];
-                    ssnlib::Port& out_port = *sys->ports[pid^1];
+                    auto& in_port  = sys->ports[pid];
+                    auto& out_port = sys->ports[pid^1];
 
                     in_port.rxq[qid].burst_bulk();
 
@@ -52,9 +52,9 @@ public:
         running = true;
         while (running) {
             for (uint8_t pid = 0; pid < nb_ports; pid++) {
-                uint8_t nb_rxq = sys->ports[pid]->rxq.size();
+                uint8_t nb_rxq = sys->ports[pid].rxq.size();
                 for (uint8_t qid=0; qid<nb_rxq; qid++) {
-                    sys->ports[pid]->rxq[qid].burst_bulk();
+                    sys->ports[pid].rxq[qid].burst_bulk();
                 }
             }
         }
@@ -72,9 +72,9 @@ public:
         running = true;
         while (running) {
             for (uint8_t pid = 0; pid < nb_ports; pid++) {
-                uint8_t nb_txq = sys->ports[pid]->txq.size();
+                uint8_t nb_txq = sys->ports[pid].txq.size();
                 for (uint8_t qid=0; qid<nb_txq; qid++) {
-                    sys->ports[pid]->txq[qid].burst_bulk();
+                    sys->ports[pid].txq[qid].burst_bulk();
                 }
             }
         }
@@ -94,13 +94,13 @@ public:
         running = true;
         while (running) {
             for (uint8_t pid = 0; pid < nb_ports; pid++) {
-                uint8_t nb_rxq = sys->ports[pid]->rxq.size();
-                uint8_t nb_txq = sys->ports[pid]->txq.size();
+                uint8_t nb_rxq = sys->ports[pid].rxq.size();
+                uint8_t nb_txq = sys->ports[pid].txq.size();
                 assert(nb_rxq == nb_txq);
 
                 for (uint8_t qid=0; qid<nb_rxq; qid++) {
-                    ssnlib::Port& in_port  = *sys->ports[pid];
-                    ssnlib::Port& out_port = *sys->ports[pid^1];
+                    auto& in_port  = sys->ports[pid];
+                    auto& out_port = sys->ports[pid^1];
 
                     const size_t burst_size = 32;
                     rte_mbuf* pkts[burst_size];
@@ -156,10 +156,10 @@ int main(int argc, char** argv)
 {
     using namespace ssnlib;
 
-    Port::nb_rx_rings    = 2;
-    Port::nb_tx_rings    = 2;
-    Port::rx_ring_size   = 128;
-    Port::tx_ring_size   = 512;
+    Port<>::nb_rx_rings    = 2;
+    Port<>::nb_tx_rings    = 2;
+    Port<>::rx_ring_size   = 128;
+    Port<>::tx_ring_size   = 512;
 
     System sys(argc, argv);
     if (sys.ports.size()%2 != 0) return -1;
