@@ -12,9 +12,9 @@
 
 namespace ssnlib {
 
-template <class RXQ=Rxq<>, class TXQ=Txq<>>
-class Port {
-private:
+
+class Port_interface {
+protected:
     static size_t id_next;
 
 public:
@@ -29,15 +29,13 @@ public:
     const size_t      bulk_size = 32;
     ether_addr        addr;
 
-    std::vector<RXQ> rxq;
-    std::vector<TXQ> txq;
-
     port_conf         conf;
     port_stats        stats;
     dev_info          info;
     Mempool           mempool;
 
-    Port() :
+public:
+    Port_interface() :
         id       (id_next++),
         name     ("port" + std::to_string(id)),
         addr     (id),
@@ -67,44 +65,58 @@ public:
 
         if (id >= rte_eth_dev_count())
             throw slankdev::exception("port is not exist");
-
-        /*
-         * Configure the Ethernet device.
-         */
-        configure(nb_rx_rings, nb_tx_rings, rx_ring_size, tx_ring_size);
-
-        /*
-         * Start the Ethernet port.
-         */
+    }
+    ~Port_interface() { throw slankdev::exception("YUAKDFDKFD\n"); }
+    virtual void boot()
+    {
+        configure();
         start();
-
         promiscuous_set(true);
         kernel_log(SYSTEM, "%s configure ... done\n", name.c_str());
     }
-    ~Port() { throw slankdev::exception("YUAKDFDKFD\n"); }
-    void linkup  ()
+    virtual void linkup  ()
     {
         int ret = rte_eth_dev_set_link_up  (id);
         if (ret < 0) {
             throw slankdev::exception("rte_eth_dev_link_up: failed");
         }
     }
-    void linkdown() { rte_eth_dev_set_link_down(id); }
-    void start()
+    virtual void linkdown() { rte_eth_dev_set_link_down(id); }
+    virtual void start()
     {
         int ret = rte_eth_dev_start(id);
         if (ret < 0) {
             throw slankdev::exception("rte_eth_dev_start: failed");
         }
     }
-    void stop () { rte_eth_dev_stop (id); }
-    void promiscuous_set(bool on)
+    virtual void stop () { rte_eth_dev_stop (id); }
+    virtual void promiscuous_set(bool on)
     {
         if (on) rte_eth_promiscuous_enable(id);
         else    rte_eth_promiscuous_disable(id);
     }
-    void configure(size_t nb_rx_rings, size_t nb_tx_rings,
-            size_t rx_ring_size, size_t tx_ring_size)
+    virtual void configure() = 0;
+};
+size_t Port_interface::id_next = 0;
+size_t Port_interface::nb_rx_rings    = 1;
+size_t Port_interface::nb_tx_rings    = 1;
+size_t Port_interface::rx_ring_size   = 128;
+size_t Port_interface::tx_ring_size   = 512;
+
+
+
+
+
+
+
+template <class RXQ=Rxq<>, class TXQ=Txq<>>
+class Port : public Port_interface {
+
+public:
+    std::vector<RXQ> rxq;
+    std::vector<TXQ> txq;
+
+    void configure() override
     {
         conf.raw.rxmode.mq_mode = ETH_MQ_RX_RSS;
         conf.raw.rx_adv_conf.rss_conf.rss_key = nullptr;
@@ -151,11 +163,6 @@ public:
 };
 
 
-template <class RXQ, class TXQ> size_t Port<RXQ, TXQ>::id_next = 0;
-template <class RXQ, class TXQ> size_t Port<RXQ, TXQ>::nb_rx_rings    = 1;
-template <class RXQ, class TXQ> size_t Port<RXQ, TXQ>::nb_tx_rings    = 1;
-template <class RXQ, class TXQ> size_t Port<RXQ, TXQ>::rx_ring_size   = 128;
-template <class RXQ, class TXQ> size_t Port<RXQ, TXQ>::tx_ring_size   = 512;
 
 
 } /* namespace ssnlib */

@@ -163,6 +163,7 @@ int main(int argc, char** argv)
 
     System sys(argc, argv);
     if (sys.ports.size()%2 != 0) return -1;
+    for (auto& port : sys.ports) port.boot();
 
     Shell shell(&sys);
     shell.add_cmd(new Cmd_test    (&sys, &shell));
