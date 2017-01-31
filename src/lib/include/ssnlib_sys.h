@@ -26,11 +26,11 @@ namespace ssnlib {
 
 
 
-template <class PORT=Port<>, class CPU=Cpu>
+template <class CPU=Cpu>
 class System_d {
 public:
 	std::vector<CPU>  cpus;
-	std::vector<PORT> ports;
+	std::vector<Port<>> ports;
 	ssnlib::Mempool           mp;
     bool                    cpuflags[RTE_CPUFLAG_NUMFLAGS];
 

@@ -2,12 +2,13 @@
 
 #pragma once
 
+#include <unistd.h>
+
 #include <ssnlib_dpdk.h>
 #include <ssnlib_mempool.h>
 #include <ssnlib_ring.h>
 #include <ssnlib_log.h>
 #include <ssnlib_port_impl.h>
-
 
 
 namespace ssnlib {
@@ -32,7 +33,6 @@ public:
     port_conf         conf;
     port_stats        stats;
     dev_info          info;
-    Mempool           mempool;
 
 public:
     Port_interface() :
@@ -47,15 +47,6 @@ public:
             throw slankdev::exception("invalid port id");
         }
 
-        size_t mbuf_cache_size = 0;
-        size_t mbuf_siz = RTE_MBUF_DEFAULT_BUF_SIZE;
-        size_t num_mbufs = 8192;
-        mempool.create(
-            name.c_str(),
-            num_mbufs ,
-            mbuf_cache_size, mbuf_siz,
-            rte_socket_id()
-        );
 
         kernel_log(SYSTEM, "boot port%u ... \n", id);
         rte_eth_macaddr_get(id, &addr);
@@ -81,7 +72,6 @@ public:
             throw slankdev::exception("rte_eth_dev_link_up: failed");
         }
     }
-    virtual void linkdown() { rte_eth_dev_set_link_down(id); }
     virtual void start()
     {
         int ret = rte_eth_dev_start(id);
@@ -89,7 +79,6 @@ public:
             throw slankdev::exception("rte_eth_dev_start: failed");
         }
     }
-    virtual void stop () { rte_eth_dev_stop (id); }
     virtual void promiscuous_set(bool on)
     {
         if (on) rte_eth_promiscuous_enable(id);
@@ -105,16 +94,16 @@ size_t Port_interface::tx_ring_size   = 512;
 
 
 
-
-
-
-
-template <class RXQ=Rxq<>, class TXQ=Txq<>>
+template <class RXQ=Rxq, class TXQ=Txq>
 class Port : public Port_interface {
 
 public:
     std::vector<RXQ> rxq;
     std::vector<TXQ> txq;
+
+    void linkdown() { rte_eth_dev_set_link_down(id); }
+    void stop () { rte_eth_dev_stop (id); }
+
 
     void configure() override
     {
@@ -126,34 +115,13 @@ public:
         if (retval != 0)
             throw slankdev::exception("rte_eth_dev_configure failed");
 
-
-        /*
-         * Allocate and set up RX $nb_rx_rings queue(s) per Ethernet port.
-         */
-        int socket_id = rte_socket_id();
-        for (uint16_t qid = 0; qid < nb_rx_rings; qid++) {
-            retval = rte_eth_rx_queue_setup(id, qid, rx_ring_size,
-                    socket_id, NULL, mempool.get_raw());
-            if (retval < 0)
-                throw slankdev::exception("rte_eth_rx_queue_setup failed");
-
-            std::string ringname = "PORT" + std::to_string(id);
-            ringname += "RX" + std::to_string(qid);
-            rxq.push_back(Rxq<Ring>(ringname.c_str(), rx_ring_size, socket_id, id, qid));
+        rxq.reserve(nb_tx_rings);
+        for (uint16_t qid=0; qid<nb_rx_rings; qid++) {
+            rxq.emplace_back(id, qid, rx_ring_size);
         }
-
-        /*
-         * Allocate and set up $nb_tx_rings TX queue per Ethernet port.
-         */
-        for (uint16_t qid = 0; qid < nb_tx_rings; qid++) {
-            retval = rte_eth_tx_queue_setup(id, qid, tx_ring_size,
-                    socket_id, NULL);
-            if (retval < 0)
-                throw slankdev::exception("rte_eth_tx_queue_setup failed");
-
-            std::string ringname = "PORT" + std::to_string(id);
-            ringname += "TX" + std::to_string(qid);
-            txq.push_back(Txq<Ring>(ringname.c_str(), tx_ring_size, socket_id, id, qid));
+        txq.reserve(nb_tx_rings);
+        for (uint16_t qid=0; qid<nb_tx_rings; qid++) {
+            txq.emplace_back(id, qid, tx_ring_size);
         }
 
         kernel_log(SYSTEM, "%s configure \n", name.c_str());
