@@ -7,7 +7,7 @@ INCLUDES   += \
 			 -I$(RTE_SDK)/$(RTE_TARGET)/include \
 			 -I/home/slank/git/libslankdev/include \
 			 -include $(RTE_SDK)/$(RTE_TARGET)/include/rte_config.h \
-			 -I../lib/include
+			 -I./lib/include
 
 LDFLAGS += \
 	-Wl,--no-as-needed \
@@ -38,5 +38,5 @@ CXXFLAGS += -Wno-format-security
 
 $(TARGET): $(OBJS)
 	@echo "LD $@"
-	@$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) ../lib/libsusanoo.a $(LDFLAGS)
+	@$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) lib/libsusanoo.a $(LDFLAGS)
 

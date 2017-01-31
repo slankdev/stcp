@@ -6,22 +6,14 @@ SRCS   = main.cc
 OBJS   = $(SRCS:.cc=.o)
 include ../mk/vars.mk
 
-all: $(TARGET)
+all: build_lib $(TARGET)
 
-lib:
-	make -C ../lib
-
-libclean:
-	make -C ../lib clean
-
-re:
-	make clean
-	make libclean
-	make lib
-	make
+build_lib:
+	make -C lib
 
 clean:
 	$(RM) $(TARGET) $(OBJS)
+
 
 include ../mk/runenv.mk
 
