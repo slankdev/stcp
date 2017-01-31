@@ -30,7 +30,7 @@ LDFLAGS += \
 	-Wl,--no-whole-archive
 LDFLAGS += -lreadline
 
-SRCS   =  ssnlib_sys.cc ssnlib_port.cc
+SRCS   =  ssnlib_sys.cc ssnlib_port.cc ssnlib_cpu.cc
 OBJS   = $(SRCS:.cc=.o)
 TARGET = libsusanoo.a
 

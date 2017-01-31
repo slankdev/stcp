@@ -38,7 +38,7 @@ public:
     Mempool           mempool;
 
     Port() :
-        id       (id_next),
+        id       (id_next++),
         name     ("port" + std::to_string(id)),
         addr     (id),
         conf     (id),
@@ -49,7 +49,6 @@ public:
             throw slankdev::exception("invalid port id");
         }
 
-        id_next ++;
         size_t mbuf_cache_size = 0;
         size_t mbuf_siz = RTE_MBUF_DEFAULT_BUF_SIZE;
         size_t num_mbufs = 8192;

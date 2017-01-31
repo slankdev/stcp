@@ -37,7 +37,7 @@ System::System(int argc, char** argv)
     uint8_t  nb_cpus  = rte_lcore_count();
 
     for (size_t i=0; i<nb_cpus; i++)
-        cpus.push_back(ssnlib::Cpu(i));
+        cpus.push_back(ssnlib::Cpu());
     for (size_t i=0; i<nb_ports; i++) {
         ports.push_back( new ssnlib::Port());
     }
