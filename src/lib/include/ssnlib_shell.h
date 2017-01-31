@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <string>
+#include <memory>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -24,7 +25,7 @@ static inline char* Readline(const char* p)
 namespace ssnlib {
 
 class Shell : public ssnlib::ssn_thread {
-    std::vector<ssnlib::Command*> cmds;
+    std::vector<std::unique_ptr<Command>> cmds;
 public:
 
     Shell(System* s)
@@ -34,12 +35,11 @@ public:
         add_cmd(new Cmd_thread ("thread", s));
         add_cmd(new Cmd_show   ("show"  , s));
     }
-    ~Shell() { for (ssnlib::Command* cmd : cmds) delete(cmd); } // TODO
 
     void help()
     {
         printf("Commands: \n");
-        for (const Command* c : cmds) {
+        for (const auto& c : cmds) {
             printf("  %s \n", c->name.c_str());
         }
     }
@@ -48,7 +48,7 @@ public:
 
     void add_cmd(ssnlib::Command* newcmd)
     {
-        cmds.push_back(newcmd);
+        cmds.push_back(std::unique_ptr<Command>(newcmd));
     }
 
 
@@ -59,7 +59,7 @@ public:
         if (args[0] == "help") {
             help();
         } else {
-            for (ssnlib::Command* cmd : cmds) {
+            for (auto& cmd : cmds) {
                 if (cmd->name == args[0]) {
                     (*cmd)(args);
                     return;

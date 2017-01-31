@@ -57,7 +57,7 @@ public:
         if (id >= rte_eth_dev_count())
             throw slankdev::exception("port is not exist");
     }
-    ~Port_interface() { throw slankdev::exception("YUAKDFDKFD\n"); }
+    // ~Port_interface() { throw slankdev::exception("YUAKDFDKFD\n"); } // TODO
     virtual void boot()
     {
         configure();
