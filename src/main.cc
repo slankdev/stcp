@@ -143,9 +143,9 @@ public:
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);
-        shell->exe_cmd("thrd launch 2");
-        shell->exe_cmd("thrd launch 3");
-        shell->exe_cmd("thrd launch 4");
+        shell->exe_cmd("thread launch 2");
+        shell->exe_cmd("thread launch 3");
+        shell->exe_cmd("thread launch 4");
     }
 };
 
@@ -171,22 +171,22 @@ int main(int argc, char** argv)
 
 #if 0
     ssnt_txrxwk txrxwk(&sys);
-    sys.cpus[1].thrd = &shell;
-    sys.cpus[2].thrd = &txrxwk;
+    sys.cpus[1].thread = &shell;
+    sys.cpus[2].thread = &txrxwk;
 #else
     ssnt_rx rx(&sys);
     ssnt_tx tx(&sys);
     ssnt_wk wk(&sys, 40000);
-    sys.cpus[1].thrd = &shell;
-    sys.cpus[2].thrd = &rx;
-    sys.cpus[3].thrd = &tx;
-    sys.cpus[4].thrd = &wk;
-    sys.cpus[5].thrd = &wk;
-    sys.cpus[6].thrd = &wk;
-    sys.cpus[8].thrd = &wk;
-    sys.cpus[9].thrd = &wk;
-    sys.cpus[10].thrd = &wk;
-    sys.cpus[11].thrd = &wk;
+    sys.cpus[1].thread = &shell;
+    sys.cpus[2].thread = &rx;
+    sys.cpus[3].thread = &tx;
+    sys.cpus[4].thread = &wk;
+    sys.cpus[5].thread = &wk;
+    sys.cpus[6].thread = &wk;
+    sys.cpus[8].thread = &wk;
+    sys.cpus[9].thread = &wk;
+    sys.cpus[10].thread = &wk;
+    sys.cpus[11].thread = &wk;
 #endif
 
     sys.cpus[1].launch();

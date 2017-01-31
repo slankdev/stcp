@@ -136,10 +136,10 @@ public:
     }
 };
 
-class Cmd_thrd : public  Command {
+class Cmd_thread : public  Command {
     System* sys;
 public:
-    Cmd_thrd(System* s) : sys(s) { name = "thrd"; }
+    Cmd_thread(System* s) : sys(s) { name = "thread"; }
     void launch(size_t lcore_id)
     {
         rte_lcore_state_t state = sys->cpus[lcore_id].get_state();
@@ -156,7 +156,7 @@ public:
             fprintf(stderr, "Error: lcore%zd is not runnning \n", lcore_id);
             return ;
         }
-        bool ret = sys->cpus[lcore_id].thrd->kill();
+        bool ret = sys->cpus[lcore_id].thread->kill();
         if (ret) {
             rte_eal_wait_lcore(lcore_id);
             printf("done \n");
@@ -200,23 +200,6 @@ public:
 };
 
 
-class Cmd_kill : public Command {
-    System* sys;
-public:
-    Cmd_kill(System* s) : sys(s) { name = "kill"; }
-    void operator()(const std::vector<std::string>& args)
-    {
-        if (args.size() < 2) {
-            fprintf(stderr, "Usage: %s lcore_id \n", args[0].c_str());
-            return ;
-        }
-
-        uint8_t lcore_id = atoi(args[1].c_str());
-        printf("kill lcore%d ... ", lcore_id);
-        fflush(stdout);
-
-    }
-};
 
 
 class Cmd_quit : public Command {

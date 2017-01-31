@@ -18,26 +18,26 @@ class Cpu {
     static int Exe(void* arg)
     {
         ssnlib::Cpu* cpu = reinterpret_cast<ssnlib::Cpu*>(arg);
-        (*cpu->thrd)();
+        (*cpu->thread)();
         return 0;
     }
 
 public:
 	const uint8_t lcore_id;
     const std::string name;
-    ssn_thread* thrd;
+    ssn_thread* thread;
 
 	Cpu(uint8_t id) :
         lcore_id(id),
         name("lcore" + std::to_string(id)),
-        thrd(nullptr)
+        thread(nullptr)
     {
         kernel_log(SYSTEM, "boot  %s ... done\n", name.c_str());
     }
     ~Cpu() { rte_eal_wait_lcore(lcore_id); }
 	void launch()
 	{
-        if (thrd) {
+        if (thread) {
             if (lcore_id == 0) {
                 fprintf(stderr, "This is COM core. can not launch thread");
             } else {

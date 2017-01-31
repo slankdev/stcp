@@ -8,6 +8,18 @@ include ../mk/vars.mk
 
 all: $(TARGET)
 
+lib:
+	make -C ../lib
+
+libclean:
+	make -C ../lib clean
+
+re:
+	make clean
+	make libclean
+	make lib
+	make
+
 clean:
 	$(RM) $(TARGET) $(OBJS)
 
