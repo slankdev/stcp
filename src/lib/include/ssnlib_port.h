@@ -20,8 +20,8 @@ public:
     const uint8_t     id;
     ether_addr        addr;
 
-    std::vector<Rxq> rxq;
-    std::vector<Txq> txq;
+    std::vector<Rxq<Ring>> rxq;
+    std::vector<Txq<Ring>> txq;
 
     port_conf         conf;
     port_stats        stats;
@@ -29,6 +29,7 @@ public:
 
     Mempool*          mempool;
 
+    ~Port() { throw slankdev::exception("YUAKDFDKFD\n"); }
     Port(uint8_t pid, size_t bs, ssnlib::Mempool* mp,
             size_t nb_rx_rings , size_t nb_tx_rings,
             size_t rx_ring_size, size_t tx_ring_size) :
@@ -108,7 +109,7 @@ public:
 
             std::string ringname = "PORT" + std::to_string(id);
             ringname += "RX" + std::to_string(qid);
-            rxq.push_back(Rxq(ringname.c_str(), rx_ring_size, socket_id, id, qid));
+            rxq.push_back(Rxq<Ring>(ringname.c_str(), rx_ring_size, socket_id, id, qid));
         }
 
         /*
@@ -122,7 +123,7 @@ public:
 
             std::string ringname = "PORT" + std::to_string(id);
             ringname += "TX" + std::to_string(qid);
-            txq.push_back(Txq(ringname.c_str(), tx_ring_size, socket_id, id, qid));
+            txq.push_back(Txq<Ring>(ringname.c_str(), tx_ring_size, socket_id, id, qid));
         }
 
         kernel_log(SYSTEM, "%s configure \n", name.c_str());

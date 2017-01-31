@@ -32,7 +32,7 @@ public:
     static size_t port_bulk_size;
 
 	std::vector<ssnlib::Cpu>  cpus;
-	std::vector<ssnlib::Port> ports;
+	std::vector<ssnlib::Port*> ports;
 	ssnlib::Mempool           mp;
     bool                    cpuflags[RTE_CPUFLAG_NUMFLAGS];
 

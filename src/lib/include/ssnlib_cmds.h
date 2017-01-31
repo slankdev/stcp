@@ -37,7 +37,8 @@ public:
 
     void show_port()
     {
-        for (ssnlib::Port& port : sys->ports) {
+        for (ssnlib::Port* port_ : sys->ports) {
+            ssnlib::Port& port = *port_;
             port.stats.update();
 
             printf("%s\n", port.name.c_str());
@@ -58,8 +59,13 @@ public:
             for (uint8_t qid=0; qid<nb_rxq; qid++) {
                 printf("  RX%u packets:%lu errors:%lu ", qid,
                         stats.raw.q_ipackets[qid], stats.raw.q_errors[qid]);
+                printf("BEFORE\n");
+                size_t rxqsize  = port.rxq[qid].size();
+                printf("BEFORE2\n");
+                size_t rxqcount = port.rxq[qid].count();
+                printf("AFTEER\n");
                 printf("  RX ring%u:%zd/%zd \n", qid,
-                        port.rxq[qid].count(), port.rxq[qid].size());
+                        rxqcount, rxqsize);
             }
             printf("\n");
             for (uint8_t qid=0; qid<nb_txq; qid++) {

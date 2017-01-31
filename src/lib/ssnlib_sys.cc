@@ -57,11 +57,13 @@ System::System(int argc, char** argv)
     for (size_t i=0; i<nb_cpus; i++)
         cpus.push_back(ssnlib::Cpu(i));
     for (size_t i=0; i<nb_ports; i++) {
+        printf("BEGORE\n");
         ports.push_back(
-                ssnlib::Port(i, port_bulk_size, &mp,
+                new ssnlib::Port(i, port_bulk_size, &mp,
                     nb_rx_rings,  nb_tx_rings,
                     rx_ring_size, tx_ring_size)
         );
+        printf("AFFTER\n");
     }
 
     for (size_t i=0; i<RTE_CPUFLAG_NUMFLAGS; i++)
