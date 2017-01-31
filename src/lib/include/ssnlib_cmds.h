@@ -205,15 +205,7 @@ public:
 class Cmd_quit : public Command {
     System* sys;
 public:
-    Cmd_quit(System* s) : sys(s)
-    {
-        name = "quit";
-        printf("CONSTRUCT QUIT COMD [%s]\n", name.c_str());
-    }
-    ~Cmd_quit()
-    {
-        printf("CONSTRUCT QUIT COMD [%s]\n", name.c_str());
-    }
+    Cmd_quit(System* s) : sys(s) { name = "quit"; }
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);

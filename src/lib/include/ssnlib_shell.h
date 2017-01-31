@@ -50,7 +50,7 @@ public:
 
     void add_cmd(ssnlib::Command* newcmd)
     {
-        printf("SHELL: add command [%s]\n", newcmd->name.c_str());
+        printf("SHELL: add command \"%s\"\n", newcmd->name.c_str());
         cmds.push_back(newcmd);
     }
 
