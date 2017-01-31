@@ -25,15 +25,14 @@ namespace ssnlib {
 
 class Shell : public ssnlib::ssn_thread {
     std::vector<ssnlib::Command*> cmds;
-    System* sys;
 public:
 
-    Shell(System* s) : sys(s)
+    Shell(System* s)
     {
-        add_cmd(new Cmd_clear  ()   );
-        add_cmd(new Cmd_quit   (sys));
-        add_cmd(new Cmd_thread (sys));
-        add_cmd(new Cmd_show   (sys));
+        add_cmd(new Cmd_clear  () );
+        add_cmd(new Cmd_quit   (s));
+        add_cmd(new Cmd_thread (s));
+        add_cmd(new Cmd_show   (s));
     }
 
     ~Shell() { for (ssnlib::Command* cmd : cmds) delete(cmd); } // TODO

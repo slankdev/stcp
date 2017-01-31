@@ -27,7 +27,7 @@ namespace ssnlib {
 
 
 template <class PORT=Port<>, class CPU=Cpu>
-class System {
+class System_d {
 public:
 	std::vector<CPU>  cpus;
 	std::vector<PORT> ports;
