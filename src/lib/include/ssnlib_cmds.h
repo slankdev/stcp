@@ -101,8 +101,6 @@ public:
 
 class Cmd_port : public Command {
     System* sys;
-public:
-    Cmd_port(const char* n, System* s) : Command(n), sys(s) {}
     void show()
     {
         for (auto& port : sys->ports) {
@@ -111,12 +109,14 @@ public:
 
             auto& link = port.link;
             printf("%s\n", port.name.c_str());
-            printf("  HWaddr %s \n", port.addr.toString().c_str());
-            printf("  LinkState: %s-%u-%s \n",
+            printf("  HWaddr %s %s\n", port.addr.toString().c_str(),
+                    port.is_promiscuous()?"PROMISC":"NOPROMISC");
+            printf("  LinkState: %s-%u-%s ",
                     link.raw.link_status==1?"Up":"Down",
                     link.raw.link_speed,
                     link.raw.link_duplex==1?"FD":"HD"
             );
+            printf("\n");
 
             auto& stats = port.stats;
             printf("  RX packets:%lu errors:%lu dropped:%lu allocmiss:%lu \n",
@@ -143,13 +143,20 @@ public:
             }
         }
     }
-    void configure()
+    void configure(const std::vector<std::string>& args)
     {
-        printf("configuring all port... \n");
-        for (auto& port : sys->ports) {
-            port.configure();
+        if (args.size() < 2) {
+            printf("Usage: %s portid\n", args[0].c_str());
+            return;
         }
-        printf("configuring ... done \n");
+
+        size_t id = atoi(args[1].c_str());
+
+        printf("configuring port%zd... \n", id);
+        sys->ports.at(id).stop();
+        sys->ports.at(id).configure();
+        sys->ports.at(id).start();
+
     }
     void dev(const std::vector<std::string>& args)
     {
@@ -167,7 +174,6 @@ public:
             printf("Usage: %s portid { start | stop } \n", args[0].c_str());
         }
     }
-    void usage() { fprintf(stderr, "Usage: %s { show | configure | dev | link } \n", name.c_str()); }
     void link(const std::vector<std::string>& args)
     {
         if (args.size() < 3) {
@@ -183,8 +189,41 @@ public:
         } else {
             printf("Usage: %s portid { up | down } \n", args[0].c_str());
         }
-
     }
+    void promisc(const std::vector<std::string>& args)
+    {
+        if (args.size() < 3) {
+            printf("Usage: %s portid { on | off } \n", args[0].c_str());
+            return;
+        }
+
+        size_t id = atoi(args[1].c_str());
+        if (args[2] == "on") {
+            sys->ports.at(id).promiscuous_set(true);
+        } else if (args[2] == "off") {
+            sys->ports.at(id).promiscuous_set(false);
+        } else {
+            printf("Usage: %s portid { on | off } \n", args[0].c_str());
+        }
+    }
+    void ring(const std::vector<std::string>& args)
+    {
+        if (args.size() < 2) {
+            printf("Usage: %s nub_rings \n", args[0].c_str());
+            return;
+        }
+
+        size_t nb_rings = atoi(args[1].c_str());
+        Port::nb_rx_rings    = nb_rings;
+        Port::nb_tx_rings    = nb_rings;
+    }
+    void usage()
+    {
+        fprintf(stderr, "Usage: %s { show | configure | dev | link | promisc | ring }\n",
+            name.c_str());
+    }
+public:
+    Cmd_port(const char* n, System* s) : Command(n), sys(s) {}
     void operator()(const std::vector<std::string>& args)
     {
         if (args.size() < 2) {
@@ -195,7 +234,13 @@ public:
         if (args[1] == "show") {
             show();
         } else if (args[1] == "configure") {
-            configure();
+            std::vector<std::string> vec;
+            std::copy(args.begin()+1, args.end(), std::back_inserter(vec));
+            configure(vec);
+        } else if (args[1] == "promisc") {
+            std::vector<std::string> vec;
+            std::copy(args.begin()+1, args.end(), std::back_inserter(vec));
+            promisc(vec);
         } else if (args[1] == "dev") {
             std::vector<std::string> vec;
             std::copy(args.begin()+1, args.end(), std::back_inserter(vec));
@@ -204,10 +249,13 @@ public:
             std::vector<std::string> vec;
             std::copy(args.begin()+1, args.end(), std::back_inserter(vec));
             link(vec);
+        } else if (args[1] == "ring") {
+            std::vector<std::string> vec;
+            std::copy(args.begin()+1, args.end(), std::back_inserter(vec));
+            ring(vec);
         } else {
             usage();
         }
-
     }
 };
 

@@ -87,8 +87,10 @@ public:
         if (on) rte_eth_promiscuous_enable(id);
         else    rte_eth_promiscuous_disable(id);
     }
+    virtual bool is_promiscuous() { return rte_eth_promiscuous_get(id)==1; }
     virtual void configure()
     {
+
         conf.raw.rxmode.mq_mode = ETH_MQ_RX_RSS;
         conf.raw.rx_adv_conf.rss_conf.rss_key = nullptr;
         conf.raw.rx_adv_conf.rss_conf.rss_hf  = ETH_RSS_IP;
