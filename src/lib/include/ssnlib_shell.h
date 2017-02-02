@@ -36,6 +36,10 @@ public:
     bool kill() { return false; }
     void add_cmd(ssnlib::Command* newcmd)
     {
+        for (auto& cmd : cmds) {
+            if (cmd->name == newcmd->name)
+                throw slankdev::exception("command name is already registred");
+        }
         cmds.push_back(std::unique_ptr<Command>(newcmd));
     }
     void exe_cmd(const char* cmd_str)
