@@ -27,6 +27,16 @@ public:
 };
 
 
+class Ring_stdqueue : public Ring_interface {
+protected:
+    // Re ing
+    void push_bulk(rte_mbuf** obj_table, size_t n) override {}
+    bool pop_bulk(rte_mbuf** obj_table, size_t n) override { return false; }
+    size_t count() const override { return 0; }
+    size_t size() const override { return 0; }
+    bool empty() const override { return true; }
+};
+
 class Ring_dpdk : public Ring_interface {
 protected:
     struct rte_ring* ring_;
