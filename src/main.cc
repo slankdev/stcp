@@ -3,15 +3,23 @@
 #include <stdio.h>
 #include <ssnlib_sys.h>
 #include <ssnlib_shell.h>
-
-
 #include <ssnlib_thread.h>
 #include <slankdev/system.h>
+
+using Rxq    = ssnlib::Rxq_interface<ssnlib::Ring_dpdk>;
+using Txq    = ssnlib::Txq_interface<ssnlib::Ring_dpdk>;
+using Port   = ssnlib::Port_interface<Rxq, Txq>;
+using Cpu    = ssnlib::Cpu_interface;
+using System = ssnlib::System_interface<Cpu, Port>;
+#include "commands.h"
+
+
+#if 0
 class ssnt_txrxwk : public ssnlib::ssn_thread {
-    ssnlib::System* sys;
+    System* sys;
     bool running;
 public:
-    ssnt_txrxwk(ssnlib::System* s) : sys(s), running(false) {}
+    ssnt_txrxwk(System* s) : sys(s), running(false) {}
     void operator()()
     {
         const uint8_t nb_ports = sys->ports.size();
@@ -41,11 +49,12 @@ public:
     }
     bool kill() { running=false; return true; }
 };
+#endif
 class ssnt_rx : public ssnlib::ssn_thread {
-    ssnlib::System* sys;
+    System* sys;
     bool running;
 public:
-    ssnt_rx(ssnlib::System* s) : sys(s), running(false) {}
+    ssnt_rx(System* s) : sys(s), running(false) {}
     void operator()()
     {
         const uint8_t nb_ports = sys->ports.size();
@@ -62,10 +71,10 @@ public:
     bool kill() { running=false; return true; }
 };
 class ssnt_tx : public ssnlib::ssn_thread {
-    ssnlib::System* sys;
+    System* sys;
     bool running;
 public:
-    ssnt_tx(ssnlib::System* s) : sys(s), running(false) {}
+    ssnt_tx(System* s) : sys(s), running(false) {}
     void operator()()
     {
         const uint8_t nb_ports = sys->ports.size();
@@ -82,12 +91,12 @@ public:
     bool kill() { running=false; return true; }
 };
 class ssnt_wk : public ssnlib::ssn_thread {
-    ssnlib::System* sys;
+    System* sys;
     bool running;
     size_t nb_delay_clk;
 public:
-    ssnt_wk(ssnlib::System* s) : sys(s), running(false), nb_delay_clk(0) {}
-    ssnt_wk(ssnlib::System* s, size_t d) : sys(s), running(false), nb_delay_clk(d) {}
+    ssnt_wk(System* s) : sys(s), running(false), nb_delay_clk(0) {}
+    ssnt_wk(System* s, size_t d) : sys(s), running(false), nb_delay_clk(d) {}
     void operator()()
     {
         const uint8_t nb_ports = sys->ports.size();
@@ -116,41 +125,6 @@ public:
     bool kill() { running=false; return true; }
 };
 
-#include <ssnlib_sys.h>
-#include <ssnlib_cmd.h>
-class Cmd_test : public ssnlib::Command {
-    ssnlib::System* sys;
-    ssnlib::Shell*  shell;
-public:
-    Cmd_test(const char* n, ssnlib::System* s, ssnlib::Shell* sh)
-        : Command(n), sys(s), shell(sh) {}
-    void operator()(const std::vector<std::string>& args)
-    {
-        UNUSED(args);
-        for (;;) {
-            slankdev::clear_screen();
-            shell->exe_cmd("port show");
-            usleep(50000);
-        }
-    }
-};
-class Cmd_run : public ssnlib::Command {
-    ssnlib::System* sys;
-    ssnlib::Shell*  shell;
-public:
-    Cmd_run(const char* n, ssnlib::System* s, ssnlib::Shell* sh)
-        : Command(n), sys(s), shell(sh) {}
-    void operator()(const std::vector<std::string>& args)
-    {
-        UNUSED(args);
-        shell->exe_cmd("thread launch 2");
-        shell->exe_cmd("thread launch 3");
-        shell->exe_cmd("thread launch 4");
-    }
-};
-
-
-
 
 int main(int argc, char** argv)
 {
@@ -164,9 +138,14 @@ int main(int argc, char** argv)
     System sys(argc, argv);
     if (sys.ports.size()%2 != 0) return -1;
 
-    Shell shell(&sys);
-    shell.add_cmd(new Cmd_test    ("test", &sys, &shell));
-    shell.add_cmd(new Cmd_run     ("run" , &sys, &shell));
+    Shell shell;
+    shell.add_cmd(new Cmd_clear   ("clear"               ));
+    shell.add_cmd(new Cmd_quit    ("quit"  , &sys        ));
+    shell.add_cmd(new Cmd_test    ("test"  , &sys, &shell));
+    shell.add_cmd(new Cmd_run     ("run"   , &sys, &shell));
+    shell.add_cmd(new Cmd_thread  ("thread", &sys        ));
+    shell.add_cmd(new Cmd_show    ("show"  , &sys        ));
+    shell.add_cmd(new Cmd_port    ("port"  , &sys        ));
 
 #if 0
     ssnt_txrxwk txrxwk(&sys);
@@ -179,10 +158,10 @@ int main(int argc, char** argv)
     sys.cpus[1].thread = &shell;
     sys.cpus[2].thread = &rx;
     sys.cpus[3].thread = &tx;
-    sys.cpus[4].thread = &wk;
-    sys.cpus[5].thread = &wk;
-    sys.cpus[6].thread = &wk;
-    sys.cpus[7].thread = &wk;
+    // sys.cpus[4].thread = &wk;
+    // sys.cpus[5].thread = &wk;
+    // sys.cpus[6].thread = &wk;
+    // sys.cpus[7].thread = &wk;
 #endif
 
     sys.cpus[1].launch();

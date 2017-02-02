@@ -63,17 +63,13 @@ public:
 
         kernel_log(SYSTEM, "[+] DPDK boot Done! \n");
     }
-
-
     virtual ~System_interface() { rte_eal_mp_wait_lcore(); }
-    void halt()
+    virtual void halt()
     {
         kernel_log(SYSTEM, "[+] System Halt ...\n");
         rte_exit(0, "Bye...\n");
     }
-
-
-	void wait_all()
+	virtual void wait_all()
     {
         sleep(1);
         rte_eal_mp_wait_lcore();
@@ -81,10 +77,6 @@ public:
 };
 
 
-class System : public System_interface<Cpu, Port> {
-public:
-    System(int argc, char** argv) : System_interface<Cpu, Port>(argc, argv) {}
-};
 
 
 } /* namespace ssnlib */

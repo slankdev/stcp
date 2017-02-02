@@ -14,11 +14,11 @@ namespace ssnlib {
 
 
 
-class Cpu {
+class Cpu_interface {
 private:
     static int Exe(void* arg)
     {
-        ssnlib::Cpu* cpu = reinterpret_cast<ssnlib::Cpu*>(arg);
+        ssnlib::Cpu_interface* cpu = reinterpret_cast<ssnlib::Cpu_interface*>(arg);
         (*cpu->thread)();
         return 0;
     }
@@ -28,7 +28,7 @@ public:
     const std::string name;
     ssn_thread* thread;
 
-	Cpu(size_t lid) :
+	Cpu_interface(size_t lid) :
         lcore_id(lid),
         name("lcore" + std::to_string(lcore_id)),
         thread(nullptr)
@@ -39,7 +39,7 @@ public:
 
         kernel_log(SYSTEM, "boot  %s ... done\n", name.c_str());
     }
-    ~Cpu() { rte_eal_wait_lcore(lcore_id); }
+    ~Cpu_interface() { rte_eal_wait_lcore(lcore_id); }
 	void launch()
 	{
         if (thread) {
@@ -47,7 +47,7 @@ public:
                 fprintf(stderr, "This is COM core. can not launch thread");
             } else {
                 kernel_log(SYSTEM, "%s lanching ... ", name.c_str());
-                rte_eal_remote_launch(Cpu::Exe, this, lcore_id);
+                rte_eal_remote_launch(Cpu_interface::Exe, this, lcore_id);
                 printf("done \n");
             }
         }

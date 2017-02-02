@@ -12,13 +12,22 @@
 #include <ssnlib_sys.h>
 #include <ssnlib_cmd.h>
 
-namespace ssnlib {
 
 
-
-class Cmd_clear : public Command {
+class Cmd_quit : public ssnlib::Command {
+    System* sys;
 public:
-    Cmd_clear(const char* n) : Command(n) {}
+    Cmd_quit(const char* n, System* s) : Command(n), sys(s) {}
+    void operator()(const std::vector<std::string>& args)
+    {
+        UNUSED(args);
+        sys->halt();
+    }
+};
+
+class Cmd_clear : public ssnlib::Command {
+public:
+    Cmd_clear(const char* n) : ssnlib::Command(n) {}
     void operator()(const std::vector<std::string>& args)
     {
         UNUSED(args);
@@ -27,12 +36,42 @@ public:
 };
 
 
+class Cmd_test : public ssnlib::Command {
+    System* sys;
+    ssnlib::Shell*  shell;
+public:
+    Cmd_test(const char* n, System* s, ssnlib::Shell* sh)
+        : Command(n), sys(s), shell(sh) {}
+    void operator()(const std::vector<std::string>& args)
+    {
+        UNUSED(args);
+        for (;;) {
+            slankdev::clear_screen();
+            shell->exe_cmd("port show");
+            usleep(50000);
+        }
+    }
+};
+class Cmd_run : public ssnlib::Command {
+    System* sys;
+    ssnlib::Shell*  shell;
+public:
+    Cmd_run(const char* n, System* s, ssnlib::Shell* sh)
+        : Command(n), sys(s), shell(sh) {}
+    void operator()(const std::vector<std::string>& args)
+    {
+        UNUSED(args);
+        shell->exe_cmd("thread launch 2");
+        shell->exe_cmd("thread launch 3");
+        // shell->exe_cmd("thread launch 4");
+    }
+};
 
 
-class Cmd_show : public Command {
+class Cmd_show : public ssnlib::Command {
     System* sys;
 public:
-    Cmd_show(const char* n, System* s) : Command(n), sys(s) {}
+    Cmd_show(const char* n, System* s) : ssnlib::Command(n), sys(s) {}
 
     void show_cpu()
     {
@@ -99,7 +138,7 @@ public:
 };
 
 
-class Cmd_port : public Command {
+class Cmd_port : public ssnlib::Command {
     System* sys;
     void show()
     {
@@ -223,7 +262,7 @@ class Cmd_port : public Command {
             name.c_str());
     }
 public:
-    Cmd_port(const char* n, System* s) : Command(n), sys(s) {}
+    Cmd_port(const char* n, System* s) : ssnlib::Command(n), sys(s) {}
     void operator()(const std::vector<std::string>& args)
     {
         if (args.size() < 2) {
@@ -259,10 +298,10 @@ public:
     }
 };
 
-class Cmd_thread : public  Command {
+class Cmd_thread : public  ssnlib::Command {
     System* sys;
 public:
-    Cmd_thread(const char* n, System* s) : Command(n), sys(s) {}
+    Cmd_thread(const char* n, System* s) : ssnlib::Command(n), sys(s) {}
     void launch(size_t lcore_id)
     {
         rte_lcore_state_t state = sys->cpus[lcore_id].get_state();
@@ -289,7 +328,7 @@ public:
     }
     void show()
     {
-        for (ssnlib::Cpu& cpu : sys->cpus) {
+        for (Cpu& cpu : sys->cpus) {
             if (cpu.lcore_id == 0) {
                 printf("lcore%u thread status: COM \n", cpu.lcore_id);
             } else {
@@ -325,25 +364,6 @@ public:
     }
 
 };
-
-
-
-
-class Cmd_quit : public Command {
-    System* sys;
-public:
-    Cmd_quit(const char* n, System* s) : Command(n), sys(s) {}
-    void operator()(const std::vector<std::string>& args)
-    {
-        UNUSED(args);
-        sys->halt();
-    }
-
-};
-
-
-
-} /* namespace ssnlib */
 
 
 

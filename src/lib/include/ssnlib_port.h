@@ -121,8 +121,6 @@ template <class CPU, class PORT> size_t Port_interface<CPU, PORT>::rx_ring_size 
 template <class CPU, class PORT> size_t Port_interface<CPU, PORT>::tx_ring_size   = 512;
 
 
-using Port = Port_interface<Rxq, Txq>;
-
 
 
 } /* namespace ssnlib */
