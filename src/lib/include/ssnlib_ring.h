@@ -4,7 +4,7 @@
 #pragma once
 #include <ssnlib_log.h>
 #include <ssnlib_mempool.h>
-
+#include <queue> // for Ring_stdqueue
 
 namespace ssnlib {
 
@@ -28,13 +28,32 @@ public:
 
 
 class Ring_stdqueue : public Ring_interface {
-protected:
-    // Re ing
-    void push_bulk(rte_mbuf** obj_table, size_t n) override {}
-    bool pop_bulk(rte_mbuf** obj_table, size_t n) override { return false; }
-    size_t count() const override { return 0; }
-    size_t size() const override { return 0; }
-    bool empty() const override { return true; }
+    std::queue<rte_mbuf*> queue_;
+public:
+    Ring_stdqueue(size_t, size_t, size_t, const char*) {}
+    void push_bulk(rte_mbuf** obj_table, size_t n) override
+    {
+        for (size_t i=0; i<n; i++) {
+            queue_.push(obj_table[i]);
+        }
+    }
+    bool pop_bulk(rte_mbuf** obj_table, size_t n) override
+    {
+        if (queue_.size() < n) {
+            return false;
+        } else {
+            printf("GAAAA\n");
+        }
+
+        for (size_t i=0; i<n; i++) {
+            obj_table[i] = queue_.front();
+            queue_.pop();
+        }
+        return true;
+    }
+    size_t count() const override { return queue_.size(); }
+    size_t size()  const override { return queue_.size(); }
+    bool   empty() const override { return queue_.empty(); }
 };
 
 class Ring_dpdk : public Ring_interface {
@@ -42,11 +61,10 @@ protected:
     struct rte_ring* ring_;
 	size_t ring_depth;
 public:
-    Ring_dpdk(size_t count, uint16_t socket_id,
-            size_t p, size_t q, bool isRx)
-        : ring_depth(count)
+    Ring_dpdk(size_t count, size_t p, size_t q, const char* nameprefix) : ring_depth(count)
     {
-        std::string rn = "PORT" + std::to_string(p) + (isRx?"RX":"TX") + std::to_string(q);
+        std::string rn = nameprefix + std::to_string(p) + ":" + std::to_string(q);
+        uint16_t socket_id = rte_socket_id();
 
         ring_ = rte_ring_create(rn.c_str(), count, socket_id, 0);
         if (!ring_) {
@@ -123,7 +141,7 @@ class Rxq_interface {
     const uint16_t queue_id;
 public:
     Rxq_interface(uint16_t pid, uint16_t qid, size_t size)
-        : ring_impl(size, rte_socket_id(), pid, qid, true),
+        : ring_impl(size, pid, qid, "RX"),
         port_id(pid),
         queue_id(qid)
     {
@@ -170,7 +188,7 @@ class Txq_interface {
     const uint16_t queue_id;
 public:
     Txq_interface(uint16_t pid, uint16_t qid, size_t size)
-        : ring_impl(size, rte_socket_id(), pid, qid, false),
+        : ring_impl(size, pid, qid, "TX"),
         port_id(pid),
         queue_id(qid)
     {

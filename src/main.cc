@@ -6,8 +6,10 @@
 #include <ssnlib_thread.h>
 #include <slankdev/system.h>
 
-using Rxq    = ssnlib::Rxq_interface<ssnlib::Ring_dpdk>;
-using Txq    = ssnlib::Txq_interface<ssnlib::Ring_dpdk>;
+// using Rxq    = ssnlib::Rxq_interface<ssnlib::Ring_dpdk>;
+// using Txq    = ssnlib::Txq_interface<ssnlib::Ring_dpdk>;
+using Rxq    = ssnlib::Rxq_interface<ssnlib::Ring_stdqueue>;
+using Txq    = ssnlib::Txq_interface<ssnlib::Ring_stdqueue>;
 using Port   = ssnlib::Port_interface<Rxq, Txq>;
 using Cpu    = ssnlib::Cpu_interface;
 using System = ssnlib::System_interface<Cpu, Port>;
