@@ -1,172 +1,84 @@
 
+#include <stcp/stcp.h>
+#include <stcp/util.h>
+#include <unistd.h> // for sleep()
+#define UNUSED(x) (void)(x)
 
-#include <stdio.h>
-#include <ssnlib_sys.h>
-#include <ssnlib_shell.h>
-#include <ssnlib_thread.h>
-#include <slankdev/system.h>
-
-// using Rxq    = ssnlib::Rxq_interface<ssnlib::Ring_dpdk>;
-// using Txq    = ssnlib::Txq_interface<ssnlib::Ring_dpdk>;
-using Rxq    = ssnlib::Rxq_interface<ssnlib::Ring_stdqueue>;
-using Txq    = ssnlib::Txq_interface<ssnlib::Ring_stdqueue>;
-using Port   = ssnlib::Port_interface<Rxq, Txq>;
-using Cpu    = ssnlib::Cpu_interface;
-using System = ssnlib::System_interface<Cpu, Port>;
-#include "commands.h"
+using namespace stcp;
 
 
 #if 0
-class ssnt_txrxwk : public ssnlib::ssn_thread {
-    System* sys;
-    bool running;
-public:
-    ssnt_txrxwk(System* s) : sys(s), running(false) {}
-    void operator()()
-    {
-        const uint8_t nb_ports = sys->ports.size();
-        running = true;
-        while (running) {
-            for (uint8_t pid = 0; pid < nb_ports; pid++) {
-                uint8_t nb_rxq = sys->ports[pid].rxq.size();
-                uint8_t nb_txq = sys->ports[pid].txq.size();
-                assert(nb_txq == nb_rxq);
+int user_main2(void* arg)
+{
+    UNUSED(arg);
 
-                for (uint8_t qid=0; qid<nb_rxq; qid++) {
-                    auto& in_port  = sys->ports[pid];
-                    auto& out_port = sys->ports[pid^1];
+    stcp_sockaddr_in addr;
+    addr.sin_fam  = STCP_AF_INET;
+    addr.sin_port = hton16(8888);
+    stcp_udp_sock* sock = core::create_udp_socket();
+    sock->bind(&addr);
 
-                    in_port.rxq[qid].burst_bulk();
-
-                    const size_t burst_size = 32;
-                    rte_mbuf* pkts[burst_size];
-                    bool ret = in_port.rxq[qid].pop_bulk(pkts, burst_size);
-                    if (ret) out_port.txq[qid].push_bulk(pkts, burst_size);
-
-                    out_port.txq[qid].burst_bulk();
-                }
-            }
-        }
-
+    stcp_sockaddr_in src;
+    while (1) {
+        mbuf* m = sock->recvfrom(&src);
+        sock->sendto(m, &src);
     }
-    bool kill() { running=false; return true; }
-};
+    return 0;
+}
 #endif
-class ssnt_rx : public ssnlib::ssn_thread {
-    System* sys;
-    bool running;
-public:
-    ssnt_rx(System* s) : sys(s), running(false) {}
-    void operator()()
-    {
-        const uint8_t nb_ports = sys->ports.size();
-        running = true;
-        while (running) {
-            for (uint8_t pid = 0; pid < nb_ports; pid++) {
-                uint8_t nb_rxq = sys->ports[pid].rxq.size();
-                for (uint8_t qid=0; qid<nb_rxq; qid++) {
-                    sys->ports[pid].rxq[qid].burst_bulk();
-                }
-            }
-        }
-    }
-    bool kill() { running=false; return true; }
-};
-class ssnt_tx : public ssnlib::ssn_thread {
-    System* sys;
-    bool running;
-public:
-    ssnt_tx(System* s) : sys(s), running(false) {}
-    void operator()()
-    {
-        const uint8_t nb_ports = sys->ports.size();
-        running = true;
-        while (running) {
-            for (uint8_t pid = 0; pid < nb_ports; pid++) {
-                uint8_t nb_txq = sys->ports[pid].txq.size();
-                for (uint8_t qid=0; qid<nb_txq; qid++) {
-                    sys->ports[pid].txq[qid].burst_bulk();
-                }
-            }
-        }
-    }
-    bool kill() { running=false; return true; }
-};
-class ssnt_wk : public ssnlib::ssn_thread {
-    System* sys;
-    bool running;
-    size_t nb_delay_clk;
-public:
-    ssnt_wk(System* s) : sys(s), running(false), nb_delay_clk(0) {}
-    ssnt_wk(System* s, size_t d) : sys(s), running(false), nb_delay_clk(d) {}
-    void operator()()
-    {
-        const uint8_t nb_ports = sys->ports.size();
-        running = true;
-        while (running) {
-            for (uint8_t pid = 0; pid < nb_ports; pid++) {
-                uint8_t nb_rxq = sys->ports[pid].rxq.size();
-                uint8_t nb_txq = sys->ports[pid].txq.size();
-                assert(nb_rxq == nb_txq);
 
-                for (uint8_t qid=0; qid<nb_rxq; qid++) {
-                    auto& in_port  = sys->ports[pid];
-                    auto& out_port = sys->ports[pid^1];
 
-                    const size_t burst_size = 32;
-                    rte_mbuf* pkts[burst_size];
-                    bool ret = in_port.rxq[qid].pop_bulk(pkts, burst_size);
-                    if (ret) {
-                        slankdev::delay_clk(nb_delay_clk);
-                        out_port.txq[qid].push_bulk(pkts, burst_size);
-                    }
-                }
+int user_main1(void* arg)
+{
+    UNUSED(arg);
+    stcp_tcp_sock* sock;
+    sock = core::create_tcp_socket();
+
+    stcp_sockaddr_in addr;
+    addr.sin_fam  = STCP_AF_INET;
+    addr.sin_port = hton16(8888);
+    sock->bind(&addr, sizeof(addr));
+    sock->listen(5);
+
+#if 1
+    while (true);
+#else
+    std::vector<stcp_tcp_sock*> fds;
+    fds.push_back(sock);
+
+    while (true) {
+        for (size_t i=0; i<fds.size(); i++) {
+            if (fds[i]->acceptable()) {
+                stcp_sockaddr_in caddr;
+                stcp_tcp_sock* csock = fds[i]->accept(&caddr);
+                fds.push_back(csock);
+            }
+            if (fds[i]->readable()) {
+                mbuf* msg = fds[i]->read();
+                mbuf_dump(msg, mbuf_pkt_len(msg));
+                fds[i]->write(msg);
+            }
+            if (fds[i]->sockdead()) {
+                core::destroy_tcp_socket(fds[i]);
+                fds.erase(fds.begin() + i);
             }
         }
     }
-    bool kill() { running=false; return true; }
-};
+    return 0;
+#endif
+}
+
 
 
 int main(int argc, char** argv)
 {
-    using namespace ssnlib;
+    core::init(argc, argv);
 
-    Port::nb_rx_rings    = 2;
-    Port::nb_tx_rings    = 2;
-    Port::rx_ring_size   = 128;
-    Port::tx_ring_size   = 512;
+    core::set_hw_addr(0x00, 0x11 , 0x22 , 0x33 , 0x44 , 0x55);
+    core::set_ip_addr(192, 168, 222, 10, 24);
+    core::set_default_gw(192, 168, 222, 1, 0);
 
-    System sys(argc, argv);
-    if (sys.ports.size()%2 != 0) return -1;
-
-    Shell shell;
-    shell.add_cmd(new Cmd_clear   ("clear"               ));
-    shell.add_cmd(new Cmd_quit    ("quit"  , &sys        ));
-    shell.add_cmd(new Cmd_test    ("test"  , &sys, &shell));
-    shell.add_cmd(new Cmd_run     ("run"   , &sys, &shell));
-    shell.add_cmd(new Cmd_thread  ("thread", &sys        ));
-    shell.add_cmd(new Cmd_show    ("show"  , &sys        ));
-    shell.add_cmd(new Cmd_port    ("port"  , &sys        ));
-
-#if 0
-    ssnt_txrxwk txrxwk(&sys);
-    sys.cpus[1].thread = &shell;
-    sys.cpus[2].thread = &txrxwk;
-#else
-    ssnt_rx rx(&sys);
-    ssnt_tx tx(&sys);
-    ssnt_wk wk(&sys, 40000);
-    sys.cpus[1].thread = &shell;
-    sys.cpus[2].thread = &rx;
-    sys.cpus[3].thread = &tx;
-    // sys.cpus[4].thread = &wk;
-    // sys.cpus[5].thread = &wk;
-    // sys.cpus[6].thread = &wk;
-    // sys.cpus[7].thread = &wk;
-#endif
-
-    sys.cpus[1].launch();
-    sys.wait_all();
+    // core::set_app(user_main1, NULL);
+    // core::set_app(user_main2, NULL);
+    core::run();
 }
-

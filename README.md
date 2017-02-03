@@ -1,17 +1,19 @@
+# STCP
+Slankdev's TCP/IP. This name is proto-name. Please give me cool one.
 
-# Susanoo
+## Concept
 
-A high performance network-stack on DPDK.
-
-## Install
-
-```
-$ git cloen http://github.com/slankdev/susanoo.git
-$ cd susanoo/src
-$ make
-$ sudo make install
-```
+ - Userland TCP/IP Protocol Stack
+ - Implement with C++11
+ - Packet IO-engin is DPDK
+ - Zero Copy Packet processing
 
 
+## Support 
+ - linux
+ - dpdk version 16.07
 
 
+## Lisence
+
+Please see the LICENSE
